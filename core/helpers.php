@@ -204,6 +204,36 @@ function auth_user(): ?array
     return $_SESSION['user'] ?? null;
 }
 
+function auth_user_by_id(int $id): ?array
+{
+    return db_fetch(
+        'SELECT id, name, email, role, academic_year, university_id, batch_id, created_at, updated_at FROM users WHERE id = ?',
+        [$id]
+    );
+}
+
+function auth_set_session_user_by_id(int $id): void
+{
+    $user = auth_user_by_id($id);
+    if ($user) {
+        $_SESSION['user'] = $user;
+    }
+}
+
+function auth_refresh_session_user(): void
+{
+    if (!isset($_SESSION['user']['id'])) {
+        return;
+    }
+
+    $user = auth_user_by_id((int) $_SESSION['user']['id']);
+    if ($user) {
+        $_SESSION['user'] = $user;
+    } else {
+        unset($_SESSION['user']);
+    }
+}
+
 function auth_check(): bool
 {
     return isset($_SESSION['user']);

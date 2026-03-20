@@ -12,6 +12,21 @@
         <form method="POST" action="/subjects/<?= $subject['id'] ?>">
             <?= csrf_field() ?>
 
+            <?php if ($is_admin): ?>
+                <div class="form-group">
+                    <label for="batch_id">Batch</label>
+                    <?php $selectedBatch = old('batch_id', (string) $subject['batch_id']); ?>
+                    <select id="batch_id" name="batch_id" required>
+                        <option value="">Select batch</option>
+                        <?php foreach ($batches as $batch): ?>
+                            <option value="<?= (int) $batch['id'] ?>" <?= $selectedBatch === (string) $batch['id'] ? 'selected' : '' ?>>
+                                <?= e($batch['name']) ?> (<?= e($batch['batch_code']) ?>)
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+            <?php endif; ?>
+
             <div class="form-group">
                 <label for="code">Subject Code</label>
                 <input type="text" id="code" name="code" value="<?= old('code', $subject['code']) ?>" placeholder="e.g. CS101" required maxlength="20">

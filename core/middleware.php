@@ -15,6 +15,9 @@ function middleware_auth(): void
         flash('error', 'Please log in to continue.');
         redirect('/login');
     }
+
+    // Keep session user in sync with DB updates (approval state, role changes, etc.).
+    auth_refresh_session_user();
 }
 
 /**
@@ -38,5 +41,33 @@ function middleware_role(string $role): void
 {
     if (!is_role($role)) {
         abort(403, 'You do not have permission to access this page.');
+    }
+}
+
+/**
+ * Require an exact role (no hierarchy fallback).
+ */
+function middleware_exact_role(string $role): void
+{
+    if (user_role() !== $role) {
+        abort(403, 'You do not have permission to access this page.');
+    }
+}
+
+/**
+ * Require onboarding completion for student/moderator users.
+ * Admin and other roles are not blocked.
+ */
+function middleware_onboarding_complete(): void
+{
+    $user = auth_user();
+    if (!$user) {
+        flash('error', 'Please log in to continue.');
+        redirect('/login');
+    }
+
+    if (!onboarding_complete_for_user($user)) {
+        flash('warning', 'Complete onboarding to access this section.');
+        redirect('/onboarding');
     }
 }

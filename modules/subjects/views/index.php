@@ -22,6 +22,9 @@
             <table class="table">
                 <thead>
                     <tr>
+                        <?php if ($is_admin): ?>
+                            <th>Batch</th>
+                        <?php endif; ?>
                         <th>Code</th>
                         <th>Subject Name</th>
                         <th>Credits</th>
@@ -32,6 +35,12 @@
                 <tbody>
                     <?php foreach ($subjects as $subject): ?>
                         <tr>
+                            <?php if ($is_admin): ?>
+                                <td>
+                                    <strong><?= e($subject['batch_name']) ?></strong><br>
+                                    <small class="text-muted"><?= e($subject['batch_code']) ?></small>
+                                </td>
+                            <?php endif; ?>
                             <td><span class="badge"><?= e($subject['code']) ?></span></td>
                             <td>
                                 <strong><?= e($subject['name']) ?></strong>

@@ -36,6 +36,12 @@ $isAuthPage = in_array($requestPath, ['/login', '/register'], true);
                 <?php if ($success = get_flash('success')): ?>
                     <div class="alert alert-success"><?= e($success) ?></div>
                 <?php endif; ?>
+                <?php if ($error = get_flash('error')): ?>
+                    <div class="alert alert-error"><?= e($error) ?></div>
+                <?php endif; ?>
+                <?php if ($warning = get_flash('warning')): ?>
+                    <div class="alert alert-warning"><?= e($warning) ?></div>
+                <?php endif; ?>
                 <?= $content ?>
             </div>
         </main>

@@ -550,6 +550,10 @@ img {
   max-width: 430px;
 }
 
+.auth-register-panel {
+  max-width: 760px;
+}
+
 .auth-panel-inner h1 {
   font-family: "Manrope", sans-serif;
   font-size: clamp(1.85rem, 3vw, 2.55rem);
@@ -597,9 +601,96 @@ img {
   outline: none;
 }
 
+.auth-field select {
+  width: 100%;
+  padding: 13px 14px;
+  border-radius: 12px;
+  border: 1px solid #d5d9e0;
+  background: #fff;
+  color: #15181f;
+  font-size: 1rem;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  outline: none;
+}
+
 .auth-field input:focus {
   border-color: #4b61f3;
   box-shadow: 0 0 0 3px rgba(75, 97, 243, 0.14);
+}
+
+.auth-field select:focus {
+  border-color: #4b61f3;
+  box-shadow: 0 0 0 3px rgba(75, 97, 243, 0.14);
+}
+
+.auth-grid {
+  display: grid;
+  gap: 14px;
+}
+
+.auth-grid-2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.auth-role-group {
+  margin-top: 4px;
+}
+
+.auth-role-title {
+  font-size: 0.93rem;
+  font-weight: 700;
+  color: #222734;
+}
+
+.auth-role-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.auth-role-option {
+  border: 1px solid #cfd4de;
+  border-radius: 14px;
+  background: #f7f8fb;
+  padding: 14px;
+  display: grid;
+  gap: 6px;
+  cursor: pointer;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.auth-role-option input {
+  display: none;
+}
+
+.auth-role-option .auth-role-icon {
+  font-size: 1.25rem;
+}
+
+.auth-role-option strong {
+  font-size: 1rem;
+  color: #1d2230;
+}
+
+.auth-role-option small {
+  color: #5f6676;
+  line-height: 1.35;
+}
+
+.auth-role-option.active {
+  border-color: #4b61f3;
+  box-shadow: 0 0 0 2px rgba(75, 97, 243, 0.12);
+  background: #eef1ff;
+}
+
+.auth-role-fields {
+  display: grid;
+  gap: 14px;
+}
+
+.auth-role-fields.hidden {
+  display: none;
 }
 
 .auth-meta-link {
@@ -1093,6 +1184,11 @@ img {
 
   .auth-quote p {
     font-size: 1.7rem;
+  }
+
+  .auth-grid-2,
+  .auth-role-grid {
+    grid-template-columns: 1fr;
   }
 
   .hero h1 {
