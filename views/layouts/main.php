@@ -12,7 +12,7 @@
 </head>
 <?php
 $requestPath = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
-$isAuthPage = in_array($requestPath, ['/login', '/register'], true);
+$isAuthPage = in_array($requestPath, ['/login', '/register', '/forgot-password', '/reset-password'], true);
 ?>
 <body class="<?= $isAuthPage ? 'auth-page-body' : '' ?>">
     <?php if (!$isAuthPage): ?>

@@ -290,3 +290,112 @@ function is_current_url(string $path): bool
     $current = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
     return rtrim($current, '/') === rtrim($path, '/');
 }
+
+// ──────────────────────────────────────
+// SMTP Mail (Gmail)
+// ──────────────────────────────────────
+
+function smtp_is_configured(): bool
+{
+    $username = trim((string) env('GMAIL_USERNAME', ''));
+    $password = trim((string) env('GMAIL_APP_PASSWORD', ''));
+    return $username !== '' && $password !== '';
+}
+
+function smtp_send_email(string $toEmail, string $subject, string $textBody): bool
+{
+    $username = trim((string) env('GMAIL_USERNAME', ''));
+    $password = trim((string) env('GMAIL_APP_PASSWORD', ''));
+
+    if ($username === '' || $password === '') {
+        error_log('SMTP credentials are missing. Set GMAIL_USERNAME and GMAIL_APP_PASSWORD.');
+        return false;
+    }
+
+    $host = 'smtp.gmail.com';
+    $port = 587;
+    $timeout = 20;
+
+    $socket = @stream_socket_client("tcp://{$host}:{$port}", $errno, $errstr, $timeout);
+    if (!$socket) {
+        error_log("SMTP connection failed: {$errno} {$errstr}");
+        return false;
+    }
+
+    stream_set_timeout($socket, $timeout);
+
+    $heloHost = parse_url((string) config('app.url', 'http://localhost'), PHP_URL_HOST) ?: 'localhost';
+    $fromName = (string) config('app.name', 'UniNest');
+
+    try {
+        if (!smtp_expect_code($socket, [220])) return false;
+        if (!smtp_send_command($socket, "EHLO {$heloHost}", [250])) return false;
+        if (!smtp_send_command($socket, 'STARTTLS', [220])) return false;
+        if (!stream_socket_enable_crypto($socket, true, STREAM_CRYPTO_METHOD_TLS_CLIENT)) {
+            error_log('SMTP STARTTLS handshake failed.');
+            return false;
+        }
+        if (!smtp_send_command($socket, "EHLO {$heloHost}", [250])) return false;
+        if (!smtp_send_command($socket, 'AUTH LOGIN', [334])) return false;
+        if (!smtp_send_command($socket, base64_encode($username), [334])) return false;
+        if (!smtp_send_command($socket, base64_encode($password), [235])) return false;
+        if (!smtp_send_command($socket, "MAIL FROM:<{$username}>", [250])) return false;
+        if (!smtp_send_command($socket, "RCPT TO:<{$toEmail}>", [250, 251])) return false;
+        if (!smtp_send_command($socket, 'DATA', [354])) return false;
+
+        $sanitizedSubject = str_replace(["\r", "\n"], '', $subject);
+        $headers = [];
+        $headers[] = "From: {$fromName} <{$username}>";
+        $headers[] = "To: <{$toEmail}>";
+        $headers[] = "Subject: {$sanitizedSubject}";
+        $headers[] = 'MIME-Version: 1.0';
+        $headers[] = 'Content-Type: text/plain; charset=UTF-8';
+        $headers[] = 'Content-Transfer-Encoding: 8bit';
+
+        $payload = implode("\r\n", $headers) . "\r\n\r\n" . $textBody;
+        $payload = str_replace(["\r\n", "\r"], "\n", $payload);
+        $payload = str_replace("\n", "\r\n", $payload);
+        $payload = preg_replace('/^\./m', '..', $payload) ?? $payload;
+
+        fwrite($socket, $payload . "\r\n.\r\n");
+        if (!smtp_expect_code($socket, [250])) return false;
+
+        smtp_send_command($socket, 'QUIT', [221]);
+        fclose($socket);
+        return true;
+    } catch (\Throwable $e) {
+        error_log('SMTP send failure: ' . $e->getMessage());
+        if (is_resource($socket)) fclose($socket);
+        return false;
+    }
+}
+
+function smtp_send_command($socket, string $command, array $expectedCodes): bool
+{
+    fwrite($socket, $command . "\r\n");
+    return smtp_expect_code($socket, $expectedCodes);
+}
+
+function smtp_expect_code($socket, array $expectedCodes): bool
+{
+    $response = '';
+    while (($line = fgets($socket, 515)) !== false) {
+        $response .= $line;
+        if (strlen($line) < 4 || $line[3] !== '-') {
+            break;
+        }
+    }
+
+    if ($response === '') {
+        error_log('SMTP empty response.');
+        return false;
+    }
+
+    $code = (int) substr($response, 0, 3);
+    if (!in_array($code, $expectedCodes, true)) {
+        error_log('SMTP unexpected response: ' . trim($response));
+        return false;
+    }
+
+    return true;
+}

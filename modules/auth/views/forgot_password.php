@@ -11,10 +11,10 @@
         </div>
     </aside>
 
-    <section class="auth-panel" aria-labelledby="auth-title">
+    <section class="auth-panel" aria-labelledby="forgot-title">
         <div class="auth-panel-inner">
-            <h1 id="auth-title">Welcome back to <?= e(config('app.name')) ?></h1>
-            <p class="auth-subtitle">Sign in to continue to your dashboard and learning workspace.</p>
+            <h1 id="forgot-title">Forgot your password?</h1>
+            <p class="auth-subtitle">Enter your account email. We will send you a password reset link.</p>
 
             <?php if ($success = get_flash('success')): ?>
                 <div class="alert alert-success auth-alert"><?= e($success) ?></div>
@@ -24,7 +24,7 @@
                 <div class="alert alert-error auth-alert"><?= e($error) ?></div>
             <?php endif; ?>
 
-            <form method="POST" action="/login" class="auth-form">
+            <form method="POST" action="/forgot-password" class="auth-form">
                 <?= csrf_field() ?>
 
                 <div class="auth-field">
@@ -32,18 +32,11 @@
                     <input type="email" id="email" name="email" value="<?= old('email') ?>" placeholder="you@example.com" required autofocus>
                 </div>
 
-                <div class="auth-field">
-                    <label for="password">Password</label>
-                    <input type="password" id="password" name="password" placeholder="Enter your password" required>
-                </div>
-
-                <p class="auth-meta-link"><a href="/forgot-password">Forgot password?</a></p>
-
-                <button type="submit" class="auth-submit">Log in</button>
+                <button type="submit" class="auth-submit">Send reset link</button>
             </form>
 
             <p class="auth-link">
-                Don't have an account? <a href="/register">Sign up</a>
+                Remembered your password? <a href="/login">Sign in</a>
             </p>
         </div>
     </section>

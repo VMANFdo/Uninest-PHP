@@ -60,6 +60,123 @@ function auth_register(): void
     view('auth::register', ['universities' => $universities], 'main');
 }
 
+function auth_forgot_password(): void
+{
+    view('auth::forgot_password', [], 'main');
+}
+
+function auth_forgot_password_post(): void
+{
+    csrf_check();
+
+    $email = trim(request_input('email', ''));
+    if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        flash('error', 'Please enter a valid email address.');
+        flash_old_input();
+        redirect('/forgot-password');
+    }
+
+    try {
+        $user = auth_find_by_email($email);
+
+        if ($user) {
+            $token = auth_create_password_reset_token((int) $user['id'], $user['email']);
+            $resetLink = base_url('reset-password') . '?email=' . urlencode($user['email']) . '&token=' . urlencode($token);
+
+            $subject = config('app.name') . ' Password Reset';
+            $textBody = implode("\n", [
+                'You requested a password reset.',
+                '',
+                'Open this link to reset your password:',
+                $resetLink,
+                '',
+                'This link will expire in 60 minutes.',
+                '',
+                'If you did not request this, you can ignore this email.',
+            ]);
+
+            $sent = smtp_send_email($user['email'], $subject, $textBody);
+            if (!$sent) {
+                error_log('Password reset email failed for: ' . $user['email']);
+            }
+        }
+    } catch (\Throwable) {
+        flash('error', 'Unable to process your request right now. Please try again.');
+        flash_old_input();
+        redirect('/forgot-password');
+    }
+
+    clear_old_input();
+    flash('success', 'If your email exists in our system, a password reset link has been sent.');
+    redirect('/forgot-password');
+}
+
+function auth_reset_password(): void
+{
+    $email = trim((string) request_input('email', ''));
+    $token = trim((string) request_input('token', ''));
+
+    $isValid = false;
+    if ($email !== '' && $token !== '') {
+        try {
+            $isValid = (bool) auth_find_valid_password_reset($email, $token);
+        } catch (\Throwable) {
+            $isValid = false;
+        }
+    }
+
+    view('auth::reset_password', [
+        'email'    => $email,
+        'token'    => $token,
+        'is_valid' => $isValid,
+    ], 'main');
+}
+
+function auth_reset_password_post(): void
+{
+    csrf_check();
+
+    $email    = trim(request_input('email', ''));
+    $token    = trim(request_input('token', ''));
+    $password = request_input('password', '');
+    $confirm  = request_input('password_confirmation', '');
+
+    $errors = [];
+    if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) $errors[] = 'Invalid email.';
+    if ($token === '') $errors[] = 'Reset token is missing.';
+    if (strlen($password) < 6) $errors[] = 'Password must be at least 6 characters.';
+    if ($password !== $confirm) $errors[] = 'Passwords do not match.';
+
+    if (!empty($errors)) {
+        flash('error', implode(' ', $errors));
+        flash_old_input();
+        redirect('/reset-password?email=' . urlencode($email) . '&token=' . urlencode($token));
+    }
+
+    try {
+        $reset = auth_find_valid_password_reset($email, $token);
+        if (!$reset) {
+            flash('error', 'This reset link is invalid or expired. Request a new one.');
+            redirect('/forgot-password');
+        }
+
+        db_update('users', [
+            'password' => password_hash($password, PASSWORD_DEFAULT),
+        ], ['id' => (int) $reset['resolved_user_id']]);
+
+        auth_mark_password_reset_used((int) $reset['id']);
+        auth_mark_all_password_resets_used_for_user((int) $reset['resolved_user_id']);
+
+        clear_old_input();
+        flash('success', 'Password reset successful. You can now sign in.');
+        redirect('/login');
+    } catch (\Throwable) {
+        flash('error', 'Unable to reset password right now. Please try again.');
+        flash_old_input();
+        redirect('/reset-password?email=' . urlencode($email) . '&token=' . urlencode($token));
+    }
+}
+
 function auth_register_post(): void
 {
     csrf_check();

@@ -19,6 +19,10 @@ route('GET', '/', 'home_index');
 
 route('GET',  '/login',    'auth_login',         ['middleware_guest']);
 route('POST', '/login',    'auth_login_post',     ['middleware_guest']);
+route('GET',  '/forgot-password', 'auth_forgot_password',      ['middleware_guest']);
+route('POST', '/forgot-password', 'auth_forgot_password_post', ['middleware_guest']);
+route('GET',  '/reset-password',  'auth_reset_password',       ['middleware_guest']);
+route('POST', '/reset-password',  'auth_reset_password_post',  ['middleware_guest']);
 route('GET',  '/register', 'auth_register',       ['middleware_guest']);
 route('POST', '/register', 'auth_register_post',  ['middleware_guest']);
 route('GET',  '/logout',   'auth_logout',         ['middleware_auth']);
