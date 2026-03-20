@@ -1,0 +1,17 @@
+.DS_Store
+
+# Dependencies
+/vendor/
+/.composer/
+
+# Environment
+/.env
+/.env.*
+!/.env.example
+
+# Logs and runtime artifacts
+/storage/logs/*.log
+
+# IDE / editor
+.idea/
+.vscode/
