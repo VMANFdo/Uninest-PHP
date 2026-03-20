@@ -3,8 +3,8 @@
     <p>
         Welcome back, <?= e($user['name']) ?>!
         <span class="badge badge-warning">Moderator</span>
-        <?php if (!empty($user['batch_id'])): ?>
-            <span class="badge badge-info">Batch #<?= (int) $user['batch_id'] ?></span>
+        <?php if (!empty($batch['batch_code'])): ?>
+            <span class="badge badge-info"><?= e($batch['batch_code']) ?></span>
         <?php endif; ?>
     </p>
 </div>
@@ -21,6 +21,34 @@
     <div class="stat-card accent">
         <div class="stat-number"><a href="/subjects/create" style="color:inherit;text-decoration:none;">+</a></div>
         <div class="stat-label">Add New Subject</div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h2>Invite Students</h2>
+    </div>
+    <div class="card-body">
+        <?php if (!empty($invite_link) && !empty($invite_qr_url)): ?>
+            <p>Share this invite link or QR code with students so the batch ID auto-fills during signup.</p>
+            <div class="invite-grid">
+                <div>
+                    <p class="text-muted">
+                        <strong>Batch ID:</strong> <span class="badge"><?= e($batch['batch_code']) ?></span>
+                    </p>
+                    <div class="invite-link-box">
+                        <input type="text" id="invite-link-input" value="<?= e($invite_link) ?>" readonly>
+                        <button type="button" class="btn btn-sm btn-primary" id="copy-invite-btn">Copy</button>
+                    </div>
+                    <a href="<?= e($invite_link) ?>" target="_blank" rel="noopener">Open invite link</a>
+                </div>
+                <div class="invite-qr">
+                    <img src="<?= e($invite_qr_url) ?>" alt="Invite QR code for student signup">
+                </div>
+            </div>
+        <?php else: ?>
+            <p class="text-muted">Batch invite details will appear after admin approves your batch and assigns a batch ID.</p>
+        <?php endif; ?>
     </div>
 </div>
 
@@ -72,3 +100,29 @@
         <?php endif; ?>
     </div>
 </div>
+
+<script>
+    (function () {
+        const input = document.getElementById('invite-link-input');
+        const button = document.getElementById('copy-invite-btn');
+        if (!input || !button) return;
+
+        button.addEventListener('click', async function () {
+            try {
+                await navigator.clipboard.writeText(input.value);
+                button.textContent = 'Copied';
+                setTimeout(() => {
+                    button.textContent = 'Copy';
+                }, 1500);
+            } catch (e) {
+                input.focus();
+                input.select();
+                document.execCommand('copy');
+                button.textContent = 'Copied';
+                setTimeout(() => {
+                    button.textContent = 'Copy';
+                }, 1500);
+            }
+        });
+    })();
+</script>

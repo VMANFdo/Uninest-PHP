@@ -36,10 +36,22 @@ function dashboard_index(): void
                 $data['subjects']      = db_fetch_all('SELECT * FROM subjects WHERE batch_id = ? ORDER BY created_at DESC LIMIT 10', [$batchId]);
                 $data['subject_count'] = (int) db_fetch('SELECT COUNT(*) AS cnt FROM subjects WHERE batch_id = ?', [$batchId])['cnt'];
                 $data['pending_student_requests'] = onboarding_moderator_pending_student_request_count((int) $user['id']);
+                $data['batch'] = onboarding_find_moderator_batch((int) $user['id']);
+
+                if (!empty($data['batch']['batch_code'])) {
+                    $data['invite_link'] = base_url('register') . '?role=student&batch_code=' . urlencode($data['batch']['batch_code']);
+                    $data['invite_qr_url'] = 'https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=' . rawurlencode($data['invite_link']);
+                } else {
+                    $data['invite_link'] = null;
+                    $data['invite_qr_url'] = null;
+                }
             } catch (\PDOException) {
                 $data['subjects']      = [];
                 $data['subject_count'] = 0;
                 $data['pending_student_requests'] = 0;
+                $data['batch'] = null;
+                $data['invite_link'] = null;
+                $data['invite_qr_url'] = null;
             }
             $viewName = 'moderator';
             break;

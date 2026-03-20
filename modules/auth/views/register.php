@@ -1,3 +1,9 @@
+<?php
+$inviteBatchCode = strtoupper(trim((string) request_input('batch_code', '')));
+$inviteRole = trim((string) request_input('role', ''));
+$defaultRole = in_array($inviteRole, ['student', 'moderator'], true) ? $inviteRole : 'student';
+?>
+
 <div class="auth-layout">
     <aside class="auth-visual">
         <a href="/" class="auth-brand" aria-label="<?= e(config('app.name')) ?> Home">
@@ -74,7 +80,7 @@
                     </div>
                 </div>
 
-                <?php $selectedRole = old('role', 'student'); ?>
+                <?php $selectedRole = old('role', $defaultRole); ?>
                 <div class="auth-role-group">
                     <p class="auth-role-title">Select Your Role</p>
                     <div class="auth-role-grid">
@@ -116,7 +122,7 @@
                 <div id="student-fields" class="auth-role-fields <?= $selectedRole === 'student' ? '' : 'hidden' ?>">
                     <div class="auth-field">
                         <label for="batch_code">Active Batch ID</label>
-                        <input type="text" id="batch_code" name="batch_code" value="<?= old('batch_code') ?>" placeholder="e.g. BATCH-AB12CD" maxlength="20">
+                        <input type="text" id="batch_code" name="batch_code" value="<?= old('batch_code', $inviteBatchCode) ?>" placeholder="e.g. BATCH-AB12CD" maxlength="20">
                     </div>
                 </div>
 

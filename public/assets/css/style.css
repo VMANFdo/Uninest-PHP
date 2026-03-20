@@ -1124,6 +1124,39 @@ img {
   margin-top: 16px;
 }
 
+.invite-grid {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 18px;
+  align-items: center;
+  margin-top: 12px;
+}
+
+.invite-link-box {
+  display: flex;
+  gap: 10px;
+  margin: 10px 0 12px;
+}
+
+.invite-link-box input {
+  flex: 1;
+  min-width: 0;
+  padding: 10px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  background: #f8fafc;
+  color: var(--text-primary);
+}
+
+.invite-qr img {
+  width: 180px;
+  height: 180px;
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+  background: white;
+  padding: 8px;
+}
+
 /* ── Error Page ────────────────────────────── */
 
 .error-page {
@@ -1188,6 +1221,10 @@ img {
 
   .auth-grid-2,
   .auth-role-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .invite-grid {
     grid-template-columns: 1fr;
   }
 
