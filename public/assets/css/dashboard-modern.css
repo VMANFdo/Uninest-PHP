@@ -6,9 +6,10 @@
   --dash-stroke: #e3e8f0;
   --dash-text: #111827;
   --dash-muted: #667085;
-  --dash-brand: #2563eb;
-  --dash-brand-dark: #1d4ed8;
-  --dash-brand-soft: #eef4ff;
+  --dash-brand: #4723d6;
+  --dash-brand-dark: #3419a6;
+  --dash-brand-soft: #efeafe;
+  --dash-brand-rgb: 71, 35, 214;
   --dash-success-soft: #e8f7ef;
   --dash-warning-soft: #fff6e3;
   --dash-danger-soft: #fff0f0;
@@ -18,7 +19,8 @@
   display: block;
   margin: 0;
   min-height: 100vh;
-  font-family: "Plus Jakarta Sans", "Segoe UI", sans-serif;
+  font-family: var(--font-family);
+  font-weight: 400;
   color: var(--dash-text);
   background: var(--dash-bg);
 }
@@ -69,20 +71,32 @@
   width: 34px;
   height: 34px;
   border-radius: 10px;
-  border: 1px solid rgba(37, 99, 235, 0.22);
+  border: 1px solid rgba(var(--dash-brand-rgb), 0.22);
   background:
-    radial-gradient(circle at 28% 28%, #2563eb 0 3px, transparent 4px),
-    radial-gradient(circle at 72% 30%, #2563eb 0 3px, transparent 4px),
-    radial-gradient(circle at 50% 72%, #2563eb 0 3px, transparent 4px),
+    radial-gradient(
+      circle at 28% 28%,
+      var(--dash-brand) 0 3px,
+      transparent 4px
+    ),
+    radial-gradient(
+      circle at 72% 30%,
+      var(--dash-brand) 0 3px,
+      transparent 4px
+    ),
+    radial-gradient(
+      circle at 50% 72%,
+      var(--dash-brand) 0 3px,
+      transparent 4px
+    ),
     #f8fbff;
   flex-shrink: 0;
 }
 
 .sidebar-brand-text strong {
   display: block;
-  font-family: "Manrope", "Plus Jakarta Sans", sans-serif;
+  font-family: var(--font-family);
   font-size: 1.06rem;
-  font-weight: 800;
+  font-weight: 600;
   letter-spacing: -0.01em;
 }
 
@@ -95,7 +109,7 @@
 .role-badge {
   width: fit-content;
   font-size: 0.72rem;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
   border-radius: 999px;
@@ -131,7 +145,7 @@
 .sidebar-section-label {
   margin: 0 8px 6px;
   font-size: 0.66rem;
-  font-weight: 700;
+  font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.12em;
   color: #8893a6;
@@ -153,7 +167,7 @@
   border-radius: 10px;
   color: var(--dash-muted);
   font-size: 0.86rem;
-  font-weight: 600;
+  font-weight: 500;
   border: 1px solid transparent;
 }
 
@@ -165,11 +179,11 @@
   display: grid;
   place-items: center;
   font-size: 0.62rem;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: 0.04em;
   color: var(--dash-brand);
   background: var(--dash-brand-soft);
-  border: 1px solid rgba(37, 99, 235, 0.2);
+  border: 1px solid rgba(var(--dash-brand-rgb), 0.2);
   flex-shrink: 0;
 }
 
@@ -193,7 +207,7 @@
 
 .sidebar-user .user-name {
   font-size: 0.85rem;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .sidebar-user .user-email {
@@ -271,7 +285,7 @@
   color: var(--dash-muted);
   background: #fff;
   font-size: 0.78rem;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .topbar-link:hover {
@@ -293,6 +307,7 @@
 .topbar-user-chip strong {
   display: block;
   font-size: 0.79rem;
+  font-weight: 600;
   line-height: 1.1;
 }
 
@@ -310,9 +325,9 @@
   place-items: center;
   color: var(--dash-brand);
   font-size: 0.69rem;
-  font-weight: 700;
+  font-weight: 600;
   background: var(--dash-brand-soft);
-  border: 1px solid #d5e2ff;
+  border: 1px solid rgba(var(--dash-brand-rgb), 0.2);
 }
 
 .dashboard-main {
@@ -336,8 +351,8 @@
 }
 
 .dashboard-body .btn {
-  border-radius: 9px;
-  font-weight: 700;
+  border-radius: 999px;
+  font-weight: 600;
   font-size: 0.78rem;
   letter-spacing: 0.015em;
   padding: 8px 13px;
@@ -351,11 +366,11 @@
 .dashboard-body .btn-primary {
   border: 0;
   color: #fff;
-  background: #1f2937;
+  background: var(--dash-brand);
 }
 
 .dashboard-body .btn-primary:hover {
-  background: #111827;
+  background: var(--dash-brand-dark);
   color: #fff;
 }
 
@@ -410,7 +425,7 @@
 .dash-eyebrow {
   margin: 0 0 8px;
   font-size: 0.67rem;
-  font-weight: 700;
+  font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.15em;
   color: var(--dash-brand);
@@ -419,8 +434,9 @@
 
 .dash-hero h1 {
   margin: 0;
-  font-family: "Manrope", "Plus Jakarta Sans", sans-serif;
+  font-family: var(--font-family);
   font-size: clamp(1.3rem, 2.1vw, 1.8rem);
+  font-weight: 600;
   line-height: 1.18;
   letter-spacing: -0.015em;
   max-width: 700px;
@@ -438,8 +454,13 @@
   z-index: 1;
 }
 
+.dashboard-body strong,
+.dashboard-body b {
+  font-weight: 600;
+}
+
 .inline-strong {
-  font-weight: 800;
+  font-weight: 600;
 }
 
 .dash-action-row {
@@ -473,7 +494,7 @@
 .kpi-label {
   display: block;
   font-size: 0.67rem;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: #75859d;
@@ -540,9 +561,9 @@
 .dash-panel-header h2,
 .dashboard-body .card-header h2 {
   margin: 0;
-  font-family: "Manrope", "Plus Jakarta Sans", sans-serif;
+  font-family: var(--font-family);
   font-size: 0.98rem;
-  font-weight: 800;
+  font-weight: 600;
   letter-spacing: -0.01em;
 }
 
@@ -568,6 +589,7 @@
 .dash-list li strong {
   display: block;
   font-size: 0.84rem;
+  font-weight: 600;
 }
 
 .dash-list li p {
@@ -600,6 +622,7 @@
 .subject-tile h3 {
   margin: 0;
   font-size: 0.9rem;
+  font-weight: 600;
   line-height: 1.35;
   letter-spacing: -0.01em;
 }
@@ -628,6 +651,7 @@
   background: #fbfcfe;
   color: #7a8ba4;
   font-size: 0.69rem;
+  font-weight: 600;
 }
 
 .dashboard-body .table tbody td {
@@ -672,8 +696,8 @@
 }
 
 .table-action-form-input:focus {
-  border-color: rgba(43, 97, 216, 0.52);
-  box-shadow: 0 0 0 3px rgba(43, 97, 216, 0.14);
+  border-color: rgba(var(--dash-brand-rgb), 0.52);
+  box-shadow: 0 0 0 3px rgba(var(--dash-brand-rgb), 0.14);
 }
 
 .invite-grid {
@@ -721,8 +745,8 @@
 .dashboard-body .page-header h1 {
   margin: 0;
   font-size: 1.08rem;
-  font-family: "Manrope", "Plus Jakarta Sans", sans-serif;
-  font-weight: 800;
+  font-family: var(--font-family);
+  font-weight: 600;
   letter-spacing: -0.01em;
 }
 
@@ -742,8 +766,8 @@
 .dashboard-body .form-group input:focus,
 .dashboard-body .form-group textarea:focus,
 .dashboard-body .form-group select:focus {
-  border-color: rgba(43, 97, 216, 0.52);
-  box-shadow: 0 0 0 3px rgba(43, 97, 216, 0.14);
+  border-color: rgba(var(--dash-brand-rgb), 0.52);
+  box-shadow: 0 0 0 3px rgba(var(--dash-brand-rgb), 0.14);
 }
 
 .dashboard-body .form-actions {
@@ -754,7 +778,7 @@
   border-radius: 999px;
   border: 1px solid transparent;
   font-size: 0.69rem;
-  font-weight: 700;
+  font-weight: 600;
   padding: 2px 9px;
 }
 
@@ -765,9 +789,9 @@
 }
 
 .dashboard-body .badge-info {
-  background: #edf3ff;
-  color: #2456c2;
-  border-color: #c9d8fb;
+  background: rgba(var(--dash-brand-rgb), 0.1);
+  color: var(--dash-brand-dark);
+  border-color: rgba(var(--dash-brand-rgb), 0.25);
 }
 
 .dashboard-body .badge-danger {
