@@ -98,7 +98,7 @@
   display: block;
   font-family: var(--font-family);
   font-size: 1.06rem;
-  font-weight: 600;
+  font-weight: 500;
   letter-spacing: -0.01em;
 }
 
@@ -111,7 +111,7 @@
 .role-badge {
   width: fit-content;
   font-size: 0.72rem;
-  font-weight: 600;
+  font-weight: 500;
   letter-spacing: 0.04em;
   text-transform: uppercase;
   border-radius: 999px;
@@ -147,7 +147,7 @@
 .sidebar-section-label {
   margin: 0 8px 6px;
   font-size: 0.66rem;
-  font-weight: 600;
+  font-weight: 500;
   text-transform: uppercase;
   letter-spacing: 0.12em;
   color: #8893a6;
@@ -169,7 +169,7 @@
   border-radius: 10px;
   color: var(--dash-muted);
   font-size: 0.86rem;
-  font-weight: 500;
+  font-weight: 450;
   border: 1px solid transparent;
 }
 
@@ -181,7 +181,7 @@
   display: grid;
   place-items: center;
   font-size: 0.62rem;
-  font-weight: 600;
+  font-weight: 500;
   letter-spacing: 0.04em;
   color: var(--dash-brand);
   background: var(--dash-brand-soft);
@@ -209,7 +209,7 @@
 
 .sidebar-user .user-name {
   font-size: 0.85rem;
-  font-weight: 600;
+  font-weight: 500;
 }
 
 .sidebar-user .user-email {
@@ -292,7 +292,7 @@
   color: var(--dash-muted);
   background: #fff;
   font-size: 0.78rem;
-  font-weight: 600;
+  font-weight: 500;
 }
 
 .topbar-link:hover {
@@ -314,7 +314,7 @@
 .topbar-user-chip strong {
   display: block;
   font-size: 0.79rem;
-  font-weight: 600;
+  font-weight: 500;
   line-height: 1.1;
 }
 
@@ -332,7 +332,7 @@
   place-items: center;
   color: var(--dash-brand);
   font-size: 0.69rem;
-  font-weight: 600;
+  font-weight: 500;
   background: var(--dash-brand-soft);
   border: 1px solid rgba(var(--dash-brand-rgb), 0.2);
 }
@@ -359,7 +359,7 @@
 
 .dashboard-body .btn {
   border-radius: 999px;
-  font-weight: 600;
+  font-weight: 500;
   font-size: 0.78rem;
   letter-spacing: 0.015em;
   padding: 8px 13px;
@@ -432,7 +432,7 @@
 .dash-eyebrow {
   margin: 0 0 8px;
   font-size: 0.67rem;
-  font-weight: 600;
+  font-weight: 500;
   text-transform: uppercase;
   letter-spacing: 0.15em;
   color: var(--dash-brand);
@@ -443,7 +443,7 @@
   margin: 0;
   font-family: var(--font-family);
   font-size: clamp(1.3rem, 2.1vw, 1.8rem);
-  font-weight: 600;
+  font-weight: 500;
   line-height: 1.18;
   letter-spacing: -0.015em;
   max-width: 700px;
@@ -463,11 +463,11 @@
 
 .dashboard-body strong,
 .dashboard-body b {
-  font-weight: 600;
+  font-weight: 500;
 }
 
 .inline-strong {
-  font-weight: 600;
+  font-weight: 500;
 }
 
 .dash-action-row {
@@ -503,7 +503,7 @@
 .kpi-label {
   display: block;
   font-size: 0.67rem;
-  font-weight: 600;
+  font-weight: 500;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: #75859d;
@@ -573,7 +573,7 @@
   margin: 0;
   font-family: var(--font-family);
   font-size: 0.98rem;
-  font-weight: 600;
+  font-weight: 500;
   letter-spacing: -0.01em;
 }
 
@@ -599,7 +599,7 @@
 .dash-list li strong {
   display: block;
   font-size: 0.84rem;
-  font-weight: 600;
+  font-weight: 500;
 }
 
 .dash-list li p {
@@ -632,7 +632,7 @@
 .subject-tile h3 {
   margin: 0;
   font-size: 0.9rem;
-  font-weight: 600;
+  font-weight: 500;
   line-height: 1.35;
   letter-spacing: -0.01em;
 }
@@ -662,7 +662,7 @@
   background: linear-gradient(180deg, #fcfdff 0%, #f6f9fd 100%);
   color: #6f8098;
   font-size: 0.72rem;
-  font-weight: 500;
+  font-weight: 450;
   letter-spacing: 0.02em;
   text-transform: none;
   white-space: nowrap;
@@ -705,7 +705,7 @@
 }
 
 .dashboard-body .table tbody td strong {
-  font-weight: 600;
+  font-weight: 500;
   color: #1e2d42;
 }
 
@@ -729,7 +729,7 @@
   flex-shrink: 0;
   border: 1px solid #d7e3ef;
   font-size: 0.74rem;
-  font-weight: 600;
+  font-weight: 500;
   letter-spacing: 0.01em;
   color: #334155;
 }
@@ -891,7 +891,7 @@
   margin: 0;
   font-size: 1.9rem;
   font-family: var(--font-family);
-  font-weight: 600;
+  font-weight: 500;
   letter-spacing: -0.01em;
   line-height: 1.12;
   color: #111827;
@@ -905,7 +905,7 @@
   margin: 0 0 10px;
   color: #66758c;
   font-size: 0.95rem;
-  font-weight: 500;
+  font-weight: 450;
   letter-spacing: 0.01em;
   text-transform: none;
 }
@@ -959,7 +959,7 @@
   border-radius: 999px;
   border: 1px solid transparent;
   font-size: 0.69rem;
-  font-weight: 600;
+  font-weight: 500;
   padding: 2px 9px;
 }
 

@@ -99,7 +99,7 @@ img {
   gap: 8px;
   padding: 10px 20px;
   font-size: 0.875rem;
-  font-weight: 500;
+  font-weight: 450;
   font-family: var(--font-family);
   border: 2px solid transparent;
   border-radius: 999px;
@@ -163,7 +163,7 @@ img {
 .form-group label {
   display: block;
   font-size: 0.875rem;
-  font-weight: 500;
+  font-weight: 450;
   color: var(--text-primary);
   margin-bottom: 6px;
 }
@@ -207,7 +207,7 @@ img {
   padding: 12px 16px;
   border-radius: var(--border-radius);
   font-size: 0.875rem;
-  font-weight: 500;
+  font-weight: 450;
   margin-bottom: 20px;
   border-left: 4px solid transparent;
 }
@@ -247,7 +247,7 @@ img {
   padding: 12px 16px;
   text-align: left;
   font-size: 0.75rem;
-  font-weight: 600;
+  font-weight: 500;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: var(--text-secondary);
@@ -281,7 +281,7 @@ img {
   display: inline-block;
   padding: 3px 10px;
   font-size: 0.75rem;
-  font-weight: 600;
+  font-weight: 500;
   border-radius: 20px;
   background: #eef2ff;
   color: var(--color-primary);
@@ -323,7 +323,7 @@ img {
 
 .card-header h2 {
   font-size: 1rem;
-  font-weight: 600;
+  font-weight: 500;
   margin: 0;
 }
 
@@ -358,7 +358,7 @@ img {
 
 .logo {
   font-size: 1.25rem;
-  font-weight: 700;
+  font-weight: 560;
   color: var(--color-primary);
   text-decoration: none;
 }
@@ -371,7 +371,7 @@ img {
 
 .main-nav a {
   font-size: 0.875rem;
-  font-weight: 500;
+  font-weight: 450;
   color: var(--text-secondary);
 }
 
@@ -405,7 +405,7 @@ img {
 
 .hero h1 {
   font-size: 2.75rem;
-  font-weight: 700;
+  font-weight: 560;
   color: var(--text-primary);
   margin-bottom: 16px;
   line-height: 1.2;
@@ -454,7 +454,7 @@ img {
 
 .feature-card h3 {
   font-size: 1.125rem;
-  font-weight: 600;
+  font-weight: 500;
   margin-bottom: 8px;
 }
 
@@ -503,7 +503,7 @@ img {
   color: #fff;
   font-family: var(--font-family);
   font-size: 1.875rem;
-  font-weight: 800;
+  font-weight: 620;
   letter-spacing: -0.02em;
 }
 
@@ -528,7 +528,7 @@ img {
   max-width: 420px;
   font-family: var(--font-family);
   font-size: clamp(1.6rem, 2.8vw, 2.45rem);
-  font-weight: 700;
+  font-weight: 560;
   line-height: 1.08;
   letter-spacing: -0.025em;
   margin-bottom: 10px;
@@ -557,7 +557,7 @@ img {
 .auth-panel-inner h1 {
   font-family: var(--font-family);
   font-size: clamp(1.85rem, 3vw, 2.55rem);
-  font-weight: 800;
+  font-weight: 620;
   line-height: 1.1;
   color: #15181f;
   letter-spacing: -0.03em;
@@ -583,7 +583,7 @@ img {
   display: block;
   margin-bottom: 7px;
   font-size: 0.84rem;
-  font-weight: 600;
+  font-weight: 500;
   color: #4f5360;
 }
 
@@ -638,7 +638,7 @@ img {
 
 .auth-role-title {
   font-size: 0.93rem;
-  font-weight: 700;
+  font-weight: 560;
   color: #222734;
 }
 
@@ -696,7 +696,7 @@ img {
 .auth-meta-link {
   color: var(--color-primary);
   font-size: 0.915rem;
-  font-weight: 600;
+  font-weight: 500;
 }
 
 .auth-meta-link a {
@@ -721,7 +721,7 @@ img {
   );
   color: #fff;
   font-size: 1.03rem;
-  font-weight: 700;
+  font-weight: 560;
   letter-spacing: 0.01em;
   cursor: pointer;
   transition:
@@ -743,7 +743,7 @@ img {
 
 .auth-link a {
   color: var(--color-primary);
-  font-weight: 700;
+  font-weight: 560;
 }
 
 /* ── Dashboard Layout ──────────────────────── */
@@ -783,7 +783,7 @@ img {
 
 .role-badge {
   font-size: 0.6875rem;
-  font-weight: 600;
+  font-weight: 500;
   padding: 3px 10px;
   border-radius: 20px;
   text-transform: uppercase;
@@ -821,7 +821,7 @@ img {
   padding: 10px 20px;
   color: rgba(255, 255, 255, 0.7);
   font-size: 0.875rem;
-  font-weight: 500;
+  font-weight: 450;
   transition: var(--transition);
   border-left: 3px solid transparent;
 }
@@ -836,7 +836,7 @@ img {
 .sidebar-section-label {
   padding: 16px 20px 6px;
   font-size: 0.6875rem;
-  font-weight: 600;
+  font-weight: 500;
   text-transform: uppercase;
   letter-spacing: 0.1em;
   color: rgba(255, 255, 255, 0.4);
@@ -854,7 +854,7 @@ img {
 .sidebar-user .user-name {
   display: block;
   font-size: 0.875rem;
-  font-weight: 600;
+  font-weight: 500;
 }
 
 .sidebar-user .user-email {
@@ -893,7 +893,7 @@ img {
 
 .dashboard-header h1 {
   font-size: 1.75rem;
-  font-weight: 700;
+  font-weight: 560;
   margin-bottom: 4px;
 }
 
@@ -937,7 +937,7 @@ img {
 
 .stat-number {
   font-size: 2rem;
-  font-weight: 700;
+  font-weight: 560;
   line-height: 1;
   margin-bottom: 4px;
 }
@@ -945,7 +945,7 @@ img {
 .stat-label {
   font-size: 0.8125rem;
   color: var(--text-secondary);
-  font-weight: 500;
+  font-weight: 450;
 }
 
 .stat-card.accent .stat-label {
@@ -963,7 +963,7 @@ img {
 
 .page-header h1 {
   font-size: 1.5rem;
-  font-weight: 700;
+  font-weight: 560;
 }
 
 /* ── Subject Cards (Student View) ──────────── */
@@ -990,7 +990,7 @@ img {
 
 .subject-code {
   font-size: 0.75rem;
-  font-weight: 700;
+  font-weight: 560;
   color: var(--color-primary);
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -999,7 +999,7 @@ img {
 
 .subject-card h3 {
   font-size: 1.0625rem;
-  font-weight: 600;
+  font-weight: 500;
   margin-bottom: 8px;
 }
 
@@ -1070,7 +1070,7 @@ img {
 
 .error-page h1 {
   font-size: 6rem;
-  font-weight: 700;
+  font-weight: 560;
   color: var(--color-primary);
   line-height: 1;
   margin-bottom: 8px;
