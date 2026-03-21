@@ -48,7 +48,6 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  box-shadow: 0 8px 24px rgba(22, 34, 52, 0.05);
 }
 
 .sidebar-header {
@@ -182,7 +181,6 @@
   background: var(--dash-card);
   color: var(--dash-text);
   border-color: var(--dash-stroke);
-  box-shadow: 0 6px 16px rgba(22, 34, 52, 0.06);
 }
 
 .sidebar-footer {
@@ -218,7 +216,6 @@
   border: 1px solid var(--dash-stroke);
   border-radius: 20px;
   background: var(--dash-shell);
-  box-shadow: 0 8px 24px rgba(22, 34, 52, 0.04);
   display: flex;
   align-items: center;
   gap: 14px;
@@ -350,12 +347,18 @@
 
 .dashboard-body .btn:hover {
   transform: none;
+  box-shadow: none;
 }
 
 .dashboard-body .btn-primary {
   border: 0;
   color: #fff;
-  background: linear-gradient(135deg, var(--dash-brand), var(--dash-brand-dark));
+  background: var(--dash-brand);
+}
+
+.dashboard-body .btn-primary:hover {
+  background: var(--dash-brand-dark);
+  color: #fff;
 }
 
 .dashboard-body .btn-outline {
@@ -378,7 +381,6 @@
     linear-gradient(135deg, #1e4fbf 0%, #2c6be0 64%, #2f77ea 100%);
   color: #fff;
   border: 1px solid rgba(255, 255, 255, 0.12);
-  box-shadow: 0 14px 30px rgba(28, 66, 148, 0.24);
 }
 
 .dash-eyebrow {
@@ -465,7 +467,6 @@
   border: 1px solid var(--dash-stroke);
   border-radius: 18px;
   background: var(--dash-card);
-  box-shadow: 0 8px 18px rgba(20, 33, 51, 0.045);
   overflow: hidden;
 }
 
