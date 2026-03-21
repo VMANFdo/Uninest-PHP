@@ -44,6 +44,10 @@
                 </thead>
                 <tbody>
                     <?php foreach ($subjects as $subject): ?>
+                        <?php
+                        $avatarText = ui_initials((string) $subject['name']);
+                        $avatarTone = ui_avatar_tone_class((string) (($subject['code'] ?? '') . '-' . ($subject['name'] ?? '')));
+                        ?>
                         <tr>
                             <?php if ($is_admin): ?>
                                 <td>
@@ -53,18 +57,27 @@
                             <?php endif; ?>
                             <td><span class="badge"><?= e($subject['code']) ?></span></td>
                             <td>
-                                <strong><?= e($subject['name']) ?></strong>
-                                <?php if (!empty($subject['description'])): ?>
-                                    <br><small class="text-muted"><?= e(substr($subject['description'], 0, 80)) ?><?= strlen($subject['description']) > 80 ? '...' : '' ?></small>
-                                <?php endif; ?>
+                                <div class="table-identity">
+                                    <span class="table-avatar <?= e($avatarTone) ?>"><?= e($avatarText) ?></span>
+                                    <div class="table-identity-text">
+                                        <strong><?= e($subject['name']) ?></strong>
+                                        <?php if (!empty($subject['description'])): ?>
+                                            <br><small class="text-muted"><?= e(substr($subject['description'], 0, 80)) ?><?= strlen($subject['description']) > 80 ? '...' : '' ?></small>
+                                        <?php endif; ?>
+                                    </div>
+                                </div>
                             </td>
                             <td><?= (int) $subject['credits'] ?></td>
                             <td><?= e($subject['creator_name'] ?? 'Unknown') ?></td>
                             <td class="actions">
-                                <a href="/subjects/<?= $subject['id'] ?>/edit" class="btn btn-sm btn-outline">Edit</a>
+                                <a href="/subjects/<?= $subject['id'] ?>/edit" class="table-icon-btn" title="Edit subject" aria-label="Edit subject">
+                                    <?= ui_lucide_icon('pencil') ?>
+                                </a>
                                 <form method="POST" action="/subjects/<?= $subject['id'] ?>/delete" class="table-action-form" onsubmit="return confirm('Delete this subject?');">
                                     <?= csrf_field() ?>
-                                    <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+                                    <button type="submit" class="table-icon-btn is-danger" title="Delete subject" aria-label="Delete subject">
+                                        <?= ui_lucide_icon('trash-2') ?>
+                                    </button>
                                 </form>
                             </td>
                         </tr>

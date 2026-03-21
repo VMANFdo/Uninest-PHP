@@ -34,10 +34,19 @@
                 </thead>
                 <tbody>
                     <?php foreach ($requests as $item): ?>
+                        <?php
+                        $avatarText = ui_initials((string) $item['moderator_name']);
+                        $avatarTone = ui_avatar_tone_class((string) ($item['moderator_email'] ?? $item['moderator_name']));
+                        ?>
                         <tr>
                             <td>
-                                <strong><?= e($item['moderator_name']) ?></strong><br>
-                                <small class="text-muted"><?= e($item['moderator_email']) ?></small>
+                                <div class="table-identity">
+                                    <span class="table-avatar <?= e($avatarTone) ?>"><?= e($avatarText) ?></span>
+                                    <div class="table-identity-text">
+                                        <strong><?= e($item['moderator_name']) ?></strong><br>
+                                        <small class="text-muted"><?= e($item['moderator_email']) ?></small>
+                                    </div>
+                                </div>
                             </td>
                             <td>
                                 <strong><?= e($item['name']) ?></strong><br>
@@ -64,12 +73,16 @@
                                 <?php if ($item['status'] === 'pending'): ?>
                                     <form method="POST" action="/admin/batch-requests/<?= (int) $item['id'] ?>/approve" class="table-action-form">
                                         <?= csrf_field() ?>
-                                        <button type="submit" class="btn btn-sm btn-primary">Approve</button>
+                                        <button type="submit" class="table-icon-btn is-success" title="Approve request" aria-label="Approve request">
+                                            <?= ui_lucide_icon('check') ?>
+                                        </button>
                                     </form>
                                     <form method="POST" action="/admin/batch-requests/<?= (int) $item['id'] ?>/reject" class="table-action-form">
                                         <?= csrf_field() ?>
                                         <input type="text" name="rejection_reason" placeholder="Reason (optional)" class="table-action-form-input">
-                                        <button type="submit" class="btn btn-sm btn-danger">Reject</button>
+                                        <button type="submit" class="table-icon-btn is-danger" title="Reject request" aria-label="Reject request">
+                                            <?= ui_lucide_icon('x') ?>
+                                        </button>
                                     </form>
                                 <?php endif; ?>
                             </td>

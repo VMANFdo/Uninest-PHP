@@ -43,10 +43,19 @@
                 </thead>
                 <tbody>
                     <?php foreach ($students as $student): ?>
+                        <?php
+                        $avatarText = ui_initials((string) $student['name']);
+                        $avatarTone = ui_avatar_tone_class((string) ($student['email'] ?? $student['name']));
+                        ?>
                         <tr>
                             <td>
-                                <strong><?= e($student['name']) ?></strong><br>
-                                <small class="text-muted"><?= e($student['email']) ?></small>
+                                <div class="table-identity">
+                                    <span class="table-avatar <?= e($avatarTone) ?>"><?= e($avatarText) ?></span>
+                                    <div class="table-identity-text">
+                                        <strong><?= e($student['name']) ?></strong><br>
+                                        <small class="text-muted"><?= e($student['email']) ?></small>
+                                    </div>
+                                </div>
                             </td>
                             <td><?= (int) ($student['academic_year'] ?? 0) ?></td>
                             <td><?= e($student['university_name'] ?? 'N/A') ?></td>
@@ -68,15 +77,21 @@
                             </td>
                             <td class="actions">
                                 <?php if ($is_admin): ?>
-                                    <a href="/students/<?= (int) $student['id'] ?>/edit" class="btn btn-sm btn-outline">Edit</a>
+                                    <a href="/students/<?= (int) $student['id'] ?>/edit" class="table-icon-btn" title="Edit student" aria-label="Edit student">
+                                        <?= ui_lucide_icon('pencil') ?>
+                                    </a>
                                     <form method="POST" action="/students/<?= (int) $student['id'] ?>/delete" class="table-action-form" onsubmit="return confirm('Delete this student account?');">
                                         <?= csrf_field() ?>
-                                        <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+                                        <button type="submit" class="table-icon-btn is-danger" title="Delete student" aria-label="Delete student">
+                                            <?= ui_lucide_icon('trash-2') ?>
+                                        </button>
                                     </form>
                                 <?php else: ?>
                                     <form method="POST" action="/students/<?= (int) $student['id'] ?>/remove" class="table-action-form" onsubmit="return confirm('Remove this student from your batch?');">
                                         <?= csrf_field() ?>
-                                        <button type="submit" class="btn btn-sm btn-danger">Remove</button>
+                                        <button type="submit" class="table-icon-btn is-danger" title="Remove student from batch" aria-label="Remove student from batch">
+                                            <?= ui_lucide_icon('trash-2') ?>
+                                        </button>
                                     </form>
                                 <?php endif; ?>
                             </td>

@@ -271,6 +271,52 @@ function user_role(): ?string
     return auth_user()['role'] ?? null;
 }
 
+function ui_initials(string $text, int $maxLetters = 2): string
+{
+    $normalized = trim((string) preg_replace('/\s+/', ' ', $text));
+    if ($normalized === '') {
+        return 'NA';
+    }
+
+    $parts = explode(' ', $normalized);
+    $initials = '';
+
+    if (count($parts) >= 2) {
+        $initials = strtoupper(substr($parts[0], 0, 1) . substr($parts[1], 0, 1));
+    } else {
+        $single = preg_replace('/[^a-zA-Z0-9]/', '', $parts[0]) ?? '';
+        if ($single === '') {
+            return 'NA';
+        }
+        $initials = strtoupper(substr($single, 0, max(1, $maxLetters)));
+    }
+
+    return substr($initials, 0, max(1, $maxLetters));
+}
+
+function ui_avatar_tone_class(string $seed): string
+{
+    $hash = abs((int) crc32(strtolower($seed)));
+    $tone = ($hash % 8) + 1;
+    return 'ui-avatar-tone-' . $tone;
+}
+
+function ui_lucide_icon(string $name): string
+{
+    $icons = [
+        'pencil' => '<path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 1 1 3 3L7 19l-4 1 1-4Z"/>',
+        'trash-2' => '<path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/>',
+        'check' => '<path d="m20 6-11 11-5-5"/>',
+        'x' => '<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',
+    ];
+
+    if (!isset($icons[$name])) {
+        return '';
+    }
+
+    return '<svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' . $icons[$name] . '</svg>';
+}
+
 // ──────────────────────────────────────
 // Misc
 // ──────────────────────────────────────

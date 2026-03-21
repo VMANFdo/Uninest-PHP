@@ -88,11 +88,26 @@ $statusLabel = ucfirst($batchStatus ?: 'pending');
                 </thead>
                 <tbody>
                     <?php foreach ($subjects as $subject): ?>
+                        <?php
+                        $avatarText = ui_initials((string) $subject['name']);
+                        $avatarTone = ui_avatar_tone_class((string) (($subject['code'] ?? '') . '-' . ($subject['name'] ?? '')));
+                        ?>
                         <tr>
                             <td><span class="badge"><?= e($subject['code']) ?></span></td>
-                            <td><?= e($subject['name']) ?></td>
+                            <td>
+                                <div class="table-identity">
+                                    <span class="table-avatar <?= e($avatarTone) ?>"><?= e($avatarText) ?></span>
+                                    <div class="table-identity-text">
+                                        <strong><?= e($subject['name']) ?></strong>
+                                    </div>
+                                </div>
+                            </td>
                             <td><?= (int) $subject['credits'] ?></td>
-                            <td><a href="/subjects/<?= (int) $subject['id'] ?>/edit" class="btn btn-sm btn-outline">Edit</a></td>
+                            <td>
+                                <a href="/subjects/<?= (int) $subject['id'] ?>/edit" class="table-icon-btn" title="Edit subject" aria-label="Edit subject">
+                                    <?= ui_lucide_icon('pencil') ?>
+                                </a>
+                            </td>
                         </tr>
                     <?php endforeach; ?>
                 </tbody>
