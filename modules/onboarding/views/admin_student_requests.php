@@ -6,7 +6,11 @@
 <?php endif; ?>
 
 <div class="page-header">
-    <h1>Student Join Requests (Admin Override)</h1>
+    <div class="page-header-content">
+        <p class="page-breadcrumb">Admin / Student Requests</p>
+        <h1>Student Requests</h1>
+        <p class="page-subtitle">Handle join requests across all batches when moderator-level escalation is needed.</p>
+    </div>
 </div>
 
 <?php if (empty($requests)): ?>

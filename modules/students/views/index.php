@@ -1,13 +1,20 @@
 <div class="page-header">
-    <?php if ($is_admin): ?>
-        <h1>Manage Students</h1>
-        <a href="/students/create" class="btn btn-primary">+ New Student</a>
-    <?php else: ?>
-        <h1>Batch Students</h1>
-        <?php if (!empty($moderator_batch['batch_code'])): ?>
+    <div class="page-header-content">
+        <p class="page-breadcrumb"><?= $is_admin ? 'Admin / Students' : 'Moderator / Students' ?></p>
+        <h1>Students</h1>
+        <p class="page-subtitle">
+            <?= $is_admin
+                ? 'Manage student accounts and approved batch assignments.'
+                : 'View your batch members and remove access when required.' ?>
+        </p>
+    </div>
+    <div class="page-header-actions">
+        <?php if ($is_admin): ?>
+            <a href="/students/create" class="btn btn-primary">+ New Student</a>
+        <?php elseif (!empty($moderator_batch['batch_code'])): ?>
             <span class="badge badge-info">Batch: <?= e($moderator_batch['batch_code']) ?></span>
         <?php endif; ?>
-    <?php endif; ?>
+    </div>
 </div>
 
 <?php if (empty($students)): ?>

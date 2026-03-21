@@ -3,8 +3,14 @@
 <?php endif; ?>
 
 <div class="page-header">
-    <h1>Create Subject</h1>
-    <a href="/subjects" class="btn btn-outline">← Back to Subjects</a>
+    <div class="page-header-content">
+        <p class="page-breadcrumb"><?= $is_admin ? 'Admin / Subjects' : 'Moderator / Subjects' ?></p>
+        <h1>Create Subject</h1>
+        <p class="page-subtitle">Set up a new subject and assign it to the right approved batch.</p>
+    </div>
+    <div class="page-header-actions">
+        <a href="/subjects" class="btn btn-outline">← Back to Subjects</a>
+    </div>
 </div>
 
 <div class="card">

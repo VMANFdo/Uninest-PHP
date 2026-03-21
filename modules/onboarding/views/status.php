@@ -9,10 +9,16 @@
 <?php endif; ?>
 
 <div class="page-header">
-    <h1>Onboarding Status</h1>
-    <?php if (!onboarding_complete_for_user($user)): ?>
-        <span class="badge badge-warning">Action Required</span>
-    <?php endif; ?>
+    <div class="page-header-content">
+        <p class="page-breadcrumb"><?= ucfirst((string) $role) ?> / Onboarding</p>
+        <h1>Onboarding Status</h1>
+        <p class="page-subtitle">Track your approval state and complete the next required onboarding step.</p>
+    </div>
+    <div class="page-header-actions">
+        <?php if (!onboarding_complete_for_user($user)): ?>
+            <span class="badge badge-warning">Action Required</span>
+        <?php endif; ?>
+    </div>
 </div>
 
 <?php if ($role === 'moderator'): ?>

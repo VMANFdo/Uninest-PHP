@@ -6,7 +6,11 @@
 <?php endif; ?>
 
 <div class="page-header">
-    <h1>Batch Creation Requests</h1>
+    <div class="page-header-content">
+        <p class="page-breadcrumb">Admin / Batch Requests</p>
+        <h1>Batch Requests</h1>
+        <p class="page-subtitle">Review moderator batch creation requests and keep onboarding quality controlled.</p>
+    </div>
 </div>
 
 <?php if (empty($requests)): ?>

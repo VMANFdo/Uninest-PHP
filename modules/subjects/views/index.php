@@ -6,8 +6,18 @@
 <?php endif; ?>
 
 <div class="page-header">
-    <h1>Manage Subjects</h1>
-    <a href="/subjects/create" class="btn btn-primary">+ New Subject</a>
+    <div class="page-header-content">
+        <p class="page-breadcrumb"><?= $is_admin ? 'Admin / Subjects' : 'Moderator / Subjects' ?></p>
+        <h1>Subjects</h1>
+        <p class="page-subtitle">
+            <?= $is_admin
+                ? 'Manage subject catalogs across approved batches.'
+                : 'Create and maintain the subject catalog for your own batch.' ?>
+        </p>
+    </div>
+    <div class="page-header-actions">
+        <a href="/subjects/create" class="btn btn-primary">+ New Subject</a>
+    </div>
 </div>
 
 <?php if (empty($subjects)): ?>

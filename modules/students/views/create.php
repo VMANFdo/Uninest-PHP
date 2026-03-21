@@ -1,6 +1,12 @@
 <div class="page-header">
-    <h1>Create Student</h1>
-    <a href="/students" class="btn btn-outline">← Back to Students</a>
+    <div class="page-header-content">
+        <p class="page-breadcrumb">Admin / Students</p>
+        <h1>Create Student</h1>
+        <p class="page-subtitle">Create a student account and place it in an approved batch in one step.</p>
+    </div>
+    <div class="page-header-actions">
+        <a href="/students" class="btn btn-outline">← Back to Students</a>
+    </div>
 </div>
 
 <div class="card">

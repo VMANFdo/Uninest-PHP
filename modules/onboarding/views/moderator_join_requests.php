@@ -6,7 +6,11 @@
 <?php endif; ?>
 
 <div class="page-header">
-    <h1>Student Join Requests</h1>
+    <div class="page-header-content">
+        <p class="page-breadcrumb">Moderator / Join Requests</p>
+        <h1>Join Requests</h1>
+        <p class="page-subtitle">Approve or reject students who request access to your batch.</p>
+    </div>
 </div>
 
 <?php if (empty($requests)): ?>

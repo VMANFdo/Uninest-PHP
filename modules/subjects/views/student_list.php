@@ -1,6 +1,12 @@
 <div class="page-header">
-    <h1>All Subjects</h1>
-    <a href="/dashboard" class="btn btn-outline">← Back to Dashboard</a>
+    <div class="page-header-content">
+        <p class="page-breadcrumb">Student / Subjects</p>
+        <h1>My Subjects</h1>
+        <p class="page-subtitle">Explore the subjects available in your approved batch.</p>
+    </div>
+    <div class="page-header-actions">
+        <a href="/dashboard" class="btn btn-outline">← Back to Dashboard</a>
+    </div>
 </div>
 
 <?php if (empty($subjects)): ?>
