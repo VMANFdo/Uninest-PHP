@@ -28,6 +28,7 @@ Treat this as the project contract.
   - `subjects_*` in `modules/subjects/*`
   - `auth_*` in `modules/auth/*`
   - `dashboard_*` in `modules/dashboard/*`
+  - `students_*` in `modules/students/*`
 - Legacy onboarding exceptions currently allowed:
   - `onboarding_*`, `admin_*`, `moderator_*`, `university_*`, `universities_*`
 - New code should prefer strict module prefixing, even inside onboarding.
@@ -70,7 +71,8 @@ Default protected pattern:
 - Student signup creates pending join request.
 - Moderator (or admin override) approves/rejects student join request.
 - Student can access batch content only after approval.
-- Student batch reassignment after first approved `users.batch_id` is blocked.
+- Student batch reassignment after first approved assignment is blocked.
+- `users.first_approved_batch_id` is the immutable lock source for this rule once set.
 - Pending/rejected users can log in but must be gated through `/onboarding`.
 - Admin bypasses onboarding gate.
 
@@ -91,6 +93,7 @@ Non-negotiable integrity rules:
 - `batch_code` is unique.
 - One primary moderator per batch (`moderator_user_id` unique).
 - One join-request row per student (`student_user_id` unique in `student_batch_requests`).
+- `users.first_approved_batch_id` becomes immutable once first approved assignment is recorded.
 
 When changing DB schema:
 
@@ -103,8 +106,10 @@ When changing DB schema:
   - can only see subjects from their `users.batch_id`.
 - Moderator:
   - can only manage data for their own batch (unless explicitly admin flow).
+  - can remove students from their own batch only (no student add/edit/delete account actions).
 - Admin:
   - unrestricted access for approvals and cross-batch management.
+  - has full student CRUD access from admin flows.
 
 Never introduce queries that bypass batch scoping for non-admin users.
 
