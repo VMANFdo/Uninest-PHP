@@ -291,3 +291,11 @@ function batches_delete_admin(int $batchId): bool
 {
     return db_query('DELETE FROM batches WHERE id = ?', [$batchId])->rowCount() > 0;
 }
+
+function batches_delete_has_locked_students(int $batchId): bool
+{
+    return (bool) db_fetch(
+        'SELECT id FROM users WHERE first_approved_batch_id = ? LIMIT 1',
+        [$batchId]
+    );
+}

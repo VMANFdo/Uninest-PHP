@@ -216,6 +216,7 @@ function onboarding_find_student_request(int $studentUserId): ?array
 {
     return db_fetch(
         "SELECT r.*, b.batch_code, b.name AS batch_name, b.program, b.intake_year,
+                b.status AS batch_status,
                 u.name AS university_name, rv.name AS reviewed_by_name
          FROM student_batch_requests r
          INNER JOIN batches b ON b.id = r.requested_batch_id

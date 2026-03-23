@@ -63,46 +63,56 @@
                 <h2>Batch Request Rejected</h2>
             </div>
             <div class="card-body">
-                <p class="text-muted">Update your details and resubmit the request.</p>
-                <?php if (!empty($batch['rejection_reason'])): ?>
-                    <div class="alert alert-warning"><?= e($batch['rejection_reason']) ?></div>
+                <?php if ($is_batch_owner): ?>
+                    <p class="text-muted">Update your details and resubmit the request.</p>
+                    <?php if (!empty($batch['rejection_reason'])): ?>
+                        <div class="alert alert-warning"><?= e($batch['rejection_reason']) ?></div>
+                    <?php endif; ?>
+
+                    <form method="POST" action="/onboarding/moderator/resubmit">
+                        <?= csrf_field() ?>
+
+                        <div class="form-group">
+                            <label for="batch_name">Batch Name</label>
+                            <input type="text" id="batch_name" name="batch_name" value="<?= old('batch_name', $batch['name']) ?>" required maxlength="150">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="program">Program</label>
+                            <input type="text" id="program" name="program" value="<?= old('program', $batch['program']) ?>" required maxlength="150">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="intake_year">Intake Year</label>
+                            <input type="number" id="intake_year" name="intake_year" value="<?= old('intake_year', (string) $batch['intake_year']) ?>" min="2000" max="2100" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="university_id">University</label>
+                            <select id="university_id" name="university_id" required>
+                                <option value="">Select university</option>
+                                <?php $selectedUniversity = old('university_id', (string) $batch['university_id']); ?>
+                                <?php foreach ($universities as $uni): ?>
+                                    <option value="<?= (int) $uni['id'] ?>" <?= $selectedUniversity === (string) $uni['id'] ? 'selected' : '' ?>>
+                                        <?= e($uni['name']) ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+
+                        <div class="form-actions">
+                            <button type="submit" class="btn btn-primary">Resubmit Request</button>
+                        </div>
+                    </form>
+                <?php else: ?>
+                    <p class="text-muted">
+                        This batch is rejected, but only the primary moderator can resubmit it.
+                        Contact the batch owner or admin.
+                    </p>
+                    <?php if (!empty($batch['rejection_reason'])): ?>
+                        <div class="alert alert-warning"><?= e($batch['rejection_reason']) ?></div>
+                    <?php endif; ?>
                 <?php endif; ?>
-
-                <form method="POST" action="/onboarding/moderator/resubmit">
-                    <?= csrf_field() ?>
-
-                    <div class="form-group">
-                        <label for="batch_name">Batch Name</label>
-                        <input type="text" id="batch_name" name="batch_name" value="<?= old('batch_name', $batch['name']) ?>" required maxlength="150">
-                    </div>
-
-                    <div class="form-group">
-                        <label for="program">Program</label>
-                        <input type="text" id="program" name="program" value="<?= old('program', $batch['program']) ?>" required maxlength="150">
-                    </div>
-
-                    <div class="form-group">
-                        <label for="intake_year">Intake Year</label>
-                        <input type="number" id="intake_year" name="intake_year" value="<?= old('intake_year', (string) $batch['intake_year']) ?>" min="2000" max="2100" required>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="university_id">University</label>
-                        <select id="university_id" name="university_id" required>
-                            <option value="">Select university</option>
-                            <?php $selectedUniversity = old('university_id', (string) $batch['university_id']); ?>
-                            <?php foreach ($universities as $uni): ?>
-                                <option value="<?= (int) $uni['id'] ?>" <?= $selectedUniversity === (string) $uni['id'] ? 'selected' : '' ?>>
-                                    <?= e($uni['name']) ?>
-                                </option>
-                            <?php endforeach; ?>
-                        </select>
-                    </div>
-
-                    <div class="form-actions">
-                        <button type="submit" class="btn btn-primary">Resubmit Request</button>
-                    </div>
-                </form>
             </div>
         </div>
     <?php endif; ?>
@@ -130,7 +140,7 @@
                 </p>
             </div>
         </div>
-    <?php elseif ($request['status'] === 'approved'): ?>
+    <?php elseif ($request['status'] === 'approved' && ($request['batch_status'] ?? '') === 'approved'): ?>
         <div class="card">
             <div class="card-header">
                 <h2>Join Request Approved</h2>
@@ -142,6 +152,21 @@
                     <strong>Batch ID:</strong> <span class="badge"><?= e($request['batch_code']) ?></span>
                 </p>
                 <a href="/dashboard" class="btn btn-primary">Go to Dashboard</a>
+            </div>
+        </div>
+    <?php elseif ($request['status'] === 'approved'): ?>
+        <div class="card">
+            <div class="card-header">
+                <h2>Batch Access Unavailable</h2>
+            </div>
+            <div class="card-body">
+                <p>Your join request is approved, but your batch is currently not active for access.</p>
+                <p class="text-muted">
+                    <strong>Batch:</strong> <?= e($request['batch_name']) ?><br>
+                    <strong>Batch ID:</strong> <span class="badge"><?= e($request['batch_code']) ?></span><br>
+                    <strong>Batch Status:</strong> <?= e(ucfirst((string) ($request['batch_status'] ?? 'unknown'))) ?>
+                </p>
+                <p class="text-muted">Contact your moderator or admin to reactivate this batch.</p>
             </div>
         </div>
     <?php else: ?>

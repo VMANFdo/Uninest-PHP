@@ -20,6 +20,7 @@ function onboarding_status(): void
         'user'         => $user,
         'role'         => user_role(),
         'batch'        => null,
+        'is_batch_owner' => false,
         'request'      => null,
         'locked_batch' => null,
         'universities' => universities_active(),
@@ -27,6 +28,8 @@ function onboarding_status(): void
 
     if (user_role() === 'moderator') {
         $data['batch'] = onboarding_find_moderator_batch((int) auth_id());
+        $data['is_batch_owner'] = $data['batch']
+            && (int) ($data['batch']['moderator_user_id'] ?? 0) === (int) auth_id();
     } elseif (user_role() === 'student') {
         $data['request'] = onboarding_find_student_request((int) auth_id());
         $lockedBatchId = (int) ($user['first_approved_batch_id'] ?? 0);
@@ -58,6 +61,11 @@ function onboarding_moderator_resubmit(): void
         redirect('/onboarding');
     }
 
+    if ((int) ($batch['moderator_user_id'] ?? 0) !== $moderatorId) {
+        flash('error', 'Only the primary moderator of this batch can resubmit this request.');
+        redirect('/onboarding');
+    }
+
     $name         = trim(request_input('batch_name', ''));
     $program      = trim(request_input('program', ''));
     $intakeYear   = (int) request_input('intake_year', 0);
@@ -75,12 +83,18 @@ function onboarding_moderator_resubmit(): void
         redirect('/onboarding');
     }
 
-    onboarding_resubmit_moderator_batch_request($moderatorId, [
+    $updatedRows = onboarding_resubmit_moderator_batch_request($moderatorId, [
         'name'          => $name,
         'program'       => $program,
         'intake_year'   => $intakeYear,
         'university_id' => $universityId,
     ]);
+
+    if ($updatedRows < 1) {
+        flash('error', 'Unable to resubmit this request right now.');
+        flash_old_input();
+        redirect('/onboarding');
+    }
 
     db_query('UPDATE users SET batch_id = NULL WHERE id = ?', [$moderatorId]);
     auth_set_session_user_by_id($moderatorId);

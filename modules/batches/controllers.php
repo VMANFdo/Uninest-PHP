@@ -197,6 +197,11 @@ function batches_delete_action(string $id): void
         abort(404, 'Batch not found.');
     }
 
+    if (batches_delete_has_locked_students($batchId)) {
+        flash('error', 'Cannot delete this batch because at least one student is permanently locked to it.');
+        redirect('/admin/batches');
+    }
+
     if (!batches_delete_admin($batchId)) {
         flash('error', 'Unable to delete this batch.');
         redirect('/admin/batches');
