@@ -18,6 +18,14 @@
 <?php else: ?>
     <div class="subjects-grid">
         <?php foreach ($subjects as $subject): ?>
+            <?php
+            $status = (string) ($subject['status'] ?? 'upcoming');
+            $statusClass = match ($status) {
+                'in_progress' => 'badge-info',
+                'completed' => 'badge-warning',
+                default => '',
+            };
+            ?>
             <div class="subject-card">
                 <div class="subject-code"><?= e($subject['code']) ?></div>
                 <h3><?= e($subject['name']) ?></h3>
@@ -25,6 +33,8 @@
                     <p><?= e($subject['description']) ?></p>
                 <?php endif; ?>
                 <div class="subject-meta">
+                    <span class="badge">Y<?= (int) ($subject['academic_year'] ?? 1) ?> / S<?= (int) ($subject['semester'] ?? 1) ?></span>
+                    <span class="badge <?= e($statusClass) ?>"><?= e(subjects_status_label($status)) ?></span>
                     <span class="badge"><?= (int) $subject['credits'] ?> Credits</span>
                 </div>
             </div>

@@ -7,7 +7,7 @@
 function students_admin_all(): array
 {
     return db_fetch_all(
-        "SELECT u.id, u.name, u.email, u.academic_year, u.university_id, u.batch_id, u.first_approved_batch_id, u.created_at,
+        "SELECT u.id, u.name, u.email, u.role, u.academic_year, u.university_id, u.batch_id, u.first_approved_batch_id, u.created_at,
                 uni.name AS university_name,
                 b.name AS batch_name, b.batch_code,
                 lb.name AS locked_batch_name, lb.batch_code AS locked_batch_code
@@ -15,7 +15,7 @@ function students_admin_all(): array
          LEFT JOIN universities uni ON uni.id = u.university_id
          LEFT JOIN batches b ON b.id = u.batch_id
          LEFT JOIN batches lb ON lb.id = u.first_approved_batch_id
-         WHERE u.role = 'student'
+         WHERE u.role IN ('student', 'coordinator')
          ORDER BY u.created_at DESC"
     );
 }
@@ -23,7 +23,7 @@ function students_admin_all(): array
 function students_moderator_batch_all(int $moderatorUserId): array
 {
     return db_fetch_all(
-        "SELECT u.id, u.name, u.email, u.academic_year, u.batch_id, u.first_approved_batch_id, u.created_at,
+        "SELECT u.id, u.name, u.email, u.role, u.academic_year, u.batch_id, u.first_approved_batch_id, u.created_at,
                 uni.name AS university_name,
                 b.name AS batch_name, b.batch_code,
                 lb.name AS locked_batch_name, lb.batch_code AS locked_batch_code
@@ -32,7 +32,7 @@ function students_moderator_batch_all(int $moderatorUserId): array
          INNER JOIN users m ON m.id = ?
          LEFT JOIN universities uni ON uni.id = u.university_id
          LEFT JOIN batches lb ON lb.id = u.first_approved_batch_id
-         WHERE u.role = 'student'
+         WHERE u.role IN ('student', 'coordinator')
            AND m.role = 'moderator'
            AND m.batch_id = u.batch_id
          ORDER BY u.created_at DESC",
@@ -43,7 +43,7 @@ function students_moderator_batch_all(int $moderatorUserId): array
 function students_find_admin(int $studentId): ?array
 {
     return db_fetch(
-        "SELECT u.id, u.name, u.email, u.academic_year, u.university_id, u.batch_id, u.first_approved_batch_id,
+        "SELECT u.id, u.name, u.email, u.role, u.academic_year, u.university_id, u.batch_id, u.first_approved_batch_id,
                 uni.name AS university_name,
                 b.name AS batch_name, b.batch_code,
                 lb.name AS locked_batch_name, lb.batch_code AS locked_batch_code
@@ -51,7 +51,7 @@ function students_find_admin(int $studentId): ?array
          LEFT JOIN universities uni ON uni.id = u.university_id
          LEFT JOIN batches b ON b.id = u.batch_id
          LEFT JOIN batches lb ON lb.id = u.first_approved_batch_id
-         WHERE u.id = ? AND u.role = 'student'",
+         WHERE u.id = ? AND u.role IN ('student', 'coordinator')",
         [$studentId]
     );
 }
@@ -59,7 +59,7 @@ function students_find_admin(int $studentId): ?array
 function students_find_for_moderator_batch(int $studentId, int $moderatorUserId): ?array
 {
     return db_fetch(
-        "SELECT u.id, u.name, u.email, u.academic_year, u.university_id, u.batch_id, u.first_approved_batch_id,
+        "SELECT u.id, u.name, u.email, u.role, u.academic_year, u.university_id, u.batch_id, u.first_approved_batch_id,
                 uni.name AS university_name,
                 b.name AS batch_name, b.batch_code
          FROM users u
@@ -67,7 +67,7 @@ function students_find_for_moderator_batch(int $studentId, int $moderatorUserId)
          INNER JOIN users m ON m.id = ?
          LEFT JOIN universities uni ON uni.id = u.university_id
          WHERE u.id = ?
-           AND u.role = 'student'
+           AND u.role IN ('student', 'coordinator')
            AND m.role = 'moderator'
            AND m.batch_id = u.batch_id",
         [$moderatorUserId, $studentId]
@@ -166,8 +166,12 @@ function students_update_admin(int $studentId, array $data, int $adminUserId): b
 
     try {
         $student = db_fetch(
-            'SELECT id, batch_id, first_approved_batch_id FROM users WHERE id = ? AND role = ? FOR UPDATE',
-            [$studentId, 'student']
+            "SELECT id, role, batch_id, first_approved_batch_id
+             FROM users
+             WHERE id = ?
+               AND role IN ('student', 'coordinator')
+             FOR UPDATE",
+            [$studentId]
         );
 
         if (!$student) {
@@ -176,21 +180,27 @@ function students_update_admin(int $studentId, array $data, int $adminUserId): b
         }
 
         $newBatchId = (int) $data['batch_id'];
+        $oldBatchId = (int) ($student['batch_id'] ?? 0);
         $lockedBatchId = (int) ($student['first_approved_batch_id'] ?? 0);
         if ($lockedBatchId > 0 && $lockedBatchId !== $newBatchId) {
             $pdo->rollBack();
             return false;
         }
 
+        if ($oldBatchId > 0 && $oldBatchId !== $newBatchId) {
+            subjects_remove_student_coordinator_assignments_for_batch($studentId, $oldBatchId);
+        }
+
         db_query(
-            'UPDATE users
+            "UPDATE users
              SET name = ?,
                  email = ?,
                  academic_year = ?,
                  university_id = ?,
                  batch_id = ?,
                  first_approved_batch_id = COALESCE(first_approved_batch_id, ?)
-             WHERE id = ? AND role = ?',
+             WHERE id = ?
+               AND role IN ('student', 'coordinator')",
             [
                 $data['name'],
                 $data['email'],
@@ -199,7 +209,6 @@ function students_update_admin(int $studentId, array $data, int $adminUserId): b
                 $newBatchId,
                 $newBatchId,
                 $studentId,
-                'student',
             ]
         );
 
@@ -217,7 +226,14 @@ function students_update_admin(int $studentId, array $data, int $adminUserId): b
 
 function students_delete_admin(int $studentId): int
 {
-    return db_query('DELETE FROM users WHERE id = ? AND role = ?', [$studentId, 'student'])->rowCount();
+    subjects_remove_student_coordinator_assignments($studentId);
+
+    return db_query(
+        "DELETE FROM users
+         WHERE id = ?
+           AND role IN ('student', 'coordinator')",
+        [$studentId]
+    )->rowCount();
 }
 
 function students_moderator_remove_from_batch(int $studentId, int $moderatorUserId): bool
@@ -231,7 +247,7 @@ function students_moderator_remove_from_batch(int $studentId, int $moderatorUser
              FROM users u
              INNER JOIN users m ON m.id = ?
              WHERE u.id = ?
-               AND u.role = 'student'
+               AND u.role IN ('student', 'coordinator')
                AND m.role = 'moderator'
                AND m.batch_id = u.batch_id
              FOR UPDATE",
@@ -252,12 +268,15 @@ function students_moderator_remove_from_batch(int $studentId, int $moderatorUser
             return false;
         }
 
+        subjects_remove_student_coordinator_assignments($studentId);
+
         db_query(
-            'UPDATE users
+            "UPDATE users
              SET batch_id = NULL,
                  first_approved_batch_id = COALESCE(first_approved_batch_id, ?)
-             WHERE id = ? AND role = ?',
-            [$targetBatchId, $studentId, 'student']
+             WHERE id = ?
+               AND role IN ('student', 'coordinator')",
+            [$targetBatchId, $studentId]
         );
 
         students_sync_request_status(

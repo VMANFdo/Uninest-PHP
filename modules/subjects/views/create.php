@@ -53,6 +53,39 @@
                 <input type="number" id="credits" name="credits" value="<?= old('credits', '3') ?>" min="1" max="10" required>
             </div>
 
+            <div class="form-group">
+                <label for="academic_year">Academic Year</label>
+                <?php $selectedAcademicYear = old('academic_year', '1'); ?>
+                <select id="academic_year" name="academic_year" required>
+                    <?php for ($year = 1; $year <= 4; $year++): ?>
+                        <option value="<?= $year ?>" <?= $selectedAcademicYear === (string) $year ? 'selected' : '' ?>>
+                            Year <?= $year ?>
+                        </option>
+                    <?php endfor; ?>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="semester">Semester</label>
+                <?php $selectedSemester = old('semester', '1'); ?>
+                <select id="semester" name="semester" required>
+                    <option value="1" <?= $selectedSemester === '1' ? 'selected' : '' ?>>Semester 1</option>
+                    <option value="2" <?= $selectedSemester === '2' ? 'selected' : '' ?>>Semester 2</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="status">Status</label>
+                <?php $selectedStatus = old('status', 'upcoming'); ?>
+                <select id="status" name="status" required>
+                    <?php foreach (subjects_allowed_statuses() as $status): ?>
+                        <option value="<?= e($status) ?>" <?= $selectedStatus === $status ? 'selected' : '' ?>>
+                            <?= e(subjects_status_label($status)) ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+
             <div class="form-actions">
                 <button type="submit" class="btn btn-primary">Create Subject</button>
                 <a href="/subjects" class="btn btn-outline">Cancel</a>

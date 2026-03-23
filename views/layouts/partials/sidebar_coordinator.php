@@ -2,6 +2,7 @@
 $currentPath = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
 ?>
 <nav class="sidebar-nav">
+    <?php $isCoordinatorSubjects = str_starts_with($currentPath, '/coordinator/subjects'); ?>
     <div class="sidebar-section-label">Overview</div>
     <ul>
         <li><a href="/dashboard" data-icon="DB" class="<?= is_current_url('/dashboard') ? 'active' : '' ?>"><span>Dashboard</span></a></li>
@@ -10,6 +11,6 @@ $currentPath = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
 
     <div class="sidebar-section-label">Coordinator</div>
     <ul>
-        <li><a href="/dashboard" data-icon="CP" class="<?= is_current_url('/dashboard') ? 'active' : '' ?>"><span>Coordinator Panel</span></a></li>
+        <li><a href="/coordinator/subjects" data-icon="CP" class="<?= $isCoordinatorSubjects ? 'active' : '' ?>"><span>Manage Subjects</span></a></li>
     </ul>
 </nav>

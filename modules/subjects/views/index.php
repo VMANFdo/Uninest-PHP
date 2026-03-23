@@ -37,7 +37,11 @@
                         <?php endif; ?>
                         <th>Code</th>
                         <th>Subject Name</th>
+                        <th>Year</th>
+                        <th>Sem</th>
+                        <th>Status</th>
                         <th>Credits</th>
+                        <th>Coordinators</th>
                         <th>Created By</th>
                         <th>Actions</th>
                     </tr>
@@ -47,6 +51,13 @@
                         <?php
                         $avatarText = ui_initials((string) $subject['name']);
                         $avatarTone = ui_avatar_tone_class((string) (($subject['code'] ?? '') . '-' . ($subject['name'] ?? '')));
+                        $status = (string) ($subject['status'] ?? 'upcoming');
+                        $statusLabel = subjects_status_label($status);
+                        $statusClass = match ($status) {
+                            'in_progress' => 'badge-info',
+                            'completed' => 'badge-warning',
+                            default => '',
+                        };
                         ?>
                         <tr>
                             <?php if ($is_admin): ?>
@@ -67,9 +78,16 @@
                                     </div>
                                 </div>
                             </td>
+                            <td><?= (int) ($subject['academic_year'] ?? 1) ?></td>
+                            <td><?= (int) ($subject['semester'] ?? 1) ?></td>
+                            <td><span class="badge <?= e($statusClass) ?>"><?= e($statusLabel) ?></span></td>
                             <td><?= (int) $subject['credits'] ?></td>
+                            <td><?= (int) ($subject['coordinators_count'] ?? 0) ?></td>
                             <td><?= e($subject['creator_name'] ?? 'Unknown') ?></td>
                             <td class="actions">
+                                <a href="/subjects/<?= (int) $subject['id'] ?>/coordinators" class="table-icon-btn" title="Manage coordinators" aria-label="Manage coordinators">
+                                    <?= ui_lucide_icon('users') ?>
+                                </a>
                                 <a href="/subjects/<?= $subject['id'] ?>/edit" class="table-icon-btn" title="Edit subject" aria-label="Edit subject">
                                     <?= ui_lucide_icon('pencil') ?>
                                 </a>

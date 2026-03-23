@@ -82,6 +82,9 @@ $statusLabel = ucfirst($batchStatus ?: 'pending');
                     <tr>
                         <th>Code</th>
                         <th>Subject</th>
+                        <th>Year</th>
+                        <th>Sem</th>
+                        <th>Status</th>
                         <th>Credits</th>
                         <th>Action</th>
                     </tr>
@@ -91,6 +94,12 @@ $statusLabel = ucfirst($batchStatus ?: 'pending');
                         <?php
                         $avatarText = ui_initials((string) $subject['name']);
                         $avatarTone = ui_avatar_tone_class((string) (($subject['code'] ?? '') . '-' . ($subject['name'] ?? '')));
+                        $status = (string) ($subject['status'] ?? 'upcoming');
+                        $statusClass = match ($status) {
+                            'in_progress' => 'badge-info',
+                            'completed' => 'badge-warning',
+                            default => '',
+                        };
                         ?>
                         <tr>
                             <td><span class="badge"><?= e($subject['code']) ?></span></td>
@@ -102,8 +111,14 @@ $statusLabel = ucfirst($batchStatus ?: 'pending');
                                     </div>
                                 </div>
                             </td>
+                            <td><?= (int) ($subject['academic_year'] ?? 1) ?></td>
+                            <td><?= (int) ($subject['semester'] ?? 1) ?></td>
+                            <td><span class="badge <?= e($statusClass) ?>"><?= e(subjects_status_label($status)) ?></span></td>
                             <td><?= (int) $subject['credits'] ?></td>
-                            <td>
+                            <td class="actions">
+                                <a href="/subjects/<?= (int) $subject['id'] ?>/coordinators" class="table-icon-btn" title="Manage coordinators" aria-label="Manage coordinators">
+                                    <?= ui_lucide_icon('users') ?>
+                                </a>
                                 <a href="/subjects/<?= (int) $subject['id'] ?>/edit" class="table-icon-btn" title="Edit subject" aria-label="Edit subject">
                                     <?= ui_lucide_icon('pencil') ?>
                                 </a>

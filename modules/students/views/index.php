@@ -52,7 +52,11 @@
                                 <div class="table-identity">
                                     <span class="table-avatar <?= e($avatarTone) ?>"><?= e($avatarText) ?></span>
                                     <div class="table-identity-text">
-                                        <strong><?= e($student['name']) ?></strong><br>
+                                        <strong><?= e($student['name']) ?></strong>
+                                        <?php if (($student['role'] ?? 'student') === 'coordinator'): ?>
+                                            <span class="badge badge-info">Coordinator</span>
+                                        <?php endif; ?>
+                                        <br>
                                         <small class="text-muted"><?= e($student['email']) ?></small>
                                     </div>
                                 </div>

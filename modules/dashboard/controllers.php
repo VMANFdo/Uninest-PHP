@@ -58,7 +58,7 @@ function dashboard_index(): void
 
         case 'coordinator':
             try {
-                $data['subjects'] = db_fetch_all('SELECT * FROM subjects ORDER BY name ASC');
+                $data['subjects'] = subjects_all_for_coordinator((int) $user['id']);
             } catch (\PDOException) {
                 $data['subjects'] = [];
             }

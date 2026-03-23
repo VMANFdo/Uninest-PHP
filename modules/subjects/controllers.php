@@ -4,6 +4,25 @@
  * Subjects Module — Controllers
  */
 
+function subjects_is_valid_status(string $status): bool
+{
+    return in_array($status, subjects_allowed_statuses(), true);
+}
+
+function subjects_resolve_manageable_subject(int $subjectId): ?array
+{
+    if (user_role() === 'admin') {
+        return subjects_find_admin($subjectId);
+    }
+
+    if (user_role() === 'moderator') {
+        $batchId = (int) (auth_user()['batch_id'] ?? 0);
+        return subjects_find_for_batch($subjectId, $batchId);
+    }
+
+    return null;
+}
+
 function subjects_index(): void
 {
     $isAdmin = user_role() === 'admin';
@@ -16,8 +35,8 @@ function subjects_index(): void
     }
 
     view('subjects::index', [
-        'subjects'  => $subjects,
-        'is_admin'  => $isAdmin,
+        'subjects' => $subjects,
+        'is_admin' => $isAdmin,
     ], 'dashboard');
 }
 
@@ -28,7 +47,7 @@ function subjects_create_form(): void
 
     view('subjects::create', [
         'is_admin' => $isAdmin,
-        'batches'  => $batches,
+        'batches' => $batches,
     ], 'dashboard');
 }
 
@@ -36,17 +55,23 @@ function subjects_store(): void
 {
     csrf_check();
 
-    $isAdmin     = user_role() === 'admin';
-    $code        = strtoupper(trim(request_input('code', '')));
-    $name        = trim(request_input('name', ''));
+    $isAdmin = user_role() === 'admin';
+    $code = strtoupper(trim(request_input('code', '')));
+    $name = trim(request_input('name', ''));
     $description = trim(request_input('description', ''));
-    $credits     = (int) request_input('credits', 3);
-    $batchId     = $isAdmin ? (int) request_input('batch_id', 0) : (int) (auth_user()['batch_id'] ?? 0);
+    $credits = (int) request_input('credits', 3);
+    $academicYear = (int) request_input('academic_year', 1);
+    $semester = (int) request_input('semester', 1);
+    $status = trim((string) request_input('status', 'upcoming'));
+    $batchId = $isAdmin ? (int) request_input('batch_id', 0) : (int) (auth_user()['batch_id'] ?? 0);
 
     $errors = [];
-    if (empty($code)) $errors[] = 'Subject code is required.';
-    if (empty($name)) $errors[] = 'Subject name is required.';
+    if ($code === '') $errors[] = 'Subject code is required.';
+    if ($name === '') $errors[] = 'Subject name is required.';
     if ($credits < 1 || $credits > 10) $errors[] = 'Credits must be between 1 and 10.';
+    if ($academicYear < 1 || $academicYear > 4) $errors[] = 'Academic year must be between 1 and 4.';
+    if ($semester < 1 || $semester > 2) $errors[] = 'Semester must be between 1 and 2.';
+    if (!subjects_is_valid_status($status)) $errors[] = 'Subject status is invalid.';
 
     if ($batchId <= 0) {
         $errors[] = 'A valid batch is required.';
@@ -57,7 +82,7 @@ function subjects_store(): void
         }
     }
 
-    if (!empty($code) && $batchId > 0 && subjects_code_exists_in_batch($code, $batchId)) {
+    if ($code !== '' && $batchId > 0 && subjects_code_exists_in_batch($code, $batchId)) {
         $errors[] = 'A subject with this code already exists in the selected batch.';
     }
 
@@ -68,11 +93,14 @@ function subjects_store(): void
     }
 
     subjects_create([
-        'batch_id'     => $batchId,
-        'code'         => $code,
-        'name'         => $name,
-        'description'  => $description,
-        'credits'      => $credits,
+        'batch_id' => $batchId,
+        'code' => $code,
+        'name' => $name,
+        'description' => $description,
+        'credits' => $credits,
+        'academic_year' => $academicYear,
+        'semester' => $semester,
+        'status' => $status,
     ]);
 
     clear_old_input();
@@ -83,18 +111,18 @@ function subjects_store(): void
 function subjects_edit_form(string $id): void
 {
     $subjectId = (int) $id;
-    $isAdmin   = user_role() === 'admin';
-    $batchId   = (int) (auth_user()['batch_id'] ?? 0);
-    $subject   = $isAdmin ? subjects_find_admin($subjectId) : subjects_find_for_batch($subjectId, $batchId);
+    $isAdmin = user_role() === 'admin';
+    $batchId = (int) (auth_user()['batch_id'] ?? 0);
+    $subject = $isAdmin ? subjects_find_admin($subjectId) : subjects_find_for_batch($subjectId, $batchId);
 
     if (!$subject) {
         abort(404, 'Subject not found.');
     }
 
     view('subjects::edit', [
-        'subject'   => $subject,
-        'is_admin'  => $isAdmin,
-        'batches'   => $isAdmin ? onboarding_approved_batches() : [],
+        'subject' => $subject,
+        'is_admin' => $isAdmin,
+        'batches' => $isAdmin ? onboarding_approved_batches() : [],
     ], 'dashboard');
 }
 
@@ -102,25 +130,31 @@ function subjects_update_action(string $id): void
 {
     csrf_check();
 
-    $subjectId    = (int) $id;
-    $isAdmin      = user_role() === 'admin';
+    $subjectId = (int) $id;
+    $isAdmin = user_role() === 'admin';
     $sessionBatch = (int) (auth_user()['batch_id'] ?? 0);
-    $subject      = $isAdmin ? subjects_find_admin($subjectId) : subjects_find_for_batch($subjectId, $sessionBatch);
+    $subject = $isAdmin ? subjects_find_admin($subjectId) : subjects_find_for_batch($subjectId, $sessionBatch);
 
     if (!$subject) {
         abort(404, 'Subject not found.');
     }
 
-    $code        = strtoupper(trim(request_input('code', '')));
-    $name        = trim(request_input('name', ''));
+    $code = strtoupper(trim(request_input('code', '')));
+    $name = trim(request_input('name', ''));
     $description = trim(request_input('description', ''));
-    $credits     = (int) request_input('credits', 3);
-    $batchId     = $isAdmin ? (int) request_input('batch_id', 0) : (int) $subject['batch_id'];
+    $credits = (int) request_input('credits', 3);
+    $academicYear = (int) request_input('academic_year', 1);
+    $semester = (int) request_input('semester', 1);
+    $status = trim((string) request_input('status', 'upcoming'));
+    $batchId = $isAdmin ? (int) request_input('batch_id', 0) : (int) $subject['batch_id'];
 
     $errors = [];
-    if (empty($code)) $errors[] = 'Subject code is required.';
-    if (empty($name)) $errors[] = 'Subject name is required.';
+    if ($code === '') $errors[] = 'Subject code is required.';
+    if ($name === '') $errors[] = 'Subject name is required.';
     if ($credits < 1 || $credits > 10) $errors[] = 'Credits must be between 1 and 10.';
+    if ($academicYear < 1 || $academicYear > 4) $errors[] = 'Academic year must be between 1 and 4.';
+    if ($semester < 1 || $semester > 2) $errors[] = 'Semester must be between 1 and 2.';
+    if (!subjects_is_valid_status($status)) $errors[] = 'Subject status is invalid.';
 
     if ($batchId <= 0) {
         $errors[] = 'A valid batch is required.';
@@ -131,7 +165,7 @@ function subjects_update_action(string $id): void
         }
     }
 
-    if (!empty($code) && $batchId > 0 && subjects_code_exists_in_batch($code, $batchId, $subjectId)) {
+    if ($code !== '' && $batchId > 0 && subjects_code_exists_in_batch($code, $batchId, $subjectId)) {
         $errors[] = 'A subject with this code already exists in the selected batch.';
     }
 
@@ -142,11 +176,14 @@ function subjects_update_action(string $id): void
     }
 
     subjects_update_data($subjectId, [
-        'batch_id'     => $batchId,
-        'code'         => $code,
-        'name'         => $name,
-        'description'  => $description,
-        'credits'      => $credits,
+        'batch_id' => $batchId,
+        'code' => $code,
+        'name' => $name,
+        'description' => $description,
+        'credits' => $credits,
+        'academic_year' => $academicYear,
+        'semester' => $semester,
+        'status' => $status,
     ]);
 
     clear_old_input();
@@ -159,10 +196,7 @@ function subjects_delete_action(string $id): void
     csrf_check();
 
     $subjectId = (int) $id;
-    $isAdmin   = user_role() === 'admin';
-    $batchId   = (int) (auth_user()['batch_id'] ?? 0);
-    $subject   = $isAdmin ? subjects_find_admin($subjectId) : subjects_find_for_batch($subjectId, $batchId);
-
+    $subject = subjects_resolve_manageable_subject($subjectId);
     if (!$subject) {
         abort(404, 'Subject not found.');
     }
@@ -170,6 +204,157 @@ function subjects_delete_action(string $id): void
     subjects_delete_by_id($subjectId);
     flash('success', 'Subject "' . $subject['name'] . '" deleted.');
     redirect('/subjects');
+}
+
+function subjects_coordinators_page(string $id): void
+{
+    $subjectId = (int) $id;
+    $subject = subjects_resolve_manageable_subject($subjectId);
+    if (!$subject) {
+        abort(404, 'Subject not found.');
+    }
+
+    view('subjects::coordinators', [
+        'subject' => $subject,
+        'is_admin' => user_role() === 'admin',
+        'coordinators' => subjects_coordinators_for_subject($subjectId),
+        'candidates' => subjects_coordinator_candidates_for_subject($subjectId),
+    ], 'dashboard');
+}
+
+function subjects_coordinator_assign_action(string $id): void
+{
+    csrf_check();
+
+    $subjectId = (int) $id;
+    $subject = subjects_resolve_manageable_subject($subjectId);
+    if (!$subject) {
+        abort(404, 'Subject not found.');
+    }
+
+    $studentId = (int) request_input('student_user_id', 0);
+    if ($studentId <= 0) {
+        flash('error', 'Select a valid student to assign.');
+        redirect('/subjects/' . $subjectId . '/coordinators');
+    }
+
+    $result = subjects_assign_coordinator($subjectId, $studentId, (int) auth_id());
+    if ($result === 'invalid_student') {
+        flash('error', 'Only students in this subject batch can be assigned as coordinators.');
+    } elseif ($result === 'subject_not_found') {
+        flash('error', 'Subject not found.');
+    } elseif ($result === 'exists') {
+        flash('success', 'Coordinator assignment refreshed.');
+    } else {
+        flash('success', 'Coordinator assigned successfully.');
+    }
+
+    redirect('/subjects/' . $subjectId . '/coordinators');
+}
+
+function subjects_coordinator_unassign_action(string $id, string $studentId): void
+{
+    csrf_check();
+
+    $subjectId = (int) $id;
+    $subject = subjects_resolve_manageable_subject($subjectId);
+    if (!$subject) {
+        abort(404, 'Subject not found.');
+    }
+
+    $targetStudentId = (int) $studentId;
+    if ($targetStudentId <= 0) {
+        flash('error', 'Invalid coordinator selected.');
+        redirect('/subjects/' . $subjectId . '/coordinators');
+    }
+
+    $result = subjects_unassign_coordinator($subjectId, $targetStudentId);
+    if ($result === 'removed') {
+        flash('success', 'Coordinator removed from this subject.');
+    } else {
+        flash('error', 'Coordinator assignment not found.');
+    }
+
+    redirect('/subjects/' . $subjectId . '/coordinators');
+}
+
+function subjects_coordinator_index(): void
+{
+    middleware_exact_role('coordinator');
+
+    $subjects = subjects_all_for_coordinator((int) auth_id());
+
+    view('subjects::coordinator_index', [
+        'subjects' => $subjects,
+    ], 'dashboard');
+}
+
+function subjects_coordinator_edit_form(string $id): void
+{
+    middleware_exact_role('coordinator');
+
+    $subjectId = (int) $id;
+    $subject = subjects_find_for_coordinator($subjectId, (int) auth_id());
+    if (!$subject) {
+        abort(404, 'Subject not found.');
+    }
+
+    view('subjects::coordinator_edit', [
+        'subject' => $subject,
+    ], 'dashboard');
+}
+
+function subjects_coordinator_update_action(string $id): void
+{
+    csrf_check();
+    middleware_exact_role('coordinator');
+
+    $subjectId = (int) $id;
+    $subject = subjects_find_for_coordinator($subjectId, (int) auth_id());
+    if (!$subject) {
+        abort(404, 'Subject not found.');
+    }
+
+    $code = strtoupper(trim(request_input('code', '')));
+    $name = trim(request_input('name', ''));
+    $description = trim(request_input('description', ''));
+    $credits = (int) request_input('credits', 3);
+    $academicYear = (int) request_input('academic_year', 1);
+    $semester = (int) request_input('semester', 1);
+    $status = trim((string) request_input('status', 'upcoming'));
+    $batchId = (int) $subject['batch_id'];
+
+    $errors = [];
+    if ($code === '') $errors[] = 'Subject code is required.';
+    if ($name === '') $errors[] = 'Subject name is required.';
+    if ($credits < 1 || $credits > 10) $errors[] = 'Credits must be between 1 and 10.';
+    if ($academicYear < 1 || $academicYear > 4) $errors[] = 'Academic year must be between 1 and 4.';
+    if ($semester < 1 || $semester > 2) $errors[] = 'Semester must be between 1 and 2.';
+    if (!subjects_is_valid_status($status)) $errors[] = 'Subject status is invalid.';
+    if ($code !== '' && subjects_code_exists_in_batch($code, $batchId, $subjectId)) {
+        $errors[] = 'A subject with this code already exists in your batch.';
+    }
+
+    if (!empty($errors)) {
+        flash('error', implode(' ', $errors));
+        flash_old_input();
+        redirect('/coordinator/subjects/' . $subjectId . '/edit');
+    }
+
+    subjects_update_data($subjectId, [
+        'batch_id' => $batchId,
+        'code' => $code,
+        'name' => $name,
+        'description' => $description,
+        'credits' => $credits,
+        'academic_year' => $academicYear,
+        'semester' => $semester,
+        'status' => $status,
+    ]);
+
+    clear_old_input();
+    flash('success', 'Subject updated successfully.');
+    redirect('/coordinator/subjects');
 }
 
 function subjects_student_list(): void

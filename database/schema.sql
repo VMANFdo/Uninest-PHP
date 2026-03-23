@@ -182,13 +182,91 @@ CREATE TABLE IF NOT EXISTS subjects (
     name VARCHAR(200) NOT NULL,
     description TEXT,
     credits INT DEFAULT 3,
+    academic_year TINYINT UNSIGNED NOT NULL DEFAULT 1,
+    semester TINYINT UNSIGNED NOT NULL DEFAULT 1,
+    status ENUM('upcoming', 'in_progress', 'completed') NOT NULL DEFAULT 'upcoming',
     created_by INT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     UNIQUE KEY uniq_subject_code_per_batch (batch_id, code),
     INDEX idx_subjects_batch (batch_id),
+    INDEX idx_subjects_status (status),
     CONSTRAINT fk_subjects_batch FOREIGN KEY (batch_id) REFERENCES batches(id) ON DELETE CASCADE,
     CONSTRAINT fk_subjects_created_by FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL
+) ENGINE=InnoDB;
+
+SET @has_subjects_academic_year_column = (
+    SELECT COUNT(*)
+    FROM information_schema.COLUMNS
+    WHERE TABLE_SCHEMA = DATABASE()
+      AND TABLE_NAME = 'subjects'
+      AND COLUMN_NAME = 'academic_year'
+);
+SET @sql_subjects_academic_year_column = IF(
+    @has_subjects_academic_year_column = 0,
+    'ALTER TABLE subjects ADD COLUMN academic_year TINYINT UNSIGNED NOT NULL DEFAULT 1 AFTER credits',
+    'SELECT 1'
+);
+PREPARE stmt_subjects_academic_year_column FROM @sql_subjects_academic_year_column;
+EXECUTE stmt_subjects_academic_year_column;
+DEALLOCATE PREPARE stmt_subjects_academic_year_column;
+
+SET @has_subjects_semester_column = (
+    SELECT COUNT(*)
+    FROM information_schema.COLUMNS
+    WHERE TABLE_SCHEMA = DATABASE()
+      AND TABLE_NAME = 'subjects'
+      AND COLUMN_NAME = 'semester'
+);
+SET @sql_subjects_semester_column = IF(
+    @has_subjects_semester_column = 0,
+    'ALTER TABLE subjects ADD COLUMN semester TINYINT UNSIGNED NOT NULL DEFAULT 1 AFTER academic_year',
+    'SELECT 1'
+);
+PREPARE stmt_subjects_semester_column FROM @sql_subjects_semester_column;
+EXECUTE stmt_subjects_semester_column;
+DEALLOCATE PREPARE stmt_subjects_semester_column;
+
+SET @has_subjects_status_column = (
+    SELECT COUNT(*)
+    FROM information_schema.COLUMNS
+    WHERE TABLE_SCHEMA = DATABASE()
+      AND TABLE_NAME = 'subjects'
+      AND COLUMN_NAME = 'status'
+);
+SET @sql_subjects_status_column = IF(
+    @has_subjects_status_column = 0,
+    'ALTER TABLE subjects ADD COLUMN status ENUM(''upcoming'', ''in_progress'', ''completed'') NOT NULL DEFAULT ''upcoming'' AFTER semester',
+    'SELECT 1'
+);
+PREPARE stmt_subjects_status_column FROM @sql_subjects_status_column;
+EXECUTE stmt_subjects_status_column;
+DEALLOCATE PREPARE stmt_subjects_status_column;
+
+UPDATE subjects
+SET academic_year = 1
+WHERE academic_year IS NULL OR academic_year < 1 OR academic_year > 4;
+
+UPDATE subjects
+SET semester = 1
+WHERE semester IS NULL OR semester < 1 OR semester > 2;
+
+UPDATE subjects
+SET status = 'upcoming'
+WHERE status IS NULL OR status NOT IN ('upcoming', 'in_progress', 'completed');
+
+CREATE TABLE IF NOT EXISTS subject_coordinators (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    subject_id INT NOT NULL,
+    student_user_id INT NOT NULL,
+    assigned_by INT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY uniq_subject_coordinator (subject_id, student_user_id),
+    INDEX idx_subject_coordinators_subject (subject_id),
+    INDEX idx_subject_coordinators_student (student_user_id),
+    CONSTRAINT fk_subject_coordinators_subject FOREIGN KEY (subject_id) REFERENCES subjects(id) ON DELETE CASCADE,
+    CONSTRAINT fk_subject_coordinators_student FOREIGN KEY (student_user_id) REFERENCES users(id) ON DELETE CASCADE,
+    CONSTRAINT fk_subject_coordinators_assigned_by FOREIGN KEY (assigned_by) REFERENCES users(id) ON DELETE SET NULL
 ) ENGINE=InnoDB;
 
 -- Existing deployments that migrate from the previous schema should remove legacy global subjects

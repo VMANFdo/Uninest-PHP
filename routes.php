@@ -54,6 +54,14 @@ route('POST', '/subjects',              'subjects_store',         ['middleware_a
 route('GET',  '/subjects/{id}/edit',    'subjects_edit_form',     ['middleware_auth', 'middleware_onboarding_complete', fn() => middleware_role('moderator')]);
 route('POST', '/subjects/{id}',         'subjects_update_action', ['middleware_auth', 'middleware_onboarding_complete', fn() => middleware_role('moderator')]);
 route('POST', '/subjects/{id}/delete',  'subjects_delete_action', ['middleware_auth', 'middleware_onboarding_complete', fn() => middleware_role('moderator')]);
+route('GET',  '/subjects/{id}/coordinators',                   'subjects_coordinators_page',            ['middleware_auth', 'middleware_onboarding_complete', fn() => middleware_role('moderator')]);
+route('POST', '/subjects/{id}/coordinators',                   'subjects_coordinator_assign_action',     ['middleware_auth', 'middleware_onboarding_complete', fn() => middleware_role('moderator')]);
+route('POST', '/subjects/{id}/coordinators/{studentId}/delete','subjects_coordinator_unassign_action',   ['middleware_auth', 'middleware_onboarding_complete', fn() => middleware_role('moderator')]);
+
+// Coordinator subject controls
+route('GET',  '/coordinator/subjects',             'subjects_coordinator_index',         ['middleware_auth', 'middleware_onboarding_complete', fn() => middleware_exact_role('coordinator')]);
+route('GET',  '/coordinator/subjects/{id}/edit',   'subjects_coordinator_edit_form',     ['middleware_auth', 'middleware_onboarding_complete', fn() => middleware_exact_role('coordinator')]);
+route('POST', '/coordinator/subjects/{id}',        'subjects_coordinator_update_action', ['middleware_auth', 'middleware_onboarding_complete', fn() => middleware_exact_role('coordinator')]);
 
 // Students management (admin + moderator scoped actions)
 route('GET',  '/students',              'students_index',         ['middleware_auth', 'middleware_onboarding_complete', fn() => middleware_role('moderator')]);

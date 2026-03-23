@@ -1,14 +1,18 @@
 <section class="dash-hero">
     <p class="dash-eyebrow">Coordinator Workspace</p>
-    <h1>Oversee subject quality across moderator teams.</h1>
-    <p class="dash-copy">Welcome back, <?= e($user['name']) ?>. Track subject consistency and align moderators on peer-learning standards.</p>
+    <h1>Manage the subjects assigned to you.</h1>
+    <p class="dash-copy">Welcome back, <?= e($user['name']) ?>. You can coordinate your assigned subjects while keeping normal student access.</p>
+    <div class="dash-action-row">
+        <a href="/coordinator/subjects" class="btn btn-primary">Manage Assigned Subjects</a>
+        <a href="/dashboard/subjects" class="btn btn-outline">Browse Batch Subjects</a>
+    </div>
 </section>
 
 <section class="dash-kpi-grid">
     <article class="kpi-card">
-        <span class="kpi-label">Available Subjects</span>
+        <span class="kpi-label">Assigned Subjects</span>
         <strong><?= count($subjects) ?></strong>
-        <p>Subject inventory currently visible to coordinator role.</p>
+        <p>Subjects where you currently hold coordinator responsibility.</p>
     </article>
 </section>
 
@@ -16,23 +20,28 @@
     <header class="dash-panel-header">
         <h2>Coordinator Notes</h2>
     </header>
-    <p class="text-muted">Use this space to review subject quality and coordinate changes with moderators before curriculum updates.</p>
+    <p class="text-muted">You can edit only assigned subjects from the coordinator management page. Subject creation, deletion, and coordinator assignment remain moderator/admin responsibilities.</p>
 </section>
 
 <section class="dash-panel">
     <header class="dash-panel-header">
-        <h2>All Subjects</h2>
-        <a href="/dashboard/subjects" class="btn btn-sm btn-outline">View Full List</a>
+        <h2>My Assigned Subjects</h2>
+        <a href="/coordinator/subjects" class="btn btn-sm btn-outline">Open Manager</a>
     </header>
     <?php if (empty($subjects)): ?>
-        <p class="text-muted">No subjects available yet.</p>
+        <p class="text-muted">No subjects are assigned to you yet.</p>
     <?php else: ?>
         <table class="table">
             <thead>
                 <tr>
+                    <th>Batch</th>
                     <th>Code</th>
                     <th>Subject</th>
+                    <th>Year</th>
+                    <th>Sem</th>
+                    <th>Status</th>
                     <th>Credits</th>
+                    <th>Action</th>
                 </tr>
             </thead>
             <tbody>
@@ -40,8 +49,18 @@
                     <?php
                     $avatarText = ui_initials((string) $subject['name']);
                     $avatarTone = ui_avatar_tone_class((string) (($subject['code'] ?? '') . '-' . ($subject['name'] ?? '')));
+                    $status = (string) ($subject['status'] ?? 'upcoming');
+                    $statusClass = match ($status) {
+                        'in_progress' => 'badge-info',
+                        'completed' => 'badge-warning',
+                        default => '',
+                    };
                     ?>
                     <tr>
+                        <td>
+                            <strong><?= e($subject['batch_name'] ?? '-') ?></strong><br>
+                            <small class="text-muted"><?= e($subject['batch_code'] ?? '') ?></small>
+                        </td>
                         <td><span class="badge"><?= e($subject['code']) ?></span></td>
                         <td>
                             <div class="table-identity">
@@ -51,7 +70,15 @@
                                 </div>
                             </div>
                         </td>
+                        <td><?= (int) ($subject['academic_year'] ?? 1) ?></td>
+                        <td><?= (int) ($subject['semester'] ?? 1) ?></td>
+                        <td><span class="badge <?= e($statusClass) ?>"><?= e(subjects_status_label($status)) ?></span></td>
                         <td><?= (int) $subject['credits'] ?></td>
+                        <td class="actions">
+                            <a href="/coordinator/subjects/<?= (int) $subject['id'] ?>/edit" class="table-icon-btn" title="Edit subject" aria-label="Edit subject">
+                                <?= ui_lucide_icon('pencil') ?>
+                            </a>
+                        </td>
                     </tr>
                 <?php endforeach; ?>
             </tbody>
