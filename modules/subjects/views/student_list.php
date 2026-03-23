@@ -25,19 +25,24 @@
                 'completed' => 'badge-warning',
                 default => '',
             };
+            $thumbnailTone = ui_avatar_tone_class((string) (($subject['code'] ?? '') . '-' . ($subject['name'] ?? '')));
             ?>
-            <div class="subject-card">
-                <div class="subject-code"><?= e($subject['code']) ?></div>
-                <h3><?= e($subject['name']) ?></h3>
-                <?php if (!empty($subject['description'])): ?>
-                    <p><?= e($subject['description']) ?></p>
-                <?php endif; ?>
-                <div class="subject-meta">
-                    <span class="badge">Y<?= (int) ($subject['academic_year'] ?? 1) ?> / S<?= (int) ($subject['semester'] ?? 1) ?></span>
-                    <span class="badge <?= e($statusClass) ?>"><?= e(subjects_status_label($status)) ?></span>
-                    <span class="badge"><?= (int) $subject['credits'] ?> Credits</span>
+            <article class="subject-card subject-card--thumb">
+                <div class="subject-card-thumb <?= e($thumbnailTone) ?>">
+                    <span class="subject-card-thumb-code"><?= e($subject['code']) ?></span>
                 </div>
-            </div>
+                <div class="subject-card-content">
+                    <div class="subject-meta">
+                        <span class="badge <?= e($statusClass) ?>"><?= e(subjects_status_label($status)) ?></span>
+                        <span class="badge"><?= (int) $subject['credits'] ?> Credits</span>
+                    </div>
+                    <h3><?= e($subject['code']) ?> - <?= e($subject['name']) ?></h3>
+                    <p class="subject-card-term">Academic year <?= (int) ($subject['academic_year'] ?? 1) ?> · Semester <?= (int) ($subject['semester'] ?? 1) ?></p>
+                    <?php if (!empty($subject['description'])): ?>
+                        <p class="subject-card-description"><?= e($subject['description']) ?></p>
+                    <?php endif; ?>
+                </div>
+            </article>
         <?php endforeach; ?>
     </div>
 <?php endif; ?>
