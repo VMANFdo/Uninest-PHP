@@ -4,6 +4,8 @@ $isSubjectCreate = $currentPath === '/subjects/create';
 $isSubjects = str_starts_with($currentPath, '/subjects') && !$isSubjectCreate;
 $isStudentCreate = $currentPath === '/students/create';
 $isStudents = str_starts_with($currentPath, '/students') && !$isStudentCreate;
+$isBatches = str_starts_with($currentPath, '/admin/batches');
+$isModerators = str_starts_with($currentPath, '/admin/moderators');
 ?>
 <nav class="sidebar-nav">
     <div class="sidebar-section-label">Overview</div>
@@ -23,5 +25,11 @@ $isStudents = str_starts_with($currentPath, '/students') && !$isStudentCreate;
         <li><a href="/subjects/create" data-icon="NW" class="<?= $isSubjectCreate ? 'active' : '' ?>"><span>New Subject</span></a></li>
         <li><a href="/students" data-icon="ST" class="<?= $isStudents ? 'active' : '' ?>"><span>Students</span></a></li>
         <li><a href="/students/create" data-icon="NS" class="<?= $isStudentCreate ? 'active' : '' ?>"><span>New Student</span></a></li>
+    </ul>
+
+    <div class="sidebar-section-label">Provisioning</div>
+    <ul>
+        <li><a href="/admin/moderators" data-icon="MD" class="<?= $isModerators ? 'active' : '' ?>"><span>Moderators</span></a></li>
+        <li><a href="/admin/batches" data-icon="BT" class="<?= $isBatches ? 'active' : '' ?>"><span>Batches</span></a></li>
     </ul>
 </nav>

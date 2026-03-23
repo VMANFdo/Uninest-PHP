@@ -64,6 +64,21 @@ route('POST', '/students/{id}',         'students_update_action', ['middleware_a
 route('POST', '/students/{id}/delete',  'students_delete_action', ['middleware_auth', fn() => middleware_exact_role('admin')]);
 route('POST', '/students/{id}/remove',  'students_remove_action', ['middleware_auth', 'middleware_onboarding_complete', fn() => middleware_exact_role('moderator')]);
 
+// Admin provisioning
+route('GET',  '/admin/batches',               'batches_index',         ['middleware_auth', fn() => middleware_exact_role('admin')]);
+route('GET',  '/admin/batches/create',        'batches_create_form',   ['middleware_auth', fn() => middleware_exact_role('admin')]);
+route('POST', '/admin/batches',               'batches_store',         ['middleware_auth', fn() => middleware_exact_role('admin')]);
+route('GET',  '/admin/batches/{id}/edit',     'batches_edit_form',     ['middleware_auth', fn() => middleware_exact_role('admin')]);
+route('POST', '/admin/batches/{id}',          'batches_update_action', ['middleware_auth', fn() => middleware_exact_role('admin')]);
+route('POST', '/admin/batches/{id}/delete',   'batches_delete_action', ['middleware_auth', fn() => middleware_exact_role('admin')]);
+
+route('GET',  '/admin/moderators',               'moderators_index',         ['middleware_auth', fn() => middleware_exact_role('admin')]);
+route('GET',  '/admin/moderators/create',        'moderators_create_form',   ['middleware_auth', fn() => middleware_exact_role('admin')]);
+route('POST', '/admin/moderators',               'moderators_store',         ['middleware_auth', fn() => middleware_exact_role('admin')]);
+route('GET',  '/admin/moderators/{id}/edit',     'moderators_edit_form',     ['middleware_auth', fn() => middleware_exact_role('admin')]);
+route('POST', '/admin/moderators/{id}',          'moderators_update_action', ['middleware_auth', fn() => middleware_exact_role('admin')]);
+route('POST', '/admin/moderators/{id}/delete',   'moderators_delete_action', ['middleware_auth', fn() => middleware_exact_role('admin')]);
+
 // Moderator join-request approvals
 route('GET',  '/moderator/join-requests',              'moderator_join_requests_index',   ['middleware_auth', 'middleware_onboarding_complete', fn() => middleware_exact_role('moderator')]);
 route('POST', '/moderator/join-requests/{id}/approve', 'moderator_join_request_approve',  ['middleware_auth', 'middleware_onboarding_complete', fn() => middleware_exact_role('moderator')]);

@@ -29,9 +29,12 @@ function students_moderator_batch_all(int $moderatorUserId): array
                 lb.name AS locked_batch_name, lb.batch_code AS locked_batch_code
          FROM users u
          INNER JOIN batches b ON b.id = u.batch_id
+         INNER JOIN users m ON m.id = ?
          LEFT JOIN universities uni ON uni.id = u.university_id
          LEFT JOIN batches lb ON lb.id = u.first_approved_batch_id
-         WHERE u.role = 'student' AND b.moderator_user_id = ?
+         WHERE u.role = 'student'
+           AND m.role = 'moderator'
+           AND m.batch_id = u.batch_id
          ORDER BY u.created_at DESC",
         [$moderatorUserId]
     );
@@ -61,9 +64,13 @@ function students_find_for_moderator_batch(int $studentId, int $moderatorUserId)
                 b.name AS batch_name, b.batch_code
          FROM users u
          INNER JOIN batches b ON b.id = u.batch_id
+         INNER JOIN users m ON m.id = ?
          LEFT JOIN universities uni ON uni.id = u.university_id
-         WHERE u.id = ? AND u.role = 'student' AND b.moderator_user_id = ?",
-        [$studentId, $moderatorUserId]
+         WHERE u.id = ?
+           AND u.role = 'student'
+           AND m.role = 'moderator'
+           AND m.batch_id = u.batch_id",
+        [$moderatorUserId, $studentId]
     );
 }
 
@@ -222,10 +229,13 @@ function students_moderator_remove_from_batch(int $studentId, int $moderatorUser
         $student = db_fetch(
             "SELECT u.id, u.batch_id, u.first_approved_batch_id
              FROM users u
-             INNER JOIN batches b ON b.id = u.batch_id
-             WHERE u.id = ? AND u.role = 'student' AND b.moderator_user_id = ?
+             INNER JOIN users m ON m.id = ?
+             WHERE u.id = ?
+               AND u.role = 'student'
+               AND m.role = 'moderator'
+               AND m.batch_id = u.batch_id
              FOR UPDATE",
-            [$studentId, $moderatorUserId]
+            [$moderatorUserId, $studentId]
         );
 
         if (!$student) {

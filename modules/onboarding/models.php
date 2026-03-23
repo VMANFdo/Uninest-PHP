@@ -53,6 +53,21 @@ function onboarding_find_batch_by_code(string $batchCode): ?array
 
 function onboarding_find_moderator_batch(int $moderatorUserId): ?array
 {
+    $assignedBatch = db_fetch(
+        "SELECT b.*, u.name AS university_name, rv.name AS reviewed_by_name
+         FROM users m
+         INNER JOIN batches b ON b.id = m.batch_id
+         LEFT JOIN universities u ON u.id = b.university_id
+         LEFT JOIN users rv ON rv.id = b.reviewed_by
+         WHERE m.id = ? AND m.role = 'moderator'
+         LIMIT 1",
+        [$moderatorUserId]
+    );
+
+    if ($assignedBatch) {
+        return $assignedBatch;
+    }
+
     return db_fetch(
         "SELECT b.*, u.name AS university_name, rv.name AS reviewed_by_name
          FROM batches b
@@ -246,8 +261,10 @@ function onboarding_moderator_student_requests(int $moderatorUserId): array
          FROM student_batch_requests r
          INNER JOIN users s ON s.id = r.student_user_id
          INNER JOIN batches b ON b.id = r.requested_batch_id
+         INNER JOIN users m ON m.id = ?
          LEFT JOIN users rv ON rv.id = r.reviewed_by
-         WHERE b.moderator_user_id = ?
+         WHERE m.role = 'moderator'
+           AND m.batch_id = r.requested_batch_id
          ORDER BY CASE r.status
              WHEN 'pending' THEN 1
              WHEN 'rejected' THEN 2
@@ -281,11 +298,13 @@ function onboarding_admin_student_requests(): array
 function onboarding_find_student_request_for_moderator(int $requestId, int $moderatorUserId): ?array
 {
     return db_fetch(
-        "SELECT r.*, b.moderator_user_id
+        "SELECT r.*, m.id AS moderator_user_id
          FROM student_batch_requests r
-         INNER JOIN batches b ON b.id = r.requested_batch_id
-         WHERE r.id = ? AND b.moderator_user_id = ?",
-        [$requestId, $moderatorUserId]
+         INNER JOIN users m ON m.id = ?
+         WHERE r.id = ?
+           AND m.role = 'moderator'
+           AND m.batch_id = r.requested_batch_id",
+        [$moderatorUserId, $requestId]
     );
 }
 
@@ -409,8 +428,10 @@ function onboarding_moderator_pending_student_request_count(int $moderatorUserId
     $row = db_fetch(
         "SELECT COUNT(*) AS cnt
          FROM student_batch_requests r
-         INNER JOIN batches b ON b.id = r.requested_batch_id
-         WHERE b.moderator_user_id = ? AND r.status = 'pending'",
+         INNER JOIN users m ON m.id = ?
+         WHERE m.role = 'moderator'
+           AND m.batch_id = r.requested_batch_id
+           AND r.status = 'pending'",
         [$moderatorUserId]
     );
 
