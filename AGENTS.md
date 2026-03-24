@@ -31,6 +31,7 @@ Treat this as the project contract.
   - `students_*` in `modules/students/*`
   - `batches_*` in `modules/batches/*`
   - `moderators_*` in `modules/moderators/*`
+  - `topics_*` in `modules/topics/*`
 - Legacy onboarding exceptions currently allowed:
   - `onboarding_*`, `admin_*`, `moderator_*`, `university_*`, `universities_*`
 - New code should prefer strict module prefixing, even inside onboarding.
@@ -91,11 +92,13 @@ Primary tables:
 - `batches`
 - `student_batch_requests`
 - `subjects` (batch-scoped)
+- `topics` (subject-scoped)
 - `password_reset_tokens`
 
 Non-negotiable integrity rules:
 
 - `subjects.batch_id` is required.
+- `topics.subject_id` is required.
 - `batch_code` is unique.
 - Each batch has exactly one primary moderator owner (`batches.moderator_user_id`).
 - A moderator can own at most one batch (`batches.moderator_user_id` unique).
@@ -112,14 +115,19 @@ When changing DB schema:
 
 - Student:
   - can only see subjects from their `users.batch_id`.
+  - can only view topics for subjects in their own batch.
 - Moderator:
   - can only manage data for their own batch (unless explicitly admin flow).
   - can remove students from their own batch only (no student add/edit/delete account actions).
+  - can CRUD topics only for subjects in their own batch.
+- Coordinator:
+  - can CRUD topics only for subjects assigned to them in `subject_coordinators`.
 - Admin:
   - unrestricted access for approvals and cross-batch management.
   - has full student CRUD access from admin flows.
   - has full moderator CRUD access from admin provisioning flows.
   - has full batch CRUD access from admin provisioning flows.
+  - has full topic CRUD access for all subjects.
 
 Never introduce queries that bypass batch scoping for non-admin users.
 Use `middleware_exact_role('admin')` for admin provisioning routes.
@@ -149,6 +157,14 @@ Use `middleware_exact_role('admin')` for admin provisioning routes.
   - `GET /admin/batches/{id}/edit`
   - `POST /admin/batches/{id}`
   - `POST /admin/batches/{id}/delete`
+- Topic management (subject-scoped):
+  - `GET /dashboard/subjects/{id}/topics` (batch-scoped read view)
+  - `GET /subjects/{id}/topics`
+  - `GET /subjects/{id}/topics/create`
+  - `POST /subjects/{id}/topics`
+  - `GET /subjects/{id}/topics/{topicId}/edit`
+  - `POST /subjects/{id}/topics/{topicId}`
+  - `POST /subjects/{id}/topics/{topicId}/delete`
 
 ## 8) Auth and Password Reset Rules
 

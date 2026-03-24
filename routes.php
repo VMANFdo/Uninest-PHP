@@ -43,6 +43,7 @@ route('GET', '/dashboard', 'dashboard_index', ['middleware_auth', 'middleware_on
 // ──────────────────────────────────────
 
 route('GET', '/dashboard/subjects', 'subjects_student_list', ['middleware_auth', 'middleware_onboarding_complete']);
+route('GET', '/dashboard/subjects/{id}/topics', 'topics_dashboard_index', ['middleware_auth', 'middleware_onboarding_complete']);
 
 // ──────────────────────────────────────
 // Subjects — Moderator CRUD
@@ -57,6 +58,14 @@ route('POST', '/subjects/{id}/delete',  'subjects_delete_action', ['middleware_a
 route('GET',  '/subjects/{id}/coordinators',                   'subjects_coordinators_page',            ['middleware_auth', 'middleware_onboarding_complete', fn() => middleware_role('moderator')]);
 route('POST', '/subjects/{id}/coordinators',                   'subjects_coordinator_assign_action',     ['middleware_auth', 'middleware_onboarding_complete', fn() => middleware_role('moderator')]);
 route('POST', '/subjects/{id}/coordinators/{studentId}/delete','subjects_coordinator_unassign_action',   ['middleware_auth', 'middleware_onboarding_complete', fn() => middleware_role('moderator')]);
+
+// Topics — Subject-scoped CRUD (admin + moderator + coordinator)
+route('GET',  '/subjects/{id}/topics',                    'topics_index',         ['middleware_auth', 'middleware_onboarding_complete', fn() => middleware_role('coordinator')]);
+route('GET',  '/subjects/{id}/topics/create',             'topics_create_form',   ['middleware_auth', 'middleware_onboarding_complete', fn() => middleware_role('coordinator')]);
+route('POST', '/subjects/{id}/topics',                    'topics_store',         ['middleware_auth', 'middleware_onboarding_complete', fn() => middleware_role('coordinator')]);
+route('GET',  '/subjects/{id}/topics/{topicId}/edit',     'topics_edit_form',     ['middleware_auth', 'middleware_onboarding_complete', fn() => middleware_role('coordinator')]);
+route('POST', '/subjects/{id}/topics/{topicId}',          'topics_update_action', ['middleware_auth', 'middleware_onboarding_complete', fn() => middleware_role('coordinator')]);
+route('POST', '/subjects/{id}/topics/{topicId}/delete',   'topics_delete_action', ['middleware_auth', 'middleware_onboarding_complete', fn() => middleware_role('coordinator')]);
 
 // Coordinator subject controls
 route('GET',  '/coordinator/subjects',             'subjects_coordinator_index',         ['middleware_auth', 'middleware_onboarding_complete', fn() => middleware_exact_role('coordinator')]);

@@ -69,6 +69,9 @@
                             <td><span class="badge <?= e($statusClass) ?>"><?= e(subjects_status_label($status)) ?></span></td>
                             <td><?= (int) $subject['credits'] ?></td>
                             <td class="actions">
+                                <a href="/subjects/<?= (int) $subject['id'] ?>/topics" class="table-icon-btn" title="Manage topics" aria-label="Manage topics">
+                                    <?= ui_lucide_icon('layers') ?>
+                                </a>
                                 <a href="/coordinator/subjects/<?= (int) $subject['id'] ?>/edit" class="table-icon-btn" title="Edit subject" aria-label="Edit subject">
                                     <?= ui_lucide_icon('pencil') ?>
                                 </a>

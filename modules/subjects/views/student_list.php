@@ -27,22 +27,24 @@
             };
             $thumbnailTone = ui_avatar_tone_class((string) (($subject['code'] ?? '') . '-' . ($subject['name'] ?? '')));
             ?>
-            <article class="subject-card subject-card--thumb">
-                <div class="subject-card-thumb <?= e($thumbnailTone) ?>">
-                    <span class="subject-card-thumb-code"><?= e($subject['code']) ?></span>
-                </div>
-                <div class="subject-card-content">
-                    <div class="subject-meta">
-                        <span class="badge <?= e($statusClass) ?>"><?= e(subjects_status_label($status)) ?></span>
-                        <span class="badge"><?= (int) $subject['credits'] ?> Credits</span>
+            <a href="/dashboard/subjects/<?= (int) $subject['id'] ?>/topics" class="subject-card-link" aria-label="Open topics for <?= e($subject['name']) ?>">
+                <article class="subject-card subject-card--thumb">
+                    <div class="subject-card-thumb <?= e($thumbnailTone) ?>">
+                        <span class="subject-card-thumb-code"><?= e($subject['code']) ?></span>
                     </div>
-                    <h3><?= e($subject['code']) ?> - <?= e($subject['name']) ?></h3>
-                    <p class="subject-card-term">Academic year <?= (int) ($subject['academic_year'] ?? 1) ?> · Semester <?= (int) ($subject['semester'] ?? 1) ?></p>
-                    <?php if (!empty($subject['description'])): ?>
-                        <p class="subject-card-description"><?= e($subject['description']) ?></p>
-                    <?php endif; ?>
-                </div>
-            </article>
+                    <div class="subject-card-content">
+                        <div class="subject-meta">
+                            <span class="badge <?= e($statusClass) ?>"><?= e(subjects_status_label($status)) ?></span>
+                            <span class="badge"><?= (int) $subject['credits'] ?> Credits</span>
+                        </div>
+                        <h3><?= e($subject['code']) ?> - <?= e($subject['name']) ?></h3>
+                        <p class="subject-card-term">Academic year <?= (int) ($subject['academic_year'] ?? 1) ?> · Semester <?= (int) ($subject['semester'] ?? 1) ?></p>
+                        <?php if (!empty($subject['description'])): ?>
+                            <p class="subject-card-description"><?= e($subject['description']) ?></p>
+                        <?php endif; ?>
+                    </div>
+                </article>
+            </a>
         <?php endforeach; ?>
     </div>
 <?php endif; ?>

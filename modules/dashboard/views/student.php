@@ -50,16 +50,18 @@ $featuredSubjects = array_slice($subjects, 0, 6);
                     default => '',
                 };
                 ?>
-                <article class="subject-tile">
-                    <span class="badge"><?= e($subject['code']) ?></span>
-                    <h3><?= e($subject['name']) ?></h3>
-                    <p><?= !empty($subject['description']) ? e($subject['description']) : 'Description will be added by your moderator.' ?></p>
-                    <small><?= (int) $subject['credits'] ?> credits</small>
-                    <div class="subject-meta">
-                        <span class="badge">Y<?= (int) ($subject['academic_year'] ?? 1) ?> / S<?= (int) ($subject['semester'] ?? 1) ?></span>
-                        <span class="badge <?= e($statusClass) ?>"><?= e(subjects_status_label($status)) ?></span>
-                    </div>
-                </article>
+                <a href="/dashboard/subjects/<?= (int) $subject['id'] ?>/topics" class="subject-tile-link" aria-label="Open topics for <?= e($subject['name']) ?>">
+                    <article class="subject-tile">
+                        <span class="badge"><?= e($subject['code']) ?></span>
+                        <h3><?= e($subject['name']) ?></h3>
+                        <p><?= !empty($subject['description']) ? e($subject['description']) : 'Description will be added by your moderator.' ?></p>
+                        <small><?= (int) $subject['credits'] ?> credits</small>
+                        <div class="subject-meta">
+                            <span class="badge">Y<?= (int) ($subject['academic_year'] ?? 1) ?> / S<?= (int) ($subject['semester'] ?? 1) ?></span>
+                            <span class="badge <?= e($statusClass) ?>"><?= e(subjects_status_label($status)) ?></span>
+                        </div>
+                    </article>
+                </a>
             <?php endforeach; ?>
         </div>
     <?php endif; ?>

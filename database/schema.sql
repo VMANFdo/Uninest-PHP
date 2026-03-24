@@ -255,6 +255,21 @@ UPDATE subjects
 SET status = 'upcoming'
 WHERE status IS NULL OR status NOT IN ('upcoming', 'in_progress', 'completed');
 
+CREATE TABLE IF NOT EXISTS topics (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    subject_id INT NOT NULL,
+    title VARCHAR(200) NOT NULL,
+    description TEXT NULL,
+    sort_order INT UNSIGNED NOT NULL DEFAULT 1,
+    created_by INT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_topics_subject_sort (subject_id, sort_order, id),
+    INDEX idx_topics_created_by (created_by),
+    CONSTRAINT fk_topics_subject FOREIGN KEY (subject_id) REFERENCES subjects(id) ON DELETE CASCADE,
+    CONSTRAINT fk_topics_created_by FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL
+) ENGINE=InnoDB;
+
 CREATE TABLE IF NOT EXISTS subject_coordinators (
     id INT AUTO_INCREMENT PRIMARY KEY,
     subject_id INT NOT NULL,

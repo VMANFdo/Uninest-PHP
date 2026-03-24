@@ -9,6 +9,7 @@
         <p class="page-subtitle">Update subject details while keeping batch alignment and code quality clear.</p>
     </div>
     <div class="page-header-actions">
+        <a href="/subjects/<?= (int) $subject['id'] ?>/topics" class="btn btn-outline">Manage Topics</a>
         <a href="/subjects/<?= (int) $subject['id'] ?>/coordinators" class="btn btn-outline">Manage Coordinators</a>
         <a href="/subjects" class="btn btn-outline">← Back to Subjects</a>
     </div>

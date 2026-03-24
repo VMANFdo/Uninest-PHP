@@ -116,6 +116,9 @@ $statusLabel = ucfirst($batchStatus ?: 'pending');
                             <td><span class="badge <?= e($statusClass) ?>"><?= e(subjects_status_label($status)) ?></span></td>
                             <td><?= (int) $subject['credits'] ?></td>
                             <td class="actions">
+                                <a href="/subjects/<?= (int) $subject['id'] ?>/topics" class="table-icon-btn" title="Manage topics" aria-label="Manage topics">
+                                    <?= ui_lucide_icon('layers') ?>
+                                </a>
                                 <a href="/subjects/<?= (int) $subject['id'] ?>/coordinators" class="table-icon-btn" title="Manage coordinators" aria-label="Manage coordinators">
                                     <?= ui_lucide_icon('users') ?>
                                 </a>
