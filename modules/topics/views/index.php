@@ -29,6 +29,7 @@
                         <th>Topic</th>
                         <th>Created By</th>
                         <th>Updated</th>
+                        <th>Resources</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
@@ -53,6 +54,10 @@
                             </td>
                             <td><?= e($topic['creator_name'] ?? 'Unknown') ?></td>
                             <td><?= e(date('Y-m-d H:i', strtotime((string) $topic['updated_at']))) ?></td>
+                            <td class="actions">
+                                <a href="/dashboard/subjects/<?= (int) $subject['id'] ?>/topics/<?= (int) $topic['id'] ?>/resources" class="btn btn-sm btn-outline">View</a>
+                                <a href="/dashboard/subjects/<?= (int) $subject['id'] ?>/topics/<?= (int) $topic['id'] ?>/resources/create" class="btn btn-sm btn-primary">Upload</a>
+                            </td>
                             <td class="actions">
                                 <a href="/subjects/<?= (int) $subject['id'] ?>/topics/<?= (int) $topic['id'] ?>/edit" class="table-icon-btn" title="Edit topic" aria-label="Edit topic">
                                     <?= ui_lucide_icon('pencil') ?>

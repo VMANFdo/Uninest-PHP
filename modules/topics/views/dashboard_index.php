@@ -30,36 +30,25 @@
             <?php
             $thumbTone = ui_avatar_tone_class((string) (($topic['title'] ?? '') . '-' . ($topic['id'] ?? '')));
             ?>
-            <article class="topic-card">
-                <div class="topic-card-thumb <?= e($thumbTone) ?>">
-                    <span class="topic-card-thumb-order">#<?= (int) $topic['sort_order'] ?></span>
-                </div>
-                <div class="topic-card-content">
-                    <h3><?= e($topic['title']) ?></h3>
-                    <?php if (!empty($topic['description'])): ?>
-                        <p><?= e((string) $topic['description']) ?></p>
-                    <?php else: ?>
-                        <p class="text-muted">No description added yet.</p>
-                    <?php endif; ?>
-                    <div class="topic-card-meta">
-                        <span class="badge">Created by <?= e($topic['creator_name'] ?? 'Unknown') ?></span>
-                        <span class="badge"><?= e(date('Y-m-d', strtotime((string) $topic['updated_at']))) ?></span>
+            <a href="/dashboard/subjects/<?= (int) $subject['id'] ?>/topics/<?= (int) $topic['id'] ?>/resources" class="topic-card-link" aria-label="Open resources for <?= e($topic['title']) ?>">
+                <article class="topic-card">
+                    <div class="topic-card-thumb <?= e($thumbTone) ?>">
+                        <span class="topic-card-thumb-order">#<?= (int) $topic['sort_order'] ?></span>
                     </div>
-                    <?php if ($can_manage): ?>
-                        <div class="topic-card-actions">
-                            <a href="/subjects/<?= (int) $subject['id'] ?>/topics/<?= (int) $topic['id'] ?>/edit" class="table-icon-btn" title="Edit topic" aria-label="Edit topic">
-                                <?= ui_lucide_icon('pencil') ?>
-                            </a>
-                            <form method="POST" action="/subjects/<?= (int) $subject['id'] ?>/topics/<?= (int) $topic['id'] ?>/delete" class="table-action-form" onsubmit="return confirm('Delete this topic?');">
-                                <?= csrf_field() ?>
-                                <button type="submit" class="table-icon-btn is-danger" title="Delete topic" aria-label="Delete topic">
-                                    <?= ui_lucide_icon('trash-2') ?>
-                                </button>
-                            </form>
+                    <div class="topic-card-content">
+                        <h3><?= e($topic['title']) ?></h3>
+                        <?php if (!empty($topic['description'])): ?>
+                            <p><?= e((string) $topic['description']) ?></p>
+                        <?php else: ?>
+                            <p class="text-muted">No description added yet.</p>
+                        <?php endif; ?>
+                        <div class="topic-card-meta">
+                            <span class="badge">Created by <?= e($topic['creator_name'] ?? 'Unknown') ?></span>
+                            <span class="badge"><?= e(date('Y-m-d', strtotime((string) $topic['updated_at']))) ?></span>
                         </div>
-                    <?php endif; ?>
-                </div>
-            </article>
+                    </div>
+                </article>
+            </a>
         <?php endforeach; ?>
     </div>
 <?php endif; ?>

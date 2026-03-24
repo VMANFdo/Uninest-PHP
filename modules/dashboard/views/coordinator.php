@@ -4,6 +4,8 @@
     <p class="dash-copy">Welcome back, <?= e($user['name']) ?>. You can coordinate your assigned subjects while keeping normal student access.</p>
     <div class="dash-action-row">
         <a href="/coordinator/subjects" class="btn btn-primary">Manage Assigned Subjects</a>
+        <a href="/coordinator/resource-requests" class="btn btn-outline">Review Resource Requests</a>
+        <a href="/my-resources" class="btn btn-outline">My Resources</a>
         <a href="/dashboard/subjects" class="btn btn-outline">Browse Batch Subjects</a>
     </div>
 </section>
@@ -14,6 +16,11 @@
         <strong><?= count($subjects) ?></strong>
         <p>Subjects where you currently hold coordinator responsibility.</p>
     </article>
+    <article class="kpi-card">
+        <span class="kpi-label">Pending Resource Requests</span>
+        <strong><?= (int) $pending_resource_requests ?></strong>
+        <p>Student submissions waiting for your approval.</p>
+    </article>
 </section>
 
 <section class="dash-panel">
@@ -21,6 +28,14 @@
         <h2>Coordinator Notes</h2>
     </header>
     <p class="text-muted">You can edit only assigned subjects from the coordinator management page. Subject creation, deletion, and coordinator assignment remain moderator/admin responsibilities.</p>
+</section>
+
+<section class="dash-panel">
+    <header class="dash-panel-header">
+        <h2>Resource Approvals</h2>
+        <a href="/coordinator/resource-requests" class="btn btn-sm btn-outline">Open Queue</a>
+    </header>
+    <p class="text-muted">Review pending student resource uploads and update requests for subjects assigned to you.</p>
 </section>
 
 <section class="dash-panel">

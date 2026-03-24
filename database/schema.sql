@@ -270,6 +270,66 @@ CREATE TABLE IF NOT EXISTS topics (
     CONSTRAINT fk_topics_created_by FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL
 ) ENGINE=InnoDB;
 
+-- ──────────────────────────────────────
+-- Topic Resources (topic-scoped, approval-based publishing)
+-- ──────────────────────────────────────
+
+CREATE TABLE IF NOT EXISTS resources (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    topic_id INT NOT NULL,
+    uploaded_by_user_id INT NULL,
+    title VARCHAR(200) NOT NULL,
+    description TEXT NULL,
+    category VARCHAR(80) NOT NULL,
+    category_other VARCHAR(120) NULL,
+    source_type ENUM('file', 'link') NOT NULL,
+    file_path VARCHAR(255) NULL,
+    file_name VARCHAR(255) NULL,
+    file_mime VARCHAR(120) NULL,
+    file_size INT UNSIGNED NULL,
+    external_url VARCHAR(2048) NULL,
+    status ENUM('pending', 'published', 'rejected') NOT NULL DEFAULT 'pending',
+    rejection_reason TEXT NULL,
+    reviewed_by_user_id INT NULL,
+    reviewed_at TIMESTAMP NULL DEFAULT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_resources_topic_status (topic_id, status),
+    INDEX idx_resources_uploaded_by (uploaded_by_user_id),
+    INDEX idx_resources_status (status),
+    CONSTRAINT fk_resources_topic FOREIGN KEY (topic_id) REFERENCES topics(id) ON DELETE CASCADE,
+    CONSTRAINT fk_resources_uploaded_by FOREIGN KEY (uploaded_by_user_id) REFERENCES users(id) ON DELETE SET NULL,
+    CONSTRAINT fk_resources_reviewed_by FOREIGN KEY (reviewed_by_user_id) REFERENCES users(id) ON DELETE SET NULL
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS resource_update_requests (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    resource_id INT NOT NULL,
+    requested_by_user_id INT NULL,
+    title VARCHAR(200) NOT NULL,
+    description TEXT NULL,
+    category VARCHAR(80) NOT NULL,
+    category_other VARCHAR(120) NULL,
+    source_type ENUM('file', 'link') NOT NULL,
+    file_path VARCHAR(255) NULL,
+    file_name VARCHAR(255) NULL,
+    file_mime VARCHAR(120) NULL,
+    file_size INT UNSIGNED NULL,
+    external_url VARCHAR(2048) NULL,
+    status ENUM('pending', 'rejected') NOT NULL DEFAULT 'pending',
+    rejection_reason TEXT NULL,
+    reviewed_by_user_id INT NULL,
+    reviewed_at TIMESTAMP NULL DEFAULT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY uniq_resource_update_resource (resource_id),
+    INDEX idx_resource_updates_status (status),
+    INDEX idx_resource_updates_requested_by (requested_by_user_id),
+    CONSTRAINT fk_resource_updates_resource FOREIGN KEY (resource_id) REFERENCES resources(id) ON DELETE CASCADE,
+    CONSTRAINT fk_resource_updates_requested_by FOREIGN KEY (requested_by_user_id) REFERENCES users(id) ON DELETE SET NULL,
+    CONSTRAINT fk_resource_updates_reviewed_by FOREIGN KEY (reviewed_by_user_id) REFERENCES users(id) ON DELETE SET NULL
+) ENGINE=InnoDB;
+
 CREATE TABLE IF NOT EXISTS subject_coordinators (
     id INT AUTO_INCREMENT PRIMARY KEY,
     subject_id INT NOT NULL,

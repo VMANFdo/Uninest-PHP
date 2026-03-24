@@ -59,8 +59,10 @@ function dashboard_index(): void
         case 'coordinator':
             try {
                 $data['subjects'] = subjects_all_for_coordinator((int) $user['id']);
+                $data['pending_resource_requests'] = resources_coordinator_pending_count((int) $user['id']);
             } catch (\PDOException) {
                 $data['subjects'] = [];
+                $data['pending_resource_requests'] = 0;
             }
             $viewName = 'coordinator';
             break;

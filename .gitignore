@@ -11,6 +11,8 @@
 
 # Logs and runtime artifacts
 /storage/logs/*.log
+/storage/resources/*
+!/storage/resources/.gitkeep
 
 # IDE / editor
 .idea/

@@ -9,6 +9,7 @@ $isStudents = str_starts_with($currentPath, '/students');
     <ul>
         <li><a href="/dashboard" data-icon="DB" class="<?= is_current_url('/dashboard') ? 'active' : '' ?>"><span>Dashboard</span></a></li>
         <li><a href="/moderator/join-requests" data-icon="JR" class="<?= str_starts_with($currentPath, '/moderator/join-requests') ? 'active' : '' ?>"><span>Join Requests</span></a></li>
+        <li><a href="/my-resources" data-icon="RS" class="<?= str_starts_with($currentPath, '/my-resources') ? 'active' : '' ?>"><span>My Resources</span></a></li>
     </ul>
 
     <div class="sidebar-section-label">Content</div>

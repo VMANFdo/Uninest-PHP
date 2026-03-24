@@ -44,6 +44,10 @@ route('GET', '/dashboard', 'dashboard_index', ['middleware_auth', 'middleware_on
 
 route('GET', '/dashboard/subjects', 'subjects_student_list', ['middleware_auth', 'middleware_onboarding_complete']);
 route('GET', '/dashboard/subjects/{id}/topics', 'topics_dashboard_index', ['middleware_auth', 'middleware_onboarding_complete']);
+route('GET', '/dashboard/subjects/{id}/topics/{topicId}/resources', 'resources_topic_index', ['middleware_auth', 'middleware_onboarding_complete']);
+route('GET', '/dashboard/subjects/{id}/topics/{topicId}/resources/create', 'resources_topic_create_form', ['middleware_auth', 'middleware_onboarding_complete']);
+route('GET', '/dashboard/subjects/{id}/topics/{topicId}/resources/{resourceId}', 'resources_topic_show', ['middleware_auth', 'middleware_onboarding_complete']);
+route('POST', '/dashboard/subjects/{id}/topics/{topicId}/resources', 'resources_topic_store', ['middleware_auth', 'middleware_onboarding_complete']);
 
 // ──────────────────────────────────────
 // Subjects — Moderator CRUD
@@ -71,6 +75,19 @@ route('POST', '/subjects/{id}/topics/{topicId}/delete',   'topics_delete_action'
 route('GET',  '/coordinator/subjects',             'subjects_coordinator_index',         ['middleware_auth', 'middleware_onboarding_complete', fn() => middleware_exact_role('coordinator')]);
 route('GET',  '/coordinator/subjects/{id}/edit',   'subjects_coordinator_edit_form',     ['middleware_auth', 'middleware_onboarding_complete', fn() => middleware_exact_role('coordinator')]);
 route('POST', '/coordinator/subjects/{id}',        'subjects_coordinator_update_action', ['middleware_auth', 'middleware_onboarding_complete', fn() => middleware_exact_role('coordinator')]);
+route('GET', '/coordinator/resource-requests', 'resources_coordinator_requests_index', ['middleware_auth', 'middleware_onboarding_complete', fn() => middleware_exact_role('coordinator')]);
+route('POST', '/coordinator/resource-requests/create/{id}/approve', 'resources_coordinator_create_approve', ['middleware_auth', 'middleware_onboarding_complete', fn() => middleware_exact_role('coordinator')]);
+route('POST', '/coordinator/resource-requests/create/{id}/reject', 'resources_coordinator_create_reject', ['middleware_auth', 'middleware_onboarding_complete', fn() => middleware_exact_role('coordinator')]);
+route('POST', '/coordinator/resource-requests/update/{id}/approve', 'resources_coordinator_update_approve', ['middleware_auth', 'middleware_onboarding_complete', fn() => middleware_exact_role('coordinator')]);
+route('POST', '/coordinator/resource-requests/update/{id}/reject', 'resources_coordinator_update_reject', ['middleware_auth', 'middleware_onboarding_complete', fn() => middleware_exact_role('coordinator')]);
+
+// My resources (authenticated)
+route('GET', '/my-resources', 'resources_my_index', ['middleware_auth', 'middleware_onboarding_complete']);
+route('GET', '/my-resources/{id}/edit', 'resources_my_edit_form', ['middleware_auth', 'middleware_onboarding_complete']);
+route('POST', '/my-resources/{id}', 'resources_my_update_action', ['middleware_auth', 'middleware_onboarding_complete']);
+route('POST', '/my-resources/{id}/delete', 'resources_my_delete_action', ['middleware_auth', 'middleware_onboarding_complete']);
+route('GET', '/resources/{id}/inline', 'resources_inline', ['middleware_auth', 'middleware_onboarding_complete']);
+route('GET', '/resources/{id}/download', 'resources_download', ['middleware_auth', 'middleware_onboarding_complete']);
 
 // Students management (admin + moderator scoped actions)
 route('GET',  '/students',              'students_index',         ['middleware_auth', 'middleware_onboarding_complete', fn() => middleware_role('moderator')]);

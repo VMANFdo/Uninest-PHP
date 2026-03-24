@@ -23,6 +23,7 @@ $isModerators = str_starts_with($currentPath, '/admin/moderators');
     <ul>
         <li><a href="/subjects" data-icon="SB" class="<?= $isSubjects ? 'active' : '' ?>"><span>Subjects</span></a></li>
         <li><a href="/subjects/create" data-icon="NW" class="<?= $isSubjectCreate ? 'active' : '' ?>"><span>New Subject</span></a></li>
+        <li><a href="/my-resources" data-icon="RS" class="<?= str_starts_with($currentPath, '/my-resources') ? 'active' : '' ?>"><span>My Resources</span></a></li>
         <li><a href="/students" data-icon="ST" class="<?= $isStudents ? 'active' : '' ?>"><span>Students</span></a></li>
         <li><a href="/students/create" data-icon="NS" class="<?= $isStudentCreate ? 'active' : '' ?>"><span>New Student</span></a></li>
     </ul>

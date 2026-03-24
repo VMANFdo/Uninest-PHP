@@ -18,6 +18,7 @@ $statusLabel = ucfirst($batchStatus ?: 'pending');
     <div class="dash-action-row">
         <a href="/moderator/join-requests" class="btn btn-primary">Review Join Requests</a>
         <a href="/students" class="btn btn-outline">Manage Students</a>
+        <a href="/my-resources" class="btn btn-outline">My Resources</a>
         <a href="/subjects/create" class="btn btn-outline">Create Subject</a>
         <a href="/subjects" class="btn btn-outline">Manage Subjects</a>
     </div>
