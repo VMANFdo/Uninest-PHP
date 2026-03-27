@@ -75,8 +75,23 @@ function topics_update_data(int $topicId, int $subjectId, array $data): int
 
 function topics_delete_by_id(int $topicId, int $subjectId): int
 {
-    return db_query(
-        'DELETE FROM topics WHERE id = ? AND subject_id = ?',
-        [$topicId, $subjectId]
-    )->rowCount();
+    $pdo = db_connect();
+    $pdo->beginTransaction();
+
+    try {
+        resources_delete_comments_for_topic($topicId);
+
+        $deleted = db_query(
+            'DELETE FROM topics WHERE id = ? AND subject_id = ?',
+            [$topicId, $subjectId]
+        )->rowCount();
+
+        $pdo->commit();
+        return $deleted;
+    } catch (Throwable $e) {
+        if ($pdo->inTransaction()) {
+            $pdo->rollBack();
+        }
+        throw $e;
+    }
 }

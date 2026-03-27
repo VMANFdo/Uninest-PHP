@@ -49,6 +49,8 @@
                         <div class="resource-card-footer">
                             <span class="badge">By <?= e($resource['uploader_name'] ?? 'Unknown') ?></span>
                             <span class="badge"><?= e(date('Y-m-d', strtotime((string) $resource['updated_at']))) ?></span>
+                            <span class="badge"><?= e(resources_rating_summary_label((float) ($resource['average_rating'] ?? 0), (int) ($resource['rating_count'] ?? 0))) ?></span>
+                            <span class="badge"><?= e(resources_comment_count_label((int) ($resource['comment_count'] ?? 0))) ?></span>
                         </div>
                     </div>
                 </article>

@@ -4,6 +4,11 @@ $isFileSource = (string) ($resource['source_type'] ?? '') === 'file';
 $previewLabel = $isFileSource
     ? resources_file_extension_label((string) ($resource['file_name'] ?? ''), (string) ($resource['file_path'] ?? ''))
     : resources_link_host_label((string) ($resource['external_url'] ?? ''));
+$resourceId = (int) ($resource['id'] ?? 0);
+$averageRating = (float) ($resource['average_rating'] ?? 0);
+$ratingCount = (int) ($resource['rating_count'] ?? 0);
+$commentCount = (int) ($resource['comment_count'] ?? 0);
+$maxCommentLevel = (int) ($comment_max_level ?? (comments_max_depth() + 1));
 ?>
 
 <div class="page-header">
@@ -95,3 +100,134 @@ $previewLabel = $isFileSource
         </div>
     </div>
 <?php endif; ?>
+
+<section class="card resource-interactions-card" id="resource-interactions">
+    <div class="card-body">
+        <h3>Interactions</h3>
+        <div class="resource-interactions-summary">
+            <span class="badge"><?= e(resources_rating_summary_label($averageRating, $ratingCount)) ?></span>
+            <span class="badge"><?= e(resources_comment_count_label($commentCount)) ?></span>
+        </div>
+
+        <?php if (!empty($can_rate)): ?>
+            <form method="POST" action="/resources/<?= $resourceId ?>/rating" class="resource-rating-form">
+                <?= csrf_field() ?>
+                <label for="rating">Your Rating</label>
+                <select id="rating" name="rating" required>
+                    <option value="">Select rating</option>
+                    <?php for ($score = 1; $score <= 5; $score++): ?>
+                        <option value="<?= $score ?>" <?= (int) ($current_user_rating ?? 0) === $score ? 'selected' : '' ?>>
+                            <?= $score ?> / 5
+                        </option>
+                    <?php endfor; ?>
+                </select>
+                <button type="submit" class="btn btn-primary">Save Rating</button>
+            </form>
+        <?php elseif (user_role() === 'student' && (int) ($resource['uploaded_by_user_id'] ?? 0) === (int) auth_id()): ?>
+            <p class="text-muted">You cannot rate your own uploaded resource.</p>
+        <?php else: ?>
+            <p class="text-muted">Only students can submit ratings.</p>
+        <?php endif; ?>
+    </div>
+</section>
+
+<section class="card resource-comments-card" id="resource-comments">
+    <div class="card-body">
+        <div class="resource-comments-shell">
+            <form method="POST" action="/resources/<?= $resourceId ?>/comments" class="resource-comments-composer">
+                <?= csrf_field() ?>
+                <textarea
+                    id="comment_body"
+                    name="body"
+                    rows="4"
+                    maxlength="<?= comments_max_body_length() ?>"
+                    placeholder="Add comment..."
+                    required></textarea>
+                <div class="resource-comments-composer-footer">
+                    <small class="text-muted">Threaded replies up to <?= $maxCommentLevel ?> levels.</small>
+                    <button type="submit" class="btn btn-primary">Submit</button>
+                </div>
+            </form>
+
+            <div class="resource-comments-divider"></div>
+
+            <div class="resource-comments-header-row">
+                <h3>Comments <span class="badge resource-comments-count"><?= (int) $commentCount ?></span></h3>
+                <span class="resource-comments-sort">Most recent</span>
+            </div>
+
+            <?php if (empty($comments)): ?>
+                <p class="text-muted">No comments yet. Start the discussion.</p>
+            <?php else: ?>
+                <div class="resource-comments-list">
+                    <?php
+                    $renderComments = function (array $nodes) use (&$renderComments, $resourceId): void {
+                        foreach ($nodes as $comment):
+                            $commentId = (int) ($comment['id'] ?? 0);
+                            $depth = (int) ($comment['depth'] ?? 0);
+                            $authorName = trim((string) ($comment['user_name'] ?? ''));
+                            if ($authorName === '') {
+                                $authorName = 'Unknown User';
+                            }
+                            ?>
+                            <article class="resource-comment depth-<?= $depth ?>">
+                                <div class="resource-comment-main">
+                                    <span class="resource-comment-avatar"><?= e(ui_initials($authorName)) ?></span>
+                                    <div class="resource-comment-body">
+                                        <header class="resource-comment-header">
+                                            <strong><?= e($authorName) ?></strong>
+                                            <small class="text-muted"><?= e(date('Y-m-d H:i', strtotime((string) ($comment['created_at'] ?? 'now')))) ?></small>
+                                        </header>
+                                        <p><?= nl2br(e((string) ($comment['body'] ?? ''))) ?></p>
+
+                                        <div class="resource-comment-actions">
+                                            <?php if (!empty($comment['can_reply'])): ?>
+                                                <details class="resource-comment-action-block">
+                                                    <summary class="resource-comment-action-btn">Reply</summary>
+                                                    <form method="POST" action="/resources/<?= $resourceId ?>/comments" class="resource-comment-inline-form">
+                                                        <?= csrf_field() ?>
+                                                        <input type="hidden" name="parent_comment_id" value="<?= $commentId ?>">
+                                                        <textarea name="body" rows="2" maxlength="<?= comments_max_body_length() ?>" required></textarea>
+                                                        <button type="submit" class="btn btn-sm btn-primary">Post Reply</button>
+                                                    </form>
+                                                </details>
+                                            <?php endif; ?>
+
+                                            <?php if (!empty($comment['can_edit'])): ?>
+                                                <details class="resource-comment-action-block">
+                                                    <summary class="resource-comment-action-btn">Edit</summary>
+                                                    <form method="POST" action="/resources/<?= $resourceId ?>/comments/<?= $commentId ?>" class="resource-comment-inline-form">
+                                                        <?= csrf_field() ?>
+                                                        <textarea name="body" rows="2" maxlength="<?= comments_max_body_length() ?>" required><?= e((string) ($comment['body'] ?? '')) ?></textarea>
+                                                        <button type="submit" class="btn btn-sm btn-outline">Save</button>
+                                                    </form>
+                                                </details>
+                                            <?php endif; ?>
+
+                                            <?php if (!empty($comment['can_delete'])): ?>
+                                                <form method="POST" action="/resources/<?= $resourceId ?>/comments/<?= $commentId ?>/delete" onsubmit="return confirm('Delete this comment and all replies?');">
+                                                    <?= csrf_field() ?>
+                                                    <button type="submit" class="resource-comment-action-btn is-danger">Delete</button>
+                                                </form>
+                                            <?php endif; ?>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <?php if (!empty($comment['children'])): ?>
+                                    <div class="resource-comment-children">
+                                        <?php $renderComments($comment['children']); ?>
+                                    </div>
+                                <?php endif; ?>
+                            </article>
+                        <?php
+                        endforeach;
+                    };
+
+                    $renderComments((array) $comments);
+                    ?>
+                </div>
+            <?php endif; ?>
+        </div>
+    </div>
+</section>

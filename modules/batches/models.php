@@ -289,7 +289,25 @@ function batches_update_admin(int $batchId, array $data, int $adminUserId): bool
 
 function batches_delete_admin(int $batchId): bool
 {
-    return db_query('DELETE FROM batches WHERE id = ?', [$batchId])->rowCount() > 0;
+    $pdo = db_connect();
+    $pdo->beginTransaction();
+
+    try {
+        resources_delete_comments_for_batch($batchId);
+        $deleted = db_query('DELETE FROM batches WHERE id = ?', [$batchId])->rowCount() > 0;
+        if (!$deleted) {
+            $pdo->rollBack();
+            return false;
+        }
+
+        $pdo->commit();
+        return true;
+    } catch (Throwable $e) {
+        if ($pdo->inTransaction()) {
+            $pdo->rollBack();
+        }
+        throw $e;
+    }
 }
 
 function batches_delete_has_locked_students(int $batchId): bool

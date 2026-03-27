@@ -78,6 +78,29 @@ function resources_format_file_size(?int $bytes): string
     return number_format($size / (1024 * 1024), 1) . ' MB';
 }
 
+function resources_format_rating_value(float $average): string
+{
+    return number_format($average, 1);
+}
+
+function resources_rating_summary_label(?float $averageRating, int $ratingCount): string
+{
+    if ($ratingCount <= 0) {
+        return 'No ratings yet';
+    }
+
+    return 'Rating ' . resources_format_rating_value((float) $averageRating) . '/5 (' . $ratingCount . ')';
+}
+
+function resources_comment_count_label(int $commentCount): string
+{
+    if ($commentCount <= 0) {
+        return 'No comments yet';
+    }
+
+    return $commentCount . ' comment' . ($commentCount === 1 ? '' : 's');
+}
+
 function resources_file_previewable_extensions(): array
 {
     return ['pdf', 'jpg', 'jpeg', 'png', 'txt'];
@@ -402,6 +425,74 @@ function resources_resolve_readable_topic(int $subjectId, int $topicId): ?array
     ];
 }
 
+function resources_resolve_accessible_published_resource(int $resourceId): ?array
+{
+    $resource = resources_find_published_with_context($resourceId);
+    if (!$resource) {
+        return null;
+    }
+
+    if (user_role() === 'admin') {
+        return $resource;
+    }
+
+    $subjectId = (int) ($resource['subject_id'] ?? 0);
+    $topicId = (int) ($resource['topic_id'] ?? 0);
+    $context = resources_resolve_readable_topic($subjectId, $topicId);
+    if (!$context) {
+        return null;
+    }
+
+    return $resource;
+}
+
+function resources_detail_path(array $resource): string
+{
+    return '/dashboard/subjects/' . (int) ($resource['subject_id'] ?? 0)
+        . '/topics/' . (int) ($resource['topic_id'] ?? 0)
+        . '/resources/' . (int) ($resource['id'] ?? 0);
+}
+
+function resources_comment_can_delete(array $resource, array $comment): bool
+{
+    $currentUserId = (int) auth_id();
+    $commentAuthorId = (int) ($comment['user_id'] ?? 0);
+
+    if ($commentAuthorId > 0 && $commentAuthorId === $currentUserId) {
+        return true;
+    }
+
+    $role = (string) user_role();
+    if ($role === 'admin' || $role === 'moderator') {
+        return true;
+    }
+
+    if ($role === 'coordinator') {
+        return subjects_find_for_coordinator((int) ($resource['subject_id'] ?? 0), $currentUserId) !== null;
+    }
+
+    return false;
+}
+
+function resources_enrich_comment_tree(array $nodes, array $resource): array
+{
+    $currentUserId = (int) auth_id();
+    $maxDepth = comments_max_depth();
+    $enriched = [];
+
+    foreach ($nodes as $node) {
+        $authorId = (int) ($node['user_id'] ?? 0);
+        $depth = (int) ($node['depth'] ?? 0);
+        $node['can_edit'] = $authorId > 0 && $authorId === $currentUserId;
+        $node['can_delete'] = resources_comment_can_delete($resource, $node);
+        $node['can_reply'] = auth_check() && $depth < $maxDepth;
+        $node['children'] = resources_enrich_comment_tree((array) ($node['children'] ?? []), $resource);
+        $enriched[] = $node;
+    }
+
+    return $enriched;
+}
+
 function resources_prepare_payload(?array $baseRecord = null): array
 {
     $errors = [];
@@ -542,10 +633,24 @@ function resources_topic_show(string $id, string $topicId, string $resourceId): 
         abort(404, 'Published resource not found.');
     }
 
+    $currentUserRating = null;
+    $viewerIsStudent = user_role() === 'student';
+    $viewerCanRate = $viewerIsStudent && (int) ($resource['uploaded_by_user_id'] ?? 0) !== (int) auth_id();
+    if ($viewerCanRate) {
+        $currentUserRating = resources_find_student_rating($resourceIdInt, (int) auth_id());
+    }
+
+    $commentsTree = comments_tree_for_target('resource', $resourceIdInt);
+    $commentsTree = resources_enrich_comment_tree($commentsTree, $resource);
+
     view('resources::show', [
         'subject' => $context['subject'],
         'topic' => $context['topic'],
         'resource' => $resource,
+        'current_user_rating' => $currentUserRating,
+        'can_rate' => $viewerCanRate,
+        'comments' => $commentsTree,
+        'comment_max_level' => comments_max_depth() + 1,
     ], 'dashboard');
 }
 
@@ -818,6 +923,168 @@ function resources_inline(string $id): void
     }
 
     resources_stream_file($resource, 'inline');
+}
+
+function resources_rating_upsert(string $id): void
+{
+    csrf_check();
+
+    if (user_role() !== 'student') {
+        abort(403, 'Only students can rate resources.');
+    }
+
+    $resourceId = (int) $id;
+    $resource = resources_resolve_accessible_published_resource($resourceId);
+    if (!$resource) {
+        abort(404, 'Resource not found.');
+    }
+
+    $resourcePath = resources_detail_path($resource);
+
+    if ((int) ($resource['uploaded_by_user_id'] ?? 0) === (int) auth_id()) {
+        flash('error', 'You cannot rate your own resource.');
+        redirect($resourcePath . '#resource-interactions');
+    }
+
+    $rating = (int) request_input('rating', 0);
+    if ($rating < 1 || $rating > 5) {
+        flash('error', 'Select a rating between 1 and 5.');
+        redirect($resourcePath . '#resource-interactions');
+    }
+
+    try {
+        resources_upsert_student_rating($resourceId, (int) auth_id(), $rating);
+    } catch (Throwable) {
+        flash('error', 'Unable to save your rating right now. Please try again.');
+        redirect($resourcePath . '#resource-interactions');
+    }
+
+    flash('success', 'Your rating has been saved.');
+    redirect($resourcePath . '#resource-interactions');
+}
+
+function resources_comment_store(string $id): void
+{
+    csrf_check();
+
+    $resourceId = (int) $id;
+    $resource = resources_resolve_accessible_published_resource($resourceId);
+    if (!$resource) {
+        abort(404, 'Resource not found.');
+    }
+
+    $resourcePath = resources_detail_path($resource);
+    $targetType = 'resource';
+    $targetId = $resourceId;
+
+    $validation = comments_validate_body((string) request_input('body', ''));
+    if (!empty($validation['errors'])) {
+        flash('error', implode(' ', $validation['errors']));
+        redirect($resourcePath . '#resource-comments');
+    }
+
+    $parentCommentId = (int) request_input('parent_comment_id', 0);
+    $parentId = null;
+    $depth = 0;
+
+    if ($parentCommentId > 0) {
+        $parent = comments_find_target_comment($parentCommentId, $targetType, $targetId);
+        if (!$parent) {
+            flash('error', 'Reply target not found.');
+            redirect($resourcePath . '#resource-comments');
+        }
+
+        $depth = (int) ($parent['depth'] ?? 0) + 1;
+        if ($depth > comments_max_depth()) {
+            flash('error', 'Reply depth limit reached.');
+            redirect($resourcePath . '#resource-comments');
+        }
+
+        $parentId = $parentCommentId;
+    }
+
+    try {
+        comments_insert(
+            $targetType,
+            $targetId,
+            (int) auth_id(),
+            $validation['body'],
+            $parentId,
+            $depth
+        );
+    } catch (Throwable) {
+        flash('error', 'Unable to post comment right now. Please try again.');
+        redirect($resourcePath . '#resource-comments');
+    }
+
+    flash('success', 'Comment posted.');
+    redirect($resourcePath . '#resource-comments');
+}
+
+function resources_comment_update(string $id, string $commentId): void
+{
+    csrf_check();
+
+    $resourceId = (int) $id;
+    $resource = resources_resolve_accessible_published_resource($resourceId);
+    if (!$resource) {
+        abort(404, 'Resource not found.');
+    }
+
+    $resourcePath = resources_detail_path($resource);
+    $commentIdInt = (int) $commentId;
+    $comment = comments_find_target_comment($commentIdInt, 'resource', $resourceId);
+    if (!$comment) {
+        abort(404, 'Comment not found.');
+    }
+
+    if ((int) ($comment['user_id'] ?? 0) !== (int) auth_id()) {
+        abort(403, 'You can only edit your own comments.');
+    }
+
+    $validation = comments_validate_body((string) request_input('body', ''));
+    if (!empty($validation['errors'])) {
+        flash('error', implode(' ', $validation['errors']));
+        redirect($resourcePath . '#resource-comments');
+    }
+
+    if (!comments_update_body_by_author($commentIdInt, (int) auth_id(), $validation['body'])) {
+        flash('error', 'Unable to update this comment.');
+        redirect($resourcePath . '#resource-comments');
+    }
+
+    flash('success', 'Comment updated.');
+    redirect($resourcePath . '#resource-comments');
+}
+
+function resources_comment_delete(string $id, string $commentId): void
+{
+    csrf_check();
+
+    $resourceId = (int) $id;
+    $resource = resources_resolve_accessible_published_resource($resourceId);
+    if (!$resource) {
+        abort(404, 'Resource not found.');
+    }
+
+    $resourcePath = resources_detail_path($resource);
+    $commentIdInt = (int) $commentId;
+    $comment = comments_find_target_comment($commentIdInt, 'resource', $resourceId);
+    if (!$comment) {
+        abort(404, 'Comment not found.');
+    }
+
+    if (!resources_comment_can_delete($resource, $comment)) {
+        abort(403, 'You do not have permission to delete this comment.');
+    }
+
+    if (!comments_delete_by_id($commentIdInt)) {
+        flash('error', 'Unable to delete this comment.');
+        redirect($resourcePath . '#resource-comments');
+    }
+
+    flash('success', 'Comment deleted.');
+    redirect($resourcePath . '#resource-comments');
 }
 
 function resources_coordinator_requests_index(): void

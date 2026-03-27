@@ -351,6 +351,8 @@ function subjects_delete_by_id(int $id): int
     $pdo->beginTransaction();
 
     try {
+        resources_delete_comments_for_subject($id);
+
         $coordinatorIds = array_map(
             static fn(array $row): int => (int) $row['student_user_id'],
             db_fetch_all('SELECT student_user_id FROM subject_coordinators WHERE subject_id = ?', [$id])

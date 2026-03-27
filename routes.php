@@ -86,6 +86,10 @@ route('GET', '/my-resources', 'resources_my_index', ['middleware_auth', 'middlew
 route('GET', '/my-resources/{id}/edit', 'resources_my_edit_form', ['middleware_auth', 'middleware_onboarding_complete']);
 route('POST', '/my-resources/{id}', 'resources_my_update_action', ['middleware_auth', 'middleware_onboarding_complete']);
 route('POST', '/my-resources/{id}/delete', 'resources_my_delete_action', ['middleware_auth', 'middleware_onboarding_complete']);
+route('POST', '/resources/{id}/rating', 'resources_rating_upsert', ['middleware_auth', 'middleware_onboarding_complete']);
+route('POST', '/resources/{id}/comments', 'resources_comment_store', ['middleware_auth', 'middleware_onboarding_complete']);
+route('POST', '/resources/{id}/comments/{commentId}', 'resources_comment_update', ['middleware_auth', 'middleware_onboarding_complete']);
+route('POST', '/resources/{id}/comments/{commentId}/delete', 'resources_comment_delete', ['middleware_auth', 'middleware_onboarding_complete']);
 route('GET', '/resources/{id}/inline', 'resources_inline', ['middleware_auth', 'middleware_onboarding_complete']);
 route('GET', '/resources/{id}/download', 'resources_download', ['middleware_auth', 'middleware_onboarding_complete']);
 

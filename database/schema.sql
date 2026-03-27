@@ -330,6 +330,38 @@ CREATE TABLE IF NOT EXISTS resource_update_requests (
     CONSTRAINT fk_resource_updates_reviewed_by FOREIGN KEY (reviewed_by_user_id) REFERENCES users(id) ON DELETE SET NULL
 ) ENGINE=InnoDB;
 
+CREATE TABLE IF NOT EXISTS resource_ratings (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    resource_id INT NOT NULL,
+    student_user_id INT NOT NULL,
+    rating TINYINT UNSIGNED NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY uniq_resource_student_rating (resource_id, student_user_id),
+    INDEX idx_resource_ratings_resource (resource_id),
+    INDEX idx_resource_ratings_student (student_user_id),
+    CONSTRAINT chk_resource_ratings_value CHECK (rating BETWEEN 1 AND 5),
+    CONSTRAINT fk_resource_ratings_resource FOREIGN KEY (resource_id) REFERENCES resources(id) ON DELETE CASCADE,
+    CONSTRAINT fk_resource_ratings_student FOREIGN KEY (student_user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS comments (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    target_type VARCHAR(50) NOT NULL,
+    target_id INT NOT NULL,
+    parent_comment_id INT NULL,
+    depth TINYINT UNSIGNED NOT NULL DEFAULT 0,
+    user_id INT NULL,
+    body TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_comments_target (target_type, target_id, created_at, id),
+    INDEX idx_comments_parent (parent_comment_id),
+    INDEX idx_comments_user (user_id),
+    CONSTRAINT fk_comments_parent FOREIGN KEY (parent_comment_id) REFERENCES comments(id) ON DELETE CASCADE,
+    CONSTRAINT fk_comments_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
+) ENGINE=InnoDB;
+
 CREATE TABLE IF NOT EXISTS subject_coordinators (
     id INT AUTO_INCREMENT PRIMARY KEY,
     subject_id INT NOT NULL,

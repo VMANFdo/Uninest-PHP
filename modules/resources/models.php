@@ -29,9 +29,27 @@ function resources_allowed_file_extensions(): array
 function resources_topic_published_list(int $topicId): array
 {
     return db_fetch_all(
-        "SELECT r.*, u.name AS uploader_name
+        "SELECT r.*,
+                u.name AS uploader_name,
+                COALESCE(rr.average_rating, 0) AS average_rating,
+                COALESCE(rr.rating_count, 0) AS rating_count,
+                COALESCE(cc.comment_count, 0) AS comment_count
          FROM resources r
          LEFT JOIN users u ON u.id = r.uploaded_by_user_id
+         LEFT JOIN (
+            SELECT resource_id,
+                   ROUND(AVG(rating), 2) AS average_rating,
+                   COUNT(*) AS rating_count
+            FROM resource_ratings
+            GROUP BY resource_id
+         ) rr ON rr.resource_id = r.id
+         LEFT JOIN (
+            SELECT target_id AS resource_id,
+                   COUNT(*) AS comment_count
+            FROM comments
+            WHERE target_type = 'resource'
+            GROUP BY target_id
+         ) cc ON cc.resource_id = r.id
          WHERE r.topic_id = ?
            AND r.status = 'published'
          ORDER BY r.updated_at DESC, r.id DESC",
@@ -42,9 +60,27 @@ function resources_topic_published_list(int $topicId): array
 function resources_find_topic_published(int $resourceId, int $topicId): ?array
 {
     return db_fetch(
-        "SELECT r.*, u.name AS uploader_name
+        "SELECT r.*,
+                u.name AS uploader_name,
+                COALESCE(rr.average_rating, 0) AS average_rating,
+                COALESCE(rr.rating_count, 0) AS rating_count,
+                COALESCE(cc.comment_count, 0) AS comment_count
          FROM resources r
          LEFT JOIN users u ON u.id = r.uploaded_by_user_id
+         LEFT JOIN (
+            SELECT resource_id,
+                   ROUND(AVG(rating), 2) AS average_rating,
+                   COUNT(*) AS rating_count
+            FROM resource_ratings
+            GROUP BY resource_id
+         ) rr ON rr.resource_id = r.id
+         LEFT JOIN (
+            SELECT target_id AS resource_id,
+                   COUNT(*) AS comment_count
+            FROM comments
+            WHERE target_type = 'resource'
+            GROUP BY target_id
+         ) cc ON cc.resource_id = r.id
          WHERE r.id = ?
            AND r.topic_id = ?
            AND r.status = 'published'
@@ -111,6 +147,127 @@ function resources_find_with_context(int $resourceId): ?array
          LIMIT 1",
         [$resourceId]
     );
+}
+
+function resources_find_published_with_context(int $resourceId): ?array
+{
+    return db_fetch(
+        "SELECT r.*,
+                t.id AS topic_id,
+                t.title AS topic_title,
+                s.id AS subject_id,
+                s.code AS subject_code,
+                s.name AS subject_name,
+                u.name AS uploader_name,
+                COALESCE(rr.average_rating, 0) AS average_rating,
+                COALESCE(rr.rating_count, 0) AS rating_count,
+                COALESCE(cc.comment_count, 0) AS comment_count
+         FROM resources r
+         INNER JOIN topics t ON t.id = r.topic_id
+         INNER JOIN subjects s ON s.id = t.subject_id
+         LEFT JOIN users u ON u.id = r.uploaded_by_user_id
+         LEFT JOIN (
+            SELECT resource_id,
+                   ROUND(AVG(rating), 2) AS average_rating,
+                   COUNT(*) AS rating_count
+            FROM resource_ratings
+            GROUP BY resource_id
+         ) rr ON rr.resource_id = r.id
+         LEFT JOIN (
+            SELECT target_id AS resource_id,
+                   COUNT(*) AS comment_count
+            FROM comments
+            WHERE target_type = 'resource'
+            GROUP BY target_id
+         ) cc ON cc.resource_id = r.id
+         WHERE r.id = ?
+           AND r.status = 'published'
+         LIMIT 1",
+        [$resourceId]
+    );
+}
+
+function resources_find_student_rating(int $resourceId, int $studentUserId): ?int
+{
+    $row = db_fetch(
+        'SELECT rating FROM resource_ratings WHERE resource_id = ? AND student_user_id = ? LIMIT 1',
+        [$resourceId, $studentUserId]
+    );
+
+    if (!$row) {
+        return null;
+    }
+
+    return (int) ($row['rating'] ?? 0);
+}
+
+function resources_upsert_student_rating(int $resourceId, int $studentUserId, int $rating): void
+{
+    db_query(
+        "INSERT INTO resource_ratings (resource_id, student_user_id, rating)
+         VALUES (?, ?, ?)
+         ON DUPLICATE KEY UPDATE
+             rating = VALUES(rating),
+             updated_at = CURRENT_TIMESTAMP",
+        [$resourceId, $studentUserId, $rating]
+    );
+}
+
+function resources_all_ids_in_topic(int $topicId): array
+{
+    $rows = db_fetch_all(
+        'SELECT id FROM resources WHERE topic_id = ?',
+        [$topicId]
+    );
+
+    return array_values(array_map(static fn(array $row): int => (int) $row['id'], $rows));
+}
+
+function resources_all_ids_in_subject(int $subjectId): array
+{
+    $rows = db_fetch_all(
+        "SELECT r.id
+         FROM resources r
+         INNER JOIN topics t ON t.id = r.topic_id
+         WHERE t.subject_id = ?",
+        [$subjectId]
+    );
+
+    return array_values(array_map(static fn(array $row): int => (int) $row['id'], $rows));
+}
+
+function resources_all_ids_in_batch(int $batchId): array
+{
+    $rows = db_fetch_all(
+        "SELECT r.id
+         FROM resources r
+         INNER JOIN topics t ON t.id = r.topic_id
+         INNER JOIN subjects s ON s.id = t.subject_id
+         WHERE s.batch_id = ?",
+        [$batchId]
+    );
+
+    return array_values(array_map(static fn(array $row): int => (int) $row['id'], $rows));
+}
+
+function resources_delete_comments_for_resource_ids(array $resourceIds): int
+{
+    return comments_delete_for_target_ids('resource', $resourceIds);
+}
+
+function resources_delete_comments_for_topic(int $topicId): int
+{
+    return resources_delete_comments_for_resource_ids(resources_all_ids_in_topic($topicId));
+}
+
+function resources_delete_comments_for_subject(int $subjectId): int
+{
+    return resources_delete_comments_for_resource_ids(resources_all_ids_in_subject($subjectId));
+}
+
+function resources_delete_comments_for_batch(int $batchId): int
+{
+    return resources_delete_comments_for_resource_ids(resources_all_ids_in_batch($batchId));
 }
 
 function resources_create(array $data): string
@@ -248,31 +405,52 @@ function resources_delete_update_request_for_resource(int $resourceId): ?array
 
 function resources_delete_owned(int $resourceId, int $ownerUserId): ?array
 {
-    $resource = db_fetch(
-        "SELECT r.id,
-                r.file_path,
-                ur.file_path AS update_file_path
-         FROM resources r
-         LEFT JOIN resource_update_requests ur ON ur.resource_id = r.id
-         WHERE r.id = ?
-           AND r.uploaded_by_user_id = ?
-         LIMIT 1",
-        [$resourceId, $ownerUserId]
-    );
+    $pdo = db_connect();
+    $pdo->beginTransaction();
 
-    if (!$resource) {
-        return null;
+    try {
+        $resource = db_fetch(
+            "SELECT r.id,
+                    r.file_path,
+                    ur.file_path AS update_file_path
+             FROM resources r
+             LEFT JOIN resource_update_requests ur ON ur.resource_id = r.id
+             WHERE r.id = ?
+               AND r.uploaded_by_user_id = ?
+             LIMIT 1
+             FOR UPDATE",
+            [$resourceId, $ownerUserId]
+        );
+
+        if (!$resource) {
+            $pdo->rollBack();
+            return null;
+        }
+
+        resources_delete_comments_for_resource_ids([$resourceId]);
+
+        $deleted = db_query(
+            'DELETE FROM resources WHERE id = ? AND uploaded_by_user_id = ?',
+            [$resourceId, $ownerUserId]
+        )->rowCount();
+
+        if ($deleted < 1) {
+            $pdo->rollBack();
+            return null;
+        }
+
+        $pdo->commit();
+
+        return [
+            'file_path' => $resource['file_path'] ?? null,
+            'update_file_path' => $resource['update_file_path'] ?? null,
+        ];
+    } catch (Throwable $e) {
+        if ($pdo->inTransaction()) {
+            $pdo->rollBack();
+        }
+        throw $e;
     }
-
-    db_query(
-        'DELETE FROM resources WHERE id = ? AND uploaded_by_user_id = ?',
-        [$resourceId, $ownerUserId]
-    );
-
-    return [
-        'file_path' => $resource['file_path'] ?? null,
-        'update_file_path' => $resource['update_file_path'] ?? null,
-    ];
 }
 
 function resources_coordinator_pending_create_requests(int $coordinatorUserId): array
