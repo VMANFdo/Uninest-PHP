@@ -31,17 +31,6 @@ $buildFeedUrl = static function (array $params = []) use ($is_admin, $selectedBa
 };
 ?>
 
-<div class="page-header community-page-header">
-    <div class="page-header-content">
-        <p class="page-breadcrumb">Dashboard / Community Feed</p>
-        <h1>Community Feed</h1>
-        <p class="page-subtitle">A clean, shared social space for your batch discussions.</p>
-    </div>
-    <div class="page-header-actions">
-        <a href="/dashboard" class="btn btn-outline">← Back to Dashboard</a>
-    </div>
-</div>
-
 <?php if (!empty($is_admin) && $selectedBatchId <= 0): ?>
     <section class="community-admin-gate">
         <h3>Select Batch to Open Feed</h3>
@@ -135,6 +124,7 @@ $buildFeedUrl = static function (array $params = []) use ($is_admin, $selectedBa
                     <?php endif; ?>
 
                     <div class="community-topbar-actions">
+                        <a href="/dashboard" class="community-topbar-link">← Dashboard</a>
                         <button type="submit" class="btn btn-primary">Apply</button>
                         <a href="<?= e($buildFeedUrl(['subject_id' => null])) ?>" class="btn btn-outline">Reset</a>
                     </div>

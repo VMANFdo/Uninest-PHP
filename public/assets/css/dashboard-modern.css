@@ -957,106 +957,96 @@
   gap: 6px;
 }
 
-.dashboard-body .community-page-header {
-  margin-bottom: 0;
-}
-
-.dashboard-body .community-admin-gate,
-.dashboard-body .community-rail-card,
-.dashboard-body .community-topbar-card,
-.dashboard-body .community-composer-card,
-.dashboard-body .community-post-card,
-.dashboard-body .community-detail-card,
-.dashboard-body .community-inline-edit-card {
-  border: 1px solid #d9e3f1;
-  border-radius: 16px;
-  background: #fff;
-  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.03);
-}
-
 .dashboard-body .community-admin-gate {
-  margin-top: 14px;
-  padding: 20px;
+  margin-top: 4px;
+  padding: 16px 0 10px;
   display: grid;
-  gap: 12px;
+  gap: 10px;
 }
 
 .dashboard-body .community-admin-gate h3 {
   margin: 0;
-  font-size: 1.16rem;
-  color: #19283d;
+  font-size: 1.06rem;
+  color: #1d2f46;
 }
 
 .dashboard-body .community-shell {
-  margin-top: 14px;
+  margin-top: 2px;
+  width: 100%;
+  max-width: 1260px;
+  margin-inline: auto;
   display: grid;
-  grid-template-columns: 240px minmax(0, 1fr) 280px;
-  gap: 14px;
+  grid-template-columns: minmax(168px, 208px) minmax(0, 760px) minmax(188px, 240px);
+  justify-content: center;
+  gap: 12px;
   align-items: start;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  padding: 0;
 }
 
 .dashboard-body .community-left-rail,
 .dashboard-body .community-right-rail {
   display: grid;
-  gap: 12px;
+  gap: 10px;
   position: sticky;
-  top: 84px;
+  top: 82px;
 }
 
 .dashboard-body .community-main-column {
   display: grid;
-  gap: 12px;
+  gap: 8px;
 }
 
 .dashboard-body .community-rail-card {
-  padding: 12px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
 }
 
 .dashboard-body .community-rail-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 8px;
+  margin-bottom: 4px;
 }
 
 .dashboard-body .community-rail-header h3 {
   margin: 0;
-  font-size: 0.95rem;
+  font-size: 0.92rem;
   font-weight: 560;
-  color: #1f2f45;
+  color: #24364f;
 }
 
 .dashboard-body .community-category-list {
   display: grid;
-  gap: 6px;
+  gap: 2px;
 }
 
 .dashboard-body .community-category-item {
-  border: 1px solid #e2e9f4;
-  border-radius: 10px;
-  background: #f8fbff;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
   color: #2f425d;
   font-size: 0.86rem;
   text-decoration: none;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 8px 10px;
+  padding: 6px 8px;
   transition:
-    border-color 0.15s ease,
     background-color 0.15s ease,
-    transform 0.15s ease;
+    color 0.15s ease;
 }
 
 .dashboard-body .community-category-item:hover {
-  border-color: #cfdced;
-  background: #f3f8ff;
-  transform: translateY(-1px);
+  background: #f3f6fb;
 }
 
 .dashboard-body .community-category-item.is-active {
-  border-color: rgba(var(--dash-brand-rgb), 0.3);
-  background: rgba(var(--dash-brand-rgb), 0.09);
+  background: rgba(var(--dash-brand-rgb), 0.12);
   color: var(--dash-brand-dark);
 }
 
@@ -1078,24 +1068,53 @@
 }
 
 .dashboard-body .community-topbar-card {
-  padding: 12px;
+  padding: 0 0 6px;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  border-bottom: 1px solid #e7edf6;
 }
 
 .dashboard-body .community-topbar-form {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  display: flex;
+  flex-wrap: wrap;
   align-items: end;
-  gap: 10px;
+  gap: 7px;
+}
+
+.dashboard-body .community-topbar-form .form-group {
+  flex: 0 1 170px;
+  min-width: 148px;
+  margin-bottom: 0;
 }
 
 .dashboard-body .community-topbar-actions {
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
+  margin-left: auto;
+  justify-content: flex-end;
+}
+
+.dashboard-body .community-topbar-link {
+  align-self: center;
+  text-decoration: none;
+  color: #506480;
+  font-size: 0.84rem;
+  font-weight: 520;
+  padding: 0 4px;
+}
+
+.dashboard-body .community-topbar-link:hover {
+  color: #304661;
 }
 
 .dashboard-body .community-composer-card {
-  padding: 12px;
+  padding: 10px 12px;
+  border: 1px solid #e2eaf5;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: none;
 }
 
 .dashboard-body .community-composer-form {
@@ -1117,11 +1136,11 @@
 }
 
 .dashboard-body .social-composer-row textarea {
-  border: 1px solid #d8e2ef;
+  border: 1px solid #dbe4f0;
   border-radius: 12px;
   background: #fff;
   padding: 11px 12px;
-  min-height: 96px;
+  min-height: 82px;
   resize: vertical;
   font-size: 0.9rem;
   line-height: 1.55;
@@ -1134,7 +1153,7 @@
 }
 
 .dashboard-body .social-composer-controls {
-  border-top: 1px solid #e4ebf5;
+  border-top: 1px solid #e9eff7;
   padding-top: 10px;
   display: flex;
   align-items: center;
@@ -1150,10 +1169,14 @@
   flex-wrap: wrap;
 }
 
+.dashboard-body .community-composer-form .form-group {
+  margin-bottom: 0;
+}
+
 .dashboard-body .social-composer-inline-fields select {
   min-width: 150px;
   height: 36px;
-  border: 1px solid #d7e1ee;
+  border: 1px solid #dce5f1;
   border-radius: 10px;
   background: #fff;
   padding: 0 10px;
@@ -1162,7 +1185,7 @@
 
 .dashboard-body .social-upload-btn {
   position: relative;
-  border: 1px solid #d7e1ee;
+  border: 1px solid #dce5f1;
   border-radius: 10px;
   background: #fff;
   color: #2c3f58;
@@ -1182,13 +1205,17 @@
 
 .dashboard-body .community-post-list {
   display: grid;
-  gap: 12px;
+  gap: 8px;
 }
 
 .dashboard-body .community-post-card {
-  padding: 14px;
+  padding: 12px;
   display: grid;
-  gap: 10px;
+  gap: 8px;
+  border: 1px solid #e2e9f3;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: none;
 }
 
 .dashboard-body .community-post-header {
@@ -1248,7 +1275,7 @@
 
 .dashboard-body .community-post-image-link img {
   width: 100%;
-  max-height: 420px;
+  max-height: 360px;
   object-fit: cover;
   border: 1px solid #d8e2ef;
   border-radius: 12px;
@@ -1277,7 +1304,7 @@
   justify-content: space-between;
   gap: 10px;
   flex-wrap: wrap;
-  border-top: 1px solid #e5ecf5;
+  border-top: 1px solid #edf2f8;
   padding-top: 9px;
 }
 
@@ -1314,17 +1341,23 @@
   padding: 0;
   list-style: none;
   display: grid;
-  gap: 8px;
+  gap: 4px;
 }
 
 .dashboard-body .community-mini-list li {
-  border: 1px solid #e2e9f4;
-  border-radius: 10px;
-  padding: 8px 9px;
+  border: 0;
+  border-bottom: 1px solid #e7edf6;
+  border-radius: 0;
+  padding: 6px 2px;
+  background: transparent;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 10px;
+}
+
+.dashboard-body .community-mini-list li:last-child {
+  border-bottom: 0;
 }
 
 .dashboard-body .community-mini-list span {
@@ -1339,17 +1372,23 @@
 
 .dashboard-body .community-popular-list {
   display: grid;
-  gap: 8px;
+  gap: 6px;
 }
 
 .dashboard-body .community-popular-item {
-  border: 1px solid #e2e9f4;
-  border-radius: 10px;
-  padding: 9px;
+  border: 0;
+  border-bottom: 1px solid #e8eef7;
+  border-radius: 0;
+  padding: 8px 2px;
   text-decoration: none;
   color: inherit;
   display: grid;
-  gap: 5px;
+  gap: 4px;
+  background: transparent;
+}
+
+.dashboard-body .community-popular-item:last-child {
+  border-bottom: 0;
 }
 
 .dashboard-body .community-popular-item strong {
@@ -1374,6 +1413,10 @@
   display: grid;
   gap: 14px;
   padding: 14px 16px;
+  border: 1px solid #e1e8f3;
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: none;
 }
 
 .dashboard-body .community-detail-body p {
@@ -1394,6 +1437,10 @@
 .dashboard-body .community-inline-edit-card {
   margin-top: 12px;
   padding: 12px;
+  border: 1px solid #e1e8f3;
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: none;
 }
 
 .dashboard-body .community-inline-edit-card details > summary {
@@ -2239,7 +2286,10 @@
   }
 
   .dashboard-body .community-shell {
-    grid-template-columns: 220px minmax(0, 1fr);
+    max-width: 100%;
+    grid-template-columns: 190px minmax(0, 1fr);
+    gap: 10px;
+    padding: 0;
   }
 
   .dashboard-body .community-right-rail {
@@ -2287,6 +2337,8 @@
 
   .dashboard-body .community-shell {
     grid-template-columns: 1fr;
+    gap: 8px;
+    padding: 0;
   }
 
   .dashboard-body .community-left-rail,
@@ -2392,6 +2444,10 @@
   .dashboard-body .community-post-footer {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  .dashboard-body .community-topbar-actions {
+    justify-content: flex-start;
   }
 
   .dashboard-body .social-composer-inline-fields {
