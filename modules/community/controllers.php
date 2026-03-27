@@ -458,8 +458,28 @@ function community_index(): void
         $selectedSubjectId = 0;
     }
 
+    $selectedPostType = trim((string) request_input('post_type', ''));
+    if ($selectedPostType !== '' && !in_array($selectedPostType, community_post_types(), true)) {
+        $selectedPostType = '';
+    }
+
+    $selectedSort = trim((string) request_input('sort', 'recent'));
+    if (!in_array($selectedSort, ['recent', 'top'], true)) {
+        $selectedSort = 'recent';
+    }
+
+    $selectedSubjectFilter = $selectedSubjectId > 0 ? $selectedSubjectId : null;
+
     $posts = $selectedBatchId > 0
-        ? community_posts_for_batch($selectedBatchId, $selectedSubjectId > 0 ? $selectedSubjectId : null, $viewerId)
+        ? community_posts_for_batch($selectedBatchId, $selectedSubjectFilter, $selectedPostType !== '' ? $selectedPostType : null, $selectedSort, $viewerId)
+        : [];
+
+    $postTypeCounts = $selectedBatchId > 0
+        ? community_post_type_counts_for_batch($selectedBatchId, $selectedSubjectFilter)
+        : [];
+
+    $popularPosts = $selectedBatchId > 0
+        ? community_popular_posts_for_batch($selectedBatchId, $selectedSubjectFilter, $viewerId, 3)
         : [];
 
     view('community::index', [
@@ -469,7 +489,11 @@ function community_index(): void
         'selected_batch_id' => $selectedBatchId,
         'subject_options' => $subjectOptions,
         'selected_subject_id' => $selectedSubjectId,
+        'selected_post_type' => $selectedPostType,
+        'selected_sort' => $selectedSort,
         'post_types' => community_post_types(),
+        'post_type_counts' => $postTypeCounts,
+        'popular_posts' => $popularPosts,
         'posts' => $posts,
         'can_post' => community_user_can_post(),
     ], 'dashboard');

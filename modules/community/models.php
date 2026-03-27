@@ -76,7 +76,13 @@ function community_subject_exists_in_batch(int $subjectId, int $batchId): bool
     );
 }
 
-function community_posts_for_batch(int $batchId, ?int $subjectId, int $viewerUserId): array
+function community_posts_for_batch(
+    int $batchId,
+    ?int $subjectId,
+    ?string $postType,
+    string $sortBy,
+    int $viewerUserId
+): array
 {
     if ($batchId <= 0) {
         return [];
@@ -88,6 +94,16 @@ function community_posts_for_batch(int $batchId, ?int $subjectId, int $viewerUse
         $subjectSql = ' AND p.subject_id = ?';
         $params[] = $subjectId;
     }
+
+    $postTypeSql = '';
+    if ($postType !== null && $postType !== '' && in_array($postType, community_post_types(), true)) {
+        $postTypeSql = ' AND p.post_type = ?';
+        $params[] = $postType;
+    }
+
+    $orderBySql = $sortBy === 'top'
+        ? 'COALESCE(lc.like_count, 0) DESC, COALESCE(cc.comment_count, 0) DESC, p.created_at DESC, p.id DESC'
+        : 'p.created_at DESC, p.id DESC';
 
     return db_fetch_all(
         "SELECT p.*,
@@ -118,7 +134,96 @@ function community_posts_for_batch(int $batchId, ?int $subjectId, int $viewerUse
                 ON ul.post_id = p.id
                AND ul.user_id = ?
          WHERE p.batch_id = ?{$subjectSql}
-         ORDER BY p.created_at DESC, p.id DESC",
+               {$postTypeSql}
+         ORDER BY {$orderBySql}",
+        $params
+    );
+}
+
+function community_post_type_counts_for_batch(int $batchId, ?int $subjectId = null): array
+{
+    if ($batchId <= 0) {
+        return [];
+    }
+
+    $params = [$batchId];
+    $subjectSql = '';
+    if ($subjectId !== null && $subjectId > 0) {
+        $subjectSql = ' AND subject_id = ?';
+        $params[] = $subjectId;
+    }
+
+    $rows = db_fetch_all(
+        "SELECT post_type, COUNT(*) AS cnt
+         FROM feed_posts
+         WHERE batch_id = ?{$subjectSql}
+         GROUP BY post_type",
+        $params
+    );
+
+    $counts = ['_all' => 0];
+    foreach (community_post_types() as $type) {
+        $counts[$type] = 0;
+    }
+
+    foreach ($rows as $row) {
+        $type = (string) ($row['post_type'] ?? '');
+        $count = (int) ($row['cnt'] ?? 0);
+        if (isset($counts[$type])) {
+            $counts[$type] = $count;
+            $counts['_all'] += $count;
+        }
+    }
+
+    return $counts;
+}
+
+function community_popular_posts_for_batch(
+    int $batchId,
+    ?int $subjectId,
+    int $viewerUserId,
+    int $limit = 3
+): array {
+    if ($batchId <= 0) {
+        return [];
+    }
+
+    $limit = max(1, min(10, $limit));
+    $params = [$viewerUserId, $batchId];
+    $subjectSql = '';
+    if ($subjectId !== null && $subjectId > 0) {
+        $subjectSql = ' AND p.subject_id = ?';
+        $params[] = $subjectId;
+    }
+
+    return db_fetch_all(
+        "SELECT p.*,
+                u.name AS author_name,
+                s.code AS subject_code,
+                s.name AS subject_name,
+                COALESCE(lc.like_count, 0) AS like_count,
+                COALESCE(cc.comment_count, 0) AS comment_count,
+                CASE WHEN ul.id IS NULL THEN 0 ELSE 1 END AS is_liked_by_viewer
+         FROM feed_posts p
+         LEFT JOIN users u ON u.id = p.author_user_id
+         LEFT JOIN subjects s ON s.id = p.subject_id
+         LEFT JOIN (
+            SELECT post_id, COUNT(*) AS like_count
+            FROM feed_post_likes
+            GROUP BY post_id
+         ) lc ON lc.post_id = p.id
+         LEFT JOIN (
+            SELECT target_id AS post_id, COUNT(*) AS comment_count
+            FROM comments
+            WHERE target_type = 'feed_post'
+            GROUP BY target_id
+         ) cc ON cc.post_id = p.id
+         LEFT JOIN feed_post_likes ul
+                ON ul.post_id = p.id
+               AND ul.user_id = ?
+         WHERE p.batch_id = ?{$subjectSql}
+         ORDER BY COALESCE(lc.like_count, 0) DESC, COALESCE(cc.comment_count, 0) DESC, p.created_at DESC, p.id DESC
+         LIMIT {$limit}",
         $params
     );
 }
