@@ -53,34 +53,6 @@ $buildFeedUrl = static function (array $params = []) use ($is_admin, $selectedBa
     </section>
 <?php else: ?>
     <section class="community-shell">
-        <aside class="community-left-rail">
-            <article class="community-rail-card">
-                <header class="community-rail-header">
-                    <h3>Category</h3>
-                </header>
-                <nav class="community-category-list" aria-label="Feed categories">
-                    <?php
-                    $allCount = (int) ($postTypeCounts['_all'] ?? 0);
-                    $allActive = $selectedPostType === '';
-                    ?>
-                    <a href="<?= e($buildFeedUrl(['post_type' => null])) ?>" class="community-category-item <?= $allActive ? 'is-active' : '' ?>">
-                        <span>All Posts</span>
-                        <span class="community-category-count"><?= $allCount ?></span>
-                    </a>
-                    <?php foreach ($post_types as $postType): ?>
-                        <?php
-                        $isActive = $selectedPostType === $postType;
-                        $typeCount = (int) ($postTypeCounts[$postType] ?? 0);
-                        ?>
-                        <a href="<?= e($buildFeedUrl(['post_type' => $postType])) ?>" class="community-category-item <?= $isActive ? 'is-active' : '' ?>">
-                            <span><?= e(community_post_type_label($postType)) ?></span>
-                            <span class="community-category-count"><?= $typeCount ?></span>
-                        </a>
-                    <?php endforeach; ?>
-                </nav>
-            </article>
-        </aside>
-
         <main class="community-main-column">
             <article class="community-topbar-card">
                 <form method="GET" action="/dashboard/community" class="community-topbar-form">
@@ -130,6 +102,27 @@ $buildFeedUrl = static function (array $params = []) use ($is_admin, $selectedBa
                     </div>
                 </form>
             </article>
+
+            <nav class="community-category-strip" aria-label="Feed categories">
+                <?php
+                $allCount = (int) ($postTypeCounts['_all'] ?? 0);
+                $allActive = $selectedPostType === '';
+                ?>
+                <a href="<?= e($buildFeedUrl(['post_type' => null])) ?>" class="community-category-pill <?= $allActive ? 'is-active' : '' ?>">
+                    <span>All Posts</span>
+                    <span class="community-category-count"><?= $allCount ?></span>
+                </a>
+                <?php foreach ($post_types as $postType): ?>
+                    <?php
+                    $isActive = $selectedPostType === $postType;
+                    $typeCount = (int) ($postTypeCounts[$postType] ?? 0);
+                    ?>
+                    <a href="<?= e($buildFeedUrl(['post_type' => $postType])) ?>" class="community-category-pill <?= $isActive ? 'is-active' : '' ?>">
+                        <span><?= e(community_post_type_label($postType)) ?></span>
+                        <span class="community-category-count"><?= $typeCount ?></span>
+                    </a>
+                <?php endforeach; ?>
+            </nav>
 
             <?php if (!empty($can_post)): ?>
                 <article class="community-composer-card social-composer">

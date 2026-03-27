@@ -973,10 +973,10 @@
 .dashboard-body .community-shell {
   margin-top: 2px;
   width: 100%;
-  max-width: 1260px;
+  max-width: 1180px;
   margin-inline: auto;
   display: grid;
-  grid-template-columns: minmax(168px, 208px) minmax(0, 760px) minmax(188px, 240px);
+  grid-template-columns: minmax(0, 860px) minmax(200px, 260px);
   justify-content: center;
   gap: 12px;
   align-items: start;
@@ -997,6 +997,7 @@
 .dashboard-body .community-main-column {
   display: grid;
   gap: 8px;
+  min-width: 0;
 }
 
 .dashboard-body .community-rail-card {
@@ -1107,6 +1108,47 @@
 
 .dashboard-body .community-topbar-link:hover {
   color: #304661;
+}
+
+.dashboard-body .community-category-strip {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex-wrap: wrap;
+  padding-bottom: 4px;
+}
+
+.dashboard-body .community-category-pill {
+  border: 1px solid #dfe7f3;
+  border-radius: 999px;
+  background: #fff;
+  color: #2d4059;
+  font-size: 0.82rem;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  transition:
+    border-color 0.15s ease,
+    color 0.15s ease,
+    background-color 0.15s ease;
+}
+
+.dashboard-body .community-category-pill:hover {
+  border-color: #ccd8ea;
+}
+
+.dashboard-body .community-category-pill.is-active {
+  background: rgba(var(--dash-brand-rgb), 0.1);
+  border-color: rgba(var(--dash-brand-rgb), 0.28);
+  color: var(--dash-brand-dark);
+}
+
+.dashboard-body .community-category-pill .community-category-count {
+  min-width: 22px;
+  height: 20px;
+  font-size: 0.72rem;
 }
 
 .dashboard-body .community-composer-card {
@@ -2287,14 +2329,13 @@
 
   .dashboard-body .community-shell {
     max-width: 100%;
-    grid-template-columns: 190px minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr);
     gap: 10px;
     padding: 0;
   }
 
   .dashboard-body .community-right-rail {
     position: static;
-    grid-column: 1 / -1;
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
@@ -2348,7 +2389,18 @@
   }
 
   .dashboard-body .community-topbar-form {
-    grid-template-columns: 1fr;
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .dashboard-body .community-topbar-form .form-group {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .dashboard-body .community-topbar-actions {
+    margin-left: 0;
+    justify-content: flex-start;
   }
 }
 
