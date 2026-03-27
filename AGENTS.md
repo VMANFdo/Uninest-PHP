@@ -32,6 +32,8 @@ Treat this as the project contract.
   - `batches_*` in `modules/batches/*`
   - `moderators_*` in `modules/moderators/*`
   - `topics_*` in `modules/topics/*`
+  - `resources_*` in `modules/resources/*`
+  - `comments_*` in `modules/comments/*`
 - Legacy onboarding exceptions currently allowed:
   - `onboarding_*`, `admin_*`, `moderator_*`, `university_*`, `universities_*`
 - New code should prefer strict module prefixing, even inside onboarding.
@@ -93,6 +95,11 @@ Primary tables:
 - `student_batch_requests`
 - `subjects` (batch-scoped)
 - `topics` (subject-scoped)
+- `subject_coordinators`
+- `resources` (topic-scoped, approval-based)
+- `resource_update_requests` (staged edits)
+- `resource_ratings`
+- `comments` (polymorphic target)
 - `password_reset_tokens`
 
 Non-negotiable integrity rules:
@@ -131,6 +138,21 @@ When changing DB schema:
 
 Never introduce queries that bypass batch scoping for non-admin users.
 Use `middleware_exact_role('admin')` for admin provisioning routes.
+
+## 7.2) Resource Interaction Rules (Do Not Break)
+
+- Published resources stay scoped by existing subject/topic access checks.
+- Ratings apply to published resources only.
+  - rating is `student`-only,
+  - one rating per `(resource_id, student_user_id)`,
+  - uploader cannot rate own resource.
+- Comments apply to published resources only in v1 using `comments.target_type = 'resource'`.
+- Comment nesting is capped at 3 visible levels (`depth` 0..2).
+- Comment permissions:
+  - any readable onboarded user can create comments/replies,
+  - only author can edit their own comment,
+  - delete allowed for author, moderator/admin, and coordinator only within assigned subjects.
+- Keep comment target access centralized in helpers/controllers; do not hardcode target-specific access rules in generic comment model functions.
 
 ## 7.1) Admin Provisioning Route Groups
 
@@ -214,6 +236,7 @@ After generation:
 - Do not allow batch deletion if any user is locked to it through `users.first_approved_batch_id`.
 - Do not introduce direct SQL using untrusted input without bound params.
 - Do not add duplicate global helper names.
+- Do not remove polymorphic resource-comment cleanup from resource/topic/subject/batch deletion flows.
 
 ## 12) Definition of Done
 
