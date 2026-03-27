@@ -37,75 +37,69 @@ $filledStars = max(0, min(5, (int) round($averageRating)));
         </div>
     </article>
 
-    <article class="card resource-detail-content-card">
-        <div class="card-body">
-            <?php if (!empty($resource['description'])): ?>
-                <p><?= nl2br(e((string) $resource['description'])) ?></p>
+    <article class="resource-detail-content-card">
+        <?php if (!empty($resource['description'])): ?>
+            <p><?= nl2br(e((string) $resource['description'])) ?></p>
+        <?php else: ?>
+            <p class="text-muted">No description added for this resource.</p>
+        <?php endif; ?>
+
+        <div class="resource-detail-meta-grid">
+            <div>
+                <small class="text-muted">Uploaded By</small>
+                <strong><?= e($resource['uploader_name'] ?? 'Unknown') ?></strong>
+            </div>
+            <div>
+                <small class="text-muted">Created</small>
+                <strong><?= e(date('Y-m-d H:i', strtotime((string) $resource['created_at']))) ?></strong>
+            </div>
+            <div>
+                <small class="text-muted">Updated</small>
+                <strong><?= e(date('Y-m-d H:i', strtotime((string) $resource['updated_at']))) ?></strong>
+            </div>
+        </div>
+
+        <div class="form-actions">
+            <?php if ($isFileSource): ?>
+                <a href="/resources/<?= (int) $resource['id'] ?>/download" class="btn btn-primary">Download File</a>
+                <span class="text-muted">
+                    <?= e((string) ($resource['file_name'] ?? 'File')) ?>
+                    (<?= e(resources_format_file_size((int) ($resource['file_size'] ?? 0))) ?>)
+                </span>
             <?php else: ?>
-                <p class="text-muted">No description added for this resource.</p>
+                <a href="<?= e((string) $resource['external_url']) ?>" target="_blank" rel="noopener" class="btn btn-primary">Open Link</a>
+                <span class="text-muted"><?= e((string) $resource['external_url']) ?></span>
             <?php endif; ?>
-
-            <div class="resource-detail-meta-grid">
-                <div>
-                    <small class="text-muted">Uploaded By</small>
-                    <strong><?= e($resource['uploader_name'] ?? 'Unknown') ?></strong>
-                </div>
-                <div>
-                    <small class="text-muted">Created</small>
-                    <strong><?= e(date('Y-m-d H:i', strtotime((string) $resource['created_at']))) ?></strong>
-                </div>
-                <div>
-                    <small class="text-muted">Updated</small>
-                    <strong><?= e(date('Y-m-d H:i', strtotime((string) $resource['updated_at']))) ?></strong>
-                </div>
-            </div>
-
-            <div class="form-actions">
-                <?php if ($isFileSource): ?>
-                    <a href="/resources/<?= (int) $resource['id'] ?>/download" class="btn btn-primary">Download File</a>
-                    <span class="text-muted">
-                        <?= e((string) ($resource['file_name'] ?? 'File')) ?>
-                        (<?= e(resources_format_file_size((int) ($resource['file_size'] ?? 0))) ?>)
-                    </span>
-                <?php else: ?>
-                    <a href="<?= e((string) $resource['external_url']) ?>" target="_blank" rel="noopener" class="btn btn-primary">Open Link</a>
-                    <span class="text-muted"><?= e((string) $resource['external_url']) ?></span>
-                <?php endif; ?>
-            </div>
         </div>
     </article>
 </div>
 
 <?php if (resources_can_embed_in_iframe($resource)): ?>
-    <div class="card resource-embed-card">
-        <div class="card-body">
-            <h3>Preview</h3>
-            <?php if ($isFileSource): ?>
-                <iframe
-                    class="resource-embed-frame"
-                    src="/resources/<?= (int) $resource['id'] ?>/inline"
-                    title="Resource preview: <?= e($resource['title']) ?>"
-                    loading="lazy"></iframe>
-            <?php else: ?>
-                <iframe
-                    class="resource-embed-frame"
-                    src="<?= e((string) $resource['external_url']) ?>"
-                    title="Resource link preview: <?= e($resource['title']) ?>"
-                    loading="lazy"></iframe>
-                <p class="text-muted">If this website blocks embedding, use the <strong>Open Link</strong> button above.</p>
-            <?php endif; ?>
-        </div>
-    </div>
+    <section class="resource-embed-card">
+        <h3>Preview</h3>
+        <?php if ($isFileSource): ?>
+            <iframe
+                class="resource-embed-frame"
+                src="/resources/<?= (int) $resource['id'] ?>/inline"
+                title="Resource preview: <?= e($resource['title']) ?>"
+                loading="lazy"></iframe>
+        <?php else: ?>
+            <iframe
+                class="resource-embed-frame"
+                src="<?= e((string) $resource['external_url']) ?>"
+                title="Resource link preview: <?= e($resource['title']) ?>"
+                loading="lazy"></iframe>
+            <p class="text-muted">If this website blocks embedding, use the <strong>Open Link</strong> button above.</p>
+        <?php endif; ?>
+    </section>
 <?php else: ?>
-    <div class="card resource-embed-empty">
-        <div class="card-body">
-            <p class="text-muted">Inline preview is not available for this resource type. Use the action above to open or download it.</p>
-        </div>
-    </div>
+    <section class="resource-embed-empty">
+        <p class="text-muted">Inline preview is not available for this resource type. Use the action above to open or download it.</p>
+    </section>
 <?php endif; ?>
 
-<section class="resource-interactions-card" id="resource-interactions">
-    <div class="card-body">
+<section class="resource-engagement-panel">
+    <div class="resource-review-section" id="resource-interactions">
         <h3>Reviews</h3>
         <div class="resource-review-layout">
             <div class="resource-review-score">
@@ -160,10 +154,8 @@ $filledStars = max(0, min(5, (int) round($averageRating)));
             <p class="text-muted">Only students can submit ratings.</p>
         <?php endif; ?>
     </div>
-</section>
-
-<section class="resource-comments-card" id="resource-comments">
-    <div class="card-body">
+    <div class="resource-engagement-divider"></div>
+    <div class="resource-comments-section" id="resource-comments">
         <div class="resource-comments-shell">
             <form method="POST" action="/resources/<?= $resourceId ?>/comments" class="resource-comments-composer">
                 <?= csrf_field() ?>

@@ -959,77 +959,82 @@
 
 .dashboard-body .resource-detail-layout {
   display: grid;
-  grid-template-columns: minmax(230px, 300px) minmax(0, 1fr);
+  grid-template-columns: minmax(220px, 280px) minmax(0, 1fr);
   gap: 16px;
+  border: 1px solid #dbe4f0;
+  border-radius: 16px;
+  background: #fff;
+  padding: 16px;
 }
 
 .dashboard-body .resource-detail-preview {
-  border: 1px solid #d7e0ec;
-  border-radius: 16px;
-  background: #fff;
-  padding: 14px;
+  border-right: 1px solid #e5ebf4;
+  padding-right: 16px;
   display: grid;
   gap: 12px;
 }
 
 .dashboard-body .resource-detail-thumb {
-  min-height: 180px;
+  min-height: 170px;
   border: 1px solid #d7e0ec;
   border-radius: 12px;
   display: grid;
   place-items: center;
+  background: #f9fbff;
 }
 
 .dashboard-body .resource-detail-thumb span {
-  font-size: 1.6rem;
-  font-weight: 640;
-  letter-spacing: 0.06em;
-  color: #22324a;
+  font-size: 1.48rem;
+  font-weight: 620;
+  letter-spacing: 0.05em;
+  color: #28384f;
 }
 
 .dashboard-body .resource-detail-preview-meta {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 6px;
 }
 
-.dashboard-body .resource-detail-content-card .card-body {
+.dashboard-body .resource-detail-content-card {
   display: grid;
   gap: 14px;
+  padding-left: 2px;
 }
 
 .dashboard-body .resource-detail-content-card p {
   margin: 0;
-  color: #344256;
+  color: #2e3f56;
   line-height: 1.6;
 }
 
 .dashboard-body .resource-detail-meta-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
-  gap: 10px;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
 }
 
 .dashboard-body .resource-detail-meta-grid strong {
   display: block;
-  margin-top: 3px;
+  margin-top: 2px;
   color: #1d2c40;
 }
 
 .dashboard-body .resource-embed-card,
 .dashboard-body .resource-embed-empty {
   margin-top: 14px;
-}
-
-.dashboard-body .resource-embed-card .card-body {
+  border: 1px solid #dbe4f0;
+  border-radius: 16px;
+  background: #fff;
+  padding: 14px 16px;
   display: grid;
   gap: 10px;
 }
 
 .dashboard-body .resource-embed-card h3 {
   margin: 0;
-  font-size: 1.02rem;
-  font-weight: 550;
+  font-size: 0.98rem;
+  font-weight: 560;
   color: #1b283b;
 }
 
@@ -1041,46 +1046,51 @@
   background: #fff;
 }
 
-.dashboard-body .resource-interactions-card,
-.dashboard-body .resource-comments-card {
+.dashboard-body .resource-engagement-panel {
   margin-top: 14px;
-}
-
-.dashboard-body .resource-interactions-card .card-body,
-.dashboard-body .resource-comments-card .card-body {
-  display: grid;
-  gap: 14px;
-  background: #fff;
   border: 1px solid #dbe4f0;
   border-radius: 16px;
-  box-shadow: none;
+  background: #fff;
+  overflow: hidden;
 }
 
-.dashboard-body .resource-interactions-card h3,
-.dashboard-body .resource-comments-card h3 {
+.dashboard-body .resource-review-section,
+.dashboard-body .resource-comments-section {
+  padding: 16px 18px;
+  display: grid;
+  gap: 12px;
+}
+
+.dashboard-body .resource-engagement-divider {
+  height: 1px;
+  background: #e5ebf4;
+}
+
+.dashboard-body .resource-review-section h3,
+.dashboard-body .resource-comments-section h3 {
   margin: 0;
-  font-size: 1.02rem;
-  font-weight: 550;
-  color: #1b283b;
+  font-size: 1rem;
+  font-weight: 560;
+  color: #1d2d42;
 }
 
 .dashboard-body .resource-review-layout {
   display: grid;
   grid-template-columns: minmax(150px, 210px) minmax(0, 1fr);
-  gap: 16px;
-  padding: 4px 0 2px;
+  gap: 18px;
+  padding: 2px 0 0;
 }
 
 .dashboard-body .resource-review-score {
   border-right: 1px solid #dee5f1;
-  padding-right: 14px;
+  padding-right: 16px;
   display: grid;
-  gap: 6px;
+  gap: 7px;
   align-content: start;
 }
 
 .dashboard-body .resource-review-score strong {
-  font-size: 3rem;
+  font-size: 2.85rem;
   line-height: 1;
   letter-spacing: -0.02em;
   color: #1a2940;
@@ -1102,24 +1112,24 @@
 }
 
 .dashboard-body .resource-review-score small {
-  color: #67788f;
-  font-size: 0.95rem;
+  color: #667a93;
+  font-size: 0.9rem;
 }
 
 .dashboard-body .resource-review-bars {
   display: grid;
-  gap: 9px;
+  gap: 8px;
 }
 
 .dashboard-body .resource-review-row {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
-  gap: 14px;
+  gap: 12px;
   align-items: center;
 }
 
 .dashboard-body .resource-review-track {
-  height: 10px;
+  height: 9px;
   border-radius: 999px;
   background: #edf1f7;
   overflow: hidden;
@@ -1150,7 +1160,7 @@
 
 .dashboard-body .resource-review-meta span {
   color: #66778f;
-  font-size: 0.9rem;
+  font-size: 0.86rem;
 }
 
 .dashboard-body .resource-interactions-summary {
@@ -1181,12 +1191,12 @@
 
 .dashboard-body .resource-comments-shell {
   display: grid;
-  gap: 12px;
+  gap: 10px;
 }
 
 .dashboard-body .resource-comments-composer {
   border: 1px solid #dce4ef;
-  background: #fafcff;
+  background: #fcfdff;
   border-radius: 12px;
   padding: 10px 12px;
   display: grid;
@@ -1197,12 +1207,18 @@
 .dashboard-body .resource-comment-inline-form textarea {
   width: 100%;
   resize: vertical;
-  border: 0;
-  border-radius: 0;
-  background: transparent;
+  border: 1px solid #dce4ef;
+  border-radius: 9px;
+  background: #fff;
   min-height: 84px;
   box-shadow: none;
-  padding: 2px 0;
+  padding: 8px 10px;
+}
+
+.dashboard-body .resource-comments-composer textarea:focus {
+  outline: none;
+  border-color: rgba(var(--dash-brand-rgb), 0.42);
+  box-shadow: 0 0 0 3px rgba(var(--dash-brand-rgb), 0.12);
 }
 
 .dashboard-body .resource-comments-composer-footer {
@@ -1246,12 +1262,13 @@
 .dashboard-body .resource-comments-list {
   display: grid;
   gap: 0;
+  border-top: 1px solid #e5ebf4;
 }
 
 .dashboard-body .resource-comment {
   display: grid;
   gap: 8px;
-  padding: 10px 0;
+  padding: 11px 0;
   border-bottom: 1px solid #e5ebf4;
 }
 
@@ -1301,7 +1318,7 @@
 
 .dashboard-body .resource-comment p {
   margin: 0;
-  color: #2d3f55;
+  color: #30435d;
   line-height: 1.5;
   font-size: 0.9rem;
 }
@@ -1831,6 +1848,19 @@
 
   .dashboard-body .resource-detail-layout {
     grid-template-columns: 1fr;
+    gap: 14px;
+    padding: 14px;
+  }
+
+  .dashboard-body .resource-detail-preview {
+    border-right: 0;
+    border-bottom: 1px solid #e5ebf4;
+    padding-right: 0;
+    padding-bottom: 12px;
+  }
+
+  .dashboard-body .resource-detail-content-card {
+    padding-left: 0;
   }
 
   .dashboard-body .resource-embed-frame {
