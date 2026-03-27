@@ -5,6 +5,7 @@
     <div class="dash-action-row">
         <a href="/admin/batch-requests" class="btn btn-primary">Review Batch Requests</a>
         <a href="/admin/student-requests" class="btn btn-outline">Review Student Requests</a>
+        <a href="/dashboard/community" class="btn btn-outline">Community Feed</a>
         <a href="/my-resources" class="btn btn-outline">My Resources</a>
         <a href="/admin/moderators" class="btn btn-outline">Manage Moderators</a>
         <a href="/admin/batches" class="btn btn-outline">Manage Batches</a>

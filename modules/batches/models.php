@@ -294,6 +294,7 @@ function batches_delete_admin(int $batchId): bool
 
     try {
         resources_delete_comments_for_batch($batchId);
+        community_delete_comments_for_batch($batchId);
         $deleted = db_query('DELETE FROM batches WHERE id = ?', [$batchId])->rowCount() > 0;
         if (!$deleted) {
             $pdo->rollBack();

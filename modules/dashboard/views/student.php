@@ -14,6 +14,8 @@ $featuredSubjects = array_slice($subjects, 0, 6);
     </p>
     <div class="dash-action-row">
         <a href="/dashboard/subjects" class="btn btn-primary">Browse Subjects</a>
+        <a href="/dashboard/community" class="btn btn-outline">Community Feed</a>
+        <a href="/my-posts" class="btn btn-outline">My Posts</a>
         <a href="/my-resources" class="btn btn-outline">My Resources</a>
         <a href="/onboarding" class="btn btn-outline">View Onboarding Status</a>
     </div>

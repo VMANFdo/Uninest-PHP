@@ -37,6 +37,16 @@ route('POST', '/onboarding/student/resubmit',    'onboarding_student_resubmit', 
 // ──────────────────────────────────────
 
 route('GET', '/dashboard', 'dashboard_index', ['middleware_auth', 'middleware_onboarding_complete']);
+route('GET', '/dashboard/community', 'community_index', ['middleware_auth', 'middleware_onboarding_complete']);
+route('POST', '/dashboard/community', 'community_store', ['middleware_auth', 'middleware_onboarding_complete']);
+route('GET', '/dashboard/community/{id}', 'community_show', ['middleware_auth', 'middleware_onboarding_complete']);
+route('POST', '/dashboard/community/{id}', 'community_update_action', ['middleware_auth', 'middleware_onboarding_complete']);
+route('POST', '/dashboard/community/{id}/delete', 'community_delete_action', ['middleware_auth', 'middleware_onboarding_complete']);
+route('POST', '/dashboard/community/{id}/like', 'community_like_toggle', ['middleware_auth', 'middleware_onboarding_complete']);
+route('POST', '/dashboard/community/{id}/comments', 'community_comment_store', ['middleware_auth', 'middleware_onboarding_complete']);
+route('POST', '/dashboard/community/{id}/comments/{commentId}', 'community_comment_update', ['middleware_auth', 'middleware_onboarding_complete']);
+route('POST', '/dashboard/community/{id}/comments/{commentId}/delete', 'community_comment_delete', ['middleware_auth', 'middleware_onboarding_complete']);
+route('GET', '/community/{id}/image', 'community_image', ['middleware_auth', 'middleware_onboarding_complete']);
 
 // ──────────────────────────────────────
 // Subjects — Student view (authenticated)
@@ -86,6 +96,10 @@ route('GET', '/my-resources', 'resources_my_index', ['middleware_auth', 'middlew
 route('GET', '/my-resources/{id}/edit', 'resources_my_edit_form', ['middleware_auth', 'middleware_onboarding_complete']);
 route('POST', '/my-resources/{id}', 'resources_my_update_action', ['middleware_auth', 'middleware_onboarding_complete']);
 route('POST', '/my-resources/{id}/delete', 'resources_my_delete_action', ['middleware_auth', 'middleware_onboarding_complete']);
+route('GET', '/my-posts', 'community_my_index', ['middleware_auth', 'middleware_onboarding_complete']);
+route('GET', '/my-posts/{id}/edit', 'community_my_edit_form', ['middleware_auth', 'middleware_onboarding_complete']);
+route('POST', '/my-posts/{id}', 'community_my_update_action', ['middleware_auth', 'middleware_onboarding_complete']);
+route('POST', '/my-posts/{id}/delete', 'community_my_delete_action', ['middleware_auth', 'middleware_onboarding_complete']);
 route('POST', '/resources/{id}/rating', 'resources_rating_upsert', ['middleware_auth', 'middleware_onboarding_complete']);
 route('POST', '/resources/{id}/comments', 'resources_comment_store', ['middleware_auth', 'middleware_onboarding_complete']);
 route('POST', '/resources/{id}/comments/{commentId}', 'resources_comment_update', ['middleware_auth', 'middleware_onboarding_complete']);

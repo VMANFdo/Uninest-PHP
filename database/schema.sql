@@ -345,6 +345,41 @@ CREATE TABLE IF NOT EXISTS resource_ratings (
     CONSTRAINT fk_resource_ratings_student FOREIGN KEY (student_user_id) REFERENCES users(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
+CREATE TABLE IF NOT EXISTS feed_posts (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    batch_id INT NOT NULL,
+    subject_id INT NULL,
+    author_user_id INT NULL,
+    post_type ENUM('general', 'discussion', 'question', 'announcement', 'resource_share') NOT NULL DEFAULT 'general',
+    body TEXT NULL,
+    image_path VARCHAR(255) NULL,
+    image_name VARCHAR(255) NULL,
+    image_mime VARCHAR(120) NULL,
+    image_size INT UNSIGNED NULL,
+    edited_at TIMESTAMP NULL DEFAULT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_feed_posts_batch_created (batch_id, created_at, id),
+    INDEX idx_feed_posts_subject (subject_id),
+    INDEX idx_feed_posts_author (author_user_id),
+    INDEX idx_feed_posts_type (post_type),
+    CONSTRAINT fk_feed_posts_batch FOREIGN KEY (batch_id) REFERENCES batches(id) ON DELETE CASCADE,
+    CONSTRAINT fk_feed_posts_subject FOREIGN KEY (subject_id) REFERENCES subjects(id) ON DELETE SET NULL,
+    CONSTRAINT fk_feed_posts_author FOREIGN KEY (author_user_id) REFERENCES users(id) ON DELETE SET NULL
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS feed_post_likes (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    post_id INT NOT NULL,
+    user_id INT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY uniq_feed_post_like (post_id, user_id),
+    INDEX idx_feed_post_likes_post (post_id),
+    INDEX idx_feed_post_likes_user (user_id),
+    CONSTRAINT fk_feed_post_likes_post FOREIGN KEY (post_id) REFERENCES feed_posts(id) ON DELETE CASCADE,
+    CONSTRAINT fk_feed_post_likes_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
 CREATE TABLE IF NOT EXISTS comments (
     id INT AUTO_INCREMENT PRIMARY KEY,
     target_type VARCHAR(50) NOT NULL,

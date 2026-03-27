@@ -15,6 +15,15 @@ function comments_max_depth(): int
     return 2;
 }
 
+function comments_max_depth_for_target(string $targetType): int
+{
+    return match ($targetType) {
+        'feed_post' => 25,
+        'resource' => comments_max_depth(),
+        default => comments_max_depth(),
+    };
+}
+
 function comments_max_body_length(): int
 {
     return 2000;

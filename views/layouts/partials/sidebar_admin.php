@@ -21,6 +21,7 @@ $isModerators = str_starts_with($currentPath, '/admin/moderators');
 
     <div class="sidebar-section-label">Content</div>
     <ul>
+        <li><a href="/dashboard/community" data-icon="CF" class="<?= str_starts_with($currentPath, '/dashboard/community') ? 'active' : '' ?>"><span>Community Feed</span></a></li>
         <li><a href="/subjects" data-icon="SB" class="<?= $isSubjects ? 'active' : '' ?>"><span>Subjects</span></a></li>
         <li><a href="/subjects/create" data-icon="NW" class="<?= $isSubjectCreate ? 'active' : '' ?>"><span>New Subject</span></a></li>
         <li><a href="/my-resources" data-icon="RS" class="<?= str_starts_with($currentPath, '/my-resources') ? 'active' : '' ?>"><span>My Resources</span></a></li>
