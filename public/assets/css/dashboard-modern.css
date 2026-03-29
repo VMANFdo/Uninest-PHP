@@ -1073,7 +1073,7 @@
   border: 0;
   background: transparent;
   box-shadow: none;
-  border-bottom: 1px solid #e7edf6;
+  border-bottom: 1px solid #edf2f8;
 }
 
 .dashboard-body .community-topbar-form {
@@ -1119,7 +1119,7 @@
 }
 
 .dashboard-body .community-category-pill {
-  border: 1px solid #dfe7f3;
+  border: 1px solid #e3eaf4;
   border-radius: 999px;
   background: #fff;
   color: #2d4059;
@@ -1136,12 +1136,13 @@
 }
 
 .dashboard-body .community-category-pill:hover {
-  border-color: #ccd8ea;
+  background: #f8fafe;
+  border-color: #d8e1ee;
 }
 
 .dashboard-body .community-category-pill.is-active {
-  background: rgba(var(--dash-brand-rgb), 0.1);
-  border-color: rgba(var(--dash-brand-rgb), 0.28);
+  background: rgba(var(--dash-brand-rgb), 0.14);
+  border-color: rgba(var(--dash-brand-rgb), 0.24);
   color: var(--dash-brand-dark);
 }
 
@@ -1153,10 +1154,10 @@
 
 .dashboard-body .community-composer-card {
   padding: 10px 12px;
-  border: 1px solid #e2eaf5;
+  border: 1px solid #e5ecf6;
   border-radius: 12px;
   background: #fff;
-  box-shadow: none;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
 }
 
 .dashboard-body .community-composer-form {
@@ -1178,7 +1179,7 @@
 }
 
 .dashboard-body .social-composer-row textarea {
-  border: 1px solid #dbe4f0;
+  border: 1px solid #e4ebf5;
   border-radius: 12px;
   background: #fff;
   padding: 11px 12px;
@@ -1195,8 +1196,8 @@
 }
 
 .dashboard-body .social-composer-controls {
-  border-top: 1px solid #e9eff7;
-  padding-top: 10px;
+  border-top: 1px solid #eff3f8;
+  padding-top: 8px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -1218,7 +1219,7 @@
 .dashboard-body .social-composer-inline-fields select {
   min-width: 150px;
   height: 36px;
-  border: 1px solid #dce5f1;
+  border: 1px solid #e5ebf4;
   border-radius: 10px;
   background: #fff;
   padding: 0 10px;
@@ -1227,7 +1228,7 @@
 
 .dashboard-body .social-upload-btn {
   position: relative;
-  border: 1px solid #dce5f1;
+  border: 1px solid #e5ebf4;
   border-radius: 10px;
   background: #fff;
   color: #2c3f58;
@@ -1254,10 +1255,15 @@
   padding: 12px;
   display: grid;
   gap: 8px;
-  border: 1px solid #e2e9f3;
+  border: 1px solid #e5ecf6;
   border-radius: 12px;
   background: #fff;
-  box-shadow: none;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+.dashboard-body .community-post-card:hover {
+  border-color: #dce5f2;
+  box-shadow: 0 2px 8px -4px rgba(15, 23, 42, 0.1);
 }
 
 .dashboard-body .community-post-header {
@@ -1282,7 +1288,7 @@
   font-size: 0.8rem;
   font-weight: 600;
   color: var(--dash-brand-dark);
-  border: 1px solid rgba(var(--dash-brand-rgb), 0.22);
+  border: 1px solid rgba(var(--dash-brand-rgb), 0.18);
   background: #f3efff;
 }
 
@@ -1319,7 +1325,7 @@
   width: 100%;
   max-height: 360px;
   object-fit: cover;
-  border: 1px solid #d8e2ef;
+  border: 1px solid #e2e9f3;
   border-radius: 12px;
   background: #f8fbff;
 }
@@ -1346,8 +1352,8 @@
   justify-content: space-between;
   gap: 10px;
   flex-wrap: wrap;
-  border-top: 1px solid #edf2f8;
-  padding-top: 9px;
+  border-top: 1px solid #eff3f8;
+  padding-top: 4px;
 }
 
 .dashboard-body .social-post-actions {
@@ -1387,11 +1393,10 @@
 }
 
 .dashboard-body .community-mini-list li {
-  border: 0;
-  border-bottom: 1px solid #e7edf6;
-  border-radius: 0;
-  padding: 6px 2px;
-  background: transparent;
+  border: 1px solid #e8eef6;
+  border-radius: 10px;
+  padding: 7px 8px;
+  background: #fff;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -1418,15 +1423,14 @@
 }
 
 .dashboard-body .community-popular-item {
-  border: 0;
-  border-bottom: 1px solid #e8eef7;
-  border-radius: 0;
-  padding: 8px 2px;
+  border: 1px solid #e8eef6;
+  border-radius: 10px;
+  padding: 8px;
   text-decoration: none;
   color: inherit;
   display: grid;
   gap: 4px;
-  background: transparent;
+  background: #fff;
 }
 
 .dashboard-body .community-popular-item:last-child {
@@ -1455,10 +1459,10 @@
   display: grid;
   gap: 14px;
   padding: 14px 16px;
-  border: 1px solid #e1e8f3;
+  border: 1px solid #e5ecf6;
   border-radius: 14px;
   background: #fff;
-  box-shadow: none;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
 }
 
 .dashboard-body .community-detail-body p {
@@ -1471,7 +1475,7 @@
   width: 100%;
   max-height: 620px;
   object-fit: contain;
-  border: 1px solid #d9e3f1;
+  border: 1px solid #e2e9f3;
   border-radius: 12px;
   background: #f8fbff;
 }
@@ -1479,10 +1483,10 @@
 .dashboard-body .community-inline-edit-card {
   margin-top: 12px;
   padding: 12px;
-  border: 1px solid #e1e8f3;
+  border: 1px solid #e5ecf6;
   border-radius: 14px;
   background: #fff;
-  box-shadow: none;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
 }
 
 .dashboard-body .community-inline-edit-card details > summary {
@@ -1504,7 +1508,7 @@
   width: 100%;
   max-height: 300px;
   object-fit: contain;
-  border: 1px solid #d9e3f1;
+  border: 1px solid #e2e9f3;
   border-radius: 12px;
   background: #f8fbff;
 }
