@@ -39,7 +39,10 @@
   top: 0;
   left: 0;
   bottom: 0;
+  align-self: start;
   width: auto;
+  height: 100vh;
+  max-height: 100vh;
   z-index: 1;
   background: var(--dash-panel);
   border: 0;
@@ -113,7 +116,8 @@
 }
 
 .sidebar-nav {
-  flex: 1;
+  flex: 1 1 auto;
+  min-height: 0;
   padding: 16px 12px;
   overflow-y: auto;
 }
@@ -171,6 +175,7 @@
 }
 
 .sidebar-footer {
+  margin-top: auto;
   border-top: 1px solid var(--dash-stroke);
   padding: 14px 16px;
   display: grid;
@@ -2824,6 +2829,8 @@
     position: fixed;
     inset: 12px auto 12px 12px;
     width: min(300px, calc(100vw - 34px));
+    height: auto;
+    max-height: none;
     z-index: 90;
     transform: translateX(-112%);
     transition: transform 0.22s ease;

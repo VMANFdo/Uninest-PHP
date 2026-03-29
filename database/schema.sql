@@ -356,16 +356,26 @@ CREATE TABLE IF NOT EXISTS feed_posts (
     image_name VARCHAR(255) NULL,
     image_mime VARCHAR(120) NULL,
     image_size INT UNSIGNED NULL,
+    is_pinned TINYINT(1) NOT NULL DEFAULT 0,
+    pinned_by_user_id INT NULL,
+    pinned_at TIMESTAMP NULL DEFAULT NULL,
+    is_resolved TINYINT(1) NOT NULL DEFAULT 0,
+    resolved_by_user_id INT NULL,
+    resolved_at TIMESTAMP NULL DEFAULT NULL,
     edited_at TIMESTAMP NULL DEFAULT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     INDEX idx_feed_posts_batch_created (batch_id, created_at, id),
+    INDEX idx_feed_posts_batch_pin_created (batch_id, is_pinned, created_at, id),
+    INDEX idx_feed_posts_batch_pin_type (batch_id, is_pinned, post_type),
     INDEX idx_feed_posts_subject (subject_id),
     INDEX idx_feed_posts_author (author_user_id),
     INDEX idx_feed_posts_type (post_type),
     CONSTRAINT fk_feed_posts_batch FOREIGN KEY (batch_id) REFERENCES batches(id) ON DELETE CASCADE,
     CONSTRAINT fk_feed_posts_subject FOREIGN KEY (subject_id) REFERENCES subjects(id) ON DELETE SET NULL,
-    CONSTRAINT fk_feed_posts_author FOREIGN KEY (author_user_id) REFERENCES users(id) ON DELETE SET NULL
+    CONSTRAINT fk_feed_posts_author FOREIGN KEY (author_user_id) REFERENCES users(id) ON DELETE SET NULL,
+    CONSTRAINT fk_feed_posts_pinned_by FOREIGN KEY (pinned_by_user_id) REFERENCES users(id) ON DELETE SET NULL,
+    CONSTRAINT fk_feed_posts_resolved_by FOREIGN KEY (resolved_by_user_id) REFERENCES users(id) ON DELETE SET NULL
 ) ENGINE=InnoDB;
 
 CREATE TABLE IF NOT EXISTS feed_post_likes (
@@ -378,6 +388,41 @@ CREATE TABLE IF NOT EXISTS feed_post_likes (
     INDEX idx_feed_post_likes_user (user_id),
     CONSTRAINT fk_feed_post_likes_post FOREIGN KEY (post_id) REFERENCES feed_posts(id) ON DELETE CASCADE,
     CONSTRAINT fk_feed_post_likes_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS feed_post_saves (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    post_id INT NOT NULL,
+    user_id INT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY uniq_feed_post_save (post_id, user_id),
+    INDEX idx_feed_post_saves_user_created (user_id, created_at, id),
+    INDEX idx_feed_post_saves_post (post_id),
+    CONSTRAINT fk_feed_post_saves_post FOREIGN KEY (post_id) REFERENCES feed_posts(id) ON DELETE CASCADE,
+    CONSTRAINT fk_feed_post_saves_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS feed_reports (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    batch_id INT NOT NULL,
+    target_type ENUM('post', 'comment') NOT NULL,
+    target_id INT NOT NULL,
+    reporter_user_id INT NULL,
+    reason ENUM('spam', 'harassment', 'misinformation', 'other') NOT NULL,
+    details TEXT NULL,
+    status ENUM('open', 'dismissed', 'resolved') NOT NULL DEFAULT 'open',
+    reviewed_by_user_id INT NULL,
+    reviewed_at TIMESTAMP NULL DEFAULT NULL,
+    action_taken VARCHAR(50) NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_feed_reports_batch_status_created (batch_id, status, created_at, id),
+    INDEX idx_feed_reports_target_status (target_type, target_id, status),
+    INDEX idx_feed_reports_reporter (reporter_user_id),
+    INDEX idx_feed_reports_reviewed_by (reviewed_by_user_id),
+    CONSTRAINT fk_feed_reports_batch FOREIGN KEY (batch_id) REFERENCES batches(id) ON DELETE CASCADE,
+    CONSTRAINT fk_feed_reports_reporter FOREIGN KEY (reporter_user_id) REFERENCES users(id) ON DELETE SET NULL,
+    CONSTRAINT fk_feed_reports_reviewed_by FOREIGN KEY (reviewed_by_user_id) REFERENCES users(id) ON DELETE SET NULL
 ) ENGINE=InnoDB;
 
 CREATE TABLE IF NOT EXISTS comments (
