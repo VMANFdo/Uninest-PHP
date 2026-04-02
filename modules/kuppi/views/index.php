@@ -210,6 +210,7 @@ $buildListUrl = static function (array $params = []) use ($is_admin, $selectedBa
                             <div class="kuppi-vote-stats">
                                 <span><strong><?= $upvotes ?></strong> upvotes</span>
                                 <span><strong><?= $downvotes ?></strong> downvotes</span>
+                                <span><strong><?= (int) ($request['conductor_count'] ?? 0) ?></strong> conductors</span>
                             </div>
                             <div class="kuppi-request-actions">
                                 <a href="<?= e($showUrl) ?>" class="btn btn-sm btn-outline">Open</a>

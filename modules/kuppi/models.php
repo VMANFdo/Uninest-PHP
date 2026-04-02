@@ -118,6 +118,7 @@ function kuppi_requests_for_batch(
                 COALESCE(vv.upvotes, 0) AS upvote_count,
                 COALESCE(vv.downvotes, 0) AS downvote_count,
                 COALESCE(vv.score, 0) AS vote_score,
+                COALESCE(ca.conductor_count, 0) AS conductor_count,
                 uv.vote_type AS viewer_vote
          FROM kuppi_requests kr
          INNER JOIN batches b ON b.id = kr.batch_id
@@ -131,6 +132,11 @@ function kuppi_requests_for_batch(
             FROM kuppi_request_votes
             GROUP BY request_id
          ) vv ON vv.request_id = kr.id
+         LEFT JOIN (
+            SELECT request_id, COUNT(*) AS conductor_count
+            FROM kuppi_conductor_applications
+            GROUP BY request_id
+         ) ca ON ca.request_id = kr.id
          LEFT JOIN kuppi_request_votes uv
                 ON uv.request_id = kr.id
                AND uv.user_id = ?
@@ -212,6 +218,7 @@ function kuppi_find_request_for_batch(int $requestId, int $batchId, int $viewerU
                 COALESCE(vv.upvotes, 0) AS upvote_count,
                 COALESCE(vv.downvotes, 0) AS downvote_count,
                 COALESCE(vv.score, 0) AS vote_score,
+                COALESCE(ca.conductor_count, 0) AS conductor_count,
                 uv.vote_type AS viewer_vote
          FROM kuppi_requests kr
          INNER JOIN batches b ON b.id = kr.batch_id
@@ -225,6 +232,11 @@ function kuppi_find_request_for_batch(int $requestId, int $batchId, int $viewerU
             FROM kuppi_request_votes
             GROUP BY request_id
          ) vv ON vv.request_id = kr.id
+         LEFT JOIN (
+            SELECT request_id, COUNT(*) AS conductor_count
+            FROM kuppi_conductor_applications
+            GROUP BY request_id
+         ) ca ON ca.request_id = kr.id
          LEFT JOIN kuppi_request_votes uv
                 ON uv.request_id = kr.id
                AND uv.user_id = ?
@@ -251,6 +263,7 @@ function kuppi_find_request_admin(int $requestId, int $viewerUserId): ?array
                 COALESCE(vv.upvotes, 0) AS upvote_count,
                 COALESCE(vv.downvotes, 0) AS downvote_count,
                 COALESCE(vv.score, 0) AS vote_score,
+                COALESCE(ca.conductor_count, 0) AS conductor_count,
                 uv.vote_type AS viewer_vote
          FROM kuppi_requests kr
          INNER JOIN batches b ON b.id = kr.batch_id
@@ -264,6 +277,11 @@ function kuppi_find_request_admin(int $requestId, int $viewerUserId): ?array
             FROM kuppi_request_votes
             GROUP BY request_id
          ) vv ON vv.request_id = kr.id
+         LEFT JOIN (
+            SELECT request_id, COUNT(*) AS conductor_count
+            FROM kuppi_conductor_applications
+            GROUP BY request_id
+         ) ca ON ca.request_id = kr.id
          LEFT JOIN kuppi_request_votes uv
                 ON uv.request_id = kr.id
                AND uv.user_id = ?
@@ -284,10 +302,16 @@ function kuppi_find_owned_request(int $requestId, int $ownerUserId): ?array
                 b.batch_code,
                 b.name AS batch_name,
                 s.code AS subject_code,
-                s.name AS subject_name
+                s.name AS subject_name,
+                COALESCE(ca.conductor_count, 0) AS conductor_count
          FROM kuppi_requests kr
          INNER JOIN batches b ON b.id = kr.batch_id
          INNER JOIN subjects s ON s.id = kr.subject_id
+         LEFT JOIN (
+            SELECT request_id, COUNT(*) AS conductor_count
+            FROM kuppi_conductor_applications
+            GROUP BY request_id
+         ) ca ON ca.request_id = kr.id
          WHERE kr.id = ?
            AND kr.requested_by_user_id = ?
          LIMIT 1",
@@ -309,7 +333,8 @@ function kuppi_my_requests(int $ownerUserId): array
                 s.name AS subject_name,
                 COALESCE(vv.upvotes, 0) AS upvote_count,
                 COALESCE(vv.downvotes, 0) AS downvote_count,
-                COALESCE(vv.score, 0) AS vote_score
+                COALESCE(vv.score, 0) AS vote_score,
+                COALESCE(ca.conductor_count, 0) AS conductor_count
          FROM kuppi_requests kr
          INNER JOIN batches b ON b.id = kr.batch_id
          INNER JOIN subjects s ON s.id = kr.subject_id
@@ -321,6 +346,11 @@ function kuppi_my_requests(int $ownerUserId): array
             FROM kuppi_request_votes
             GROUP BY request_id
          ) vv ON vv.request_id = kr.id
+         LEFT JOIN (
+            SELECT request_id, COUNT(*) AS conductor_count
+            FROM kuppi_conductor_applications
+            GROUP BY request_id
+         ) ca ON ca.request_id = kr.id
          WHERE kr.requested_by_user_id = ?
          ORDER BY kr.updated_at DESC, kr.id DESC",
         [$ownerUserId]
@@ -383,10 +413,65 @@ function kuppi_delete_request_by_id(int $requestId): bool
         return false;
     }
 
-    return db_query(
-        'DELETE FROM kuppi_requests WHERE id = ?',
-        [$requestId]
-    )->rowCount() > 0;
+    $pdo = db_connect();
+    $pdo->beginTransaction();
+
+    try {
+        comments_delete_for_target('kuppi_request', $requestId);
+        $deleted = db_query(
+            'DELETE FROM kuppi_requests WHERE id = ?',
+            [$requestId]
+        )->rowCount() > 0;
+
+        if (!$deleted) {
+            $pdo->rollBack();
+            return false;
+        }
+
+        $pdo->commit();
+        return true;
+    } catch (Throwable $e) {
+        if ($pdo->inTransaction()) {
+            $pdo->rollBack();
+        }
+        throw $e;
+    }
+}
+
+function kuppi_request_ids_for_batch(int $batchId): array
+{
+    if ($batchId <= 0) {
+        return [];
+    }
+
+    $rows = db_fetch_all(
+        'SELECT id FROM kuppi_requests WHERE batch_id = ?',
+        [$batchId]
+    );
+
+    return array_values(array_filter(array_map(
+        static fn(array $row): int => (int) ($row['id'] ?? 0),
+        $rows
+    ), static fn(int $id): bool => $id > 0));
+}
+
+function kuppi_delete_comments_for_request(int $requestId): int
+{
+    if ($requestId <= 0) {
+        return 0;
+    }
+
+    return comments_delete_for_target('kuppi_request', $requestId);
+}
+
+function kuppi_delete_comments_for_request_ids(array $requestIds): int
+{
+    return comments_delete_for_target_ids('kuppi_request', $requestIds);
+}
+
+function kuppi_delete_comments_for_batch(int $batchId): int
+{
+    return kuppi_delete_comments_for_request_ids(kuppi_request_ids_for_batch($batchId));
 }
 
 function kuppi_apply_vote(int $requestId, int $userId, string $direction): ?string
@@ -455,4 +540,130 @@ function kuppi_vote_totals_for_request(int $requestId): array
         'downvote_count' => (int) ($row['downvote_count'] ?? 0),
         'vote_score' => (int) ($row['vote_score'] ?? 0),
     ];
+}
+
+function kuppi_find_conductor_application_for_request(int $applicationId, int $requestId): ?array
+{
+    if ($applicationId <= 0 || $requestId <= 0) {
+        return null;
+    }
+
+    return db_fetch(
+        "SELECT a.*,
+                u.name AS applicant_name,
+                u.role AS applicant_role,
+                u.academic_year AS applicant_academic_year
+         FROM kuppi_conductor_applications a
+         INNER JOIN users u ON u.id = a.applicant_user_id
+         WHERE a.id = ?
+           AND a.request_id = ?
+         LIMIT 1",
+        [$applicationId, $requestId]
+    );
+}
+
+function kuppi_find_user_conductor_application(int $requestId, int $userId): ?array
+{
+    if ($requestId <= 0 || $userId <= 0) {
+        return null;
+    }
+
+    return db_fetch(
+        "SELECT a.*,
+                u.name AS applicant_name,
+                u.role AS applicant_role,
+                u.academic_year AS applicant_academic_year
+         FROM kuppi_conductor_applications a
+         INNER JOIN users u ON u.id = a.applicant_user_id
+         WHERE a.request_id = ?
+           AND a.applicant_user_id = ?
+         LIMIT 1",
+        [$requestId, $userId]
+    );
+}
+
+function kuppi_conductor_applications_for_request(int $requestId, int $viewerUserId): array
+{
+    if ($requestId <= 0) {
+        return [];
+    }
+
+    return db_fetch_all(
+        "SELECT a.*,
+                u.name AS applicant_name,
+                u.role AS applicant_role,
+                u.academic_year AS applicant_academic_year,
+                COALESCE(cv.vote_count, 0) AS vote_count,
+                CASE WHEN uv.id IS NULL THEN 0 ELSE 1 END AS is_voted_by_viewer
+         FROM kuppi_conductor_applications a
+         INNER JOIN users u ON u.id = a.applicant_user_id
+         LEFT JOIN (
+            SELECT application_id, COUNT(*) AS vote_count
+            FROM kuppi_conductor_votes
+            GROUP BY application_id
+         ) cv ON cv.application_id = a.id
+         LEFT JOIN kuppi_conductor_votes uv
+                ON uv.application_id = a.id
+               AND uv.voter_user_id = ?
+         WHERE a.request_id = ?
+         ORDER BY COALESCE(cv.vote_count, 0) DESC, a.created_at ASC, a.id ASC",
+        [$viewerUserId, $requestId]
+    );
+}
+
+function kuppi_conductor_application_count_for_request(int $requestId): int
+{
+    if ($requestId <= 0) {
+        return 0;
+    }
+
+    $row = db_fetch(
+        'SELECT COUNT(*) AS cnt FROM kuppi_conductor_applications WHERE request_id = ?',
+        [$requestId]
+    );
+
+    return (int) ($row['cnt'] ?? 0);
+}
+
+function kuppi_create_conductor_application(array $data): int
+{
+    return (int) db_insert('kuppi_conductor_applications', [
+        'request_id' => (int) $data['request_id'],
+        'applicant_user_id' => (int) $data['applicant_user_id'],
+        'motivation' => $data['motivation'],
+        'availability_csv' => $data['availability_csv'],
+    ]);
+}
+
+function kuppi_toggle_conductor_vote(int $applicationId, int $voterUserId): bool
+{
+    if ($applicationId <= 0 || $voterUserId <= 0) {
+        return false;
+    }
+
+    $existing = db_fetch(
+        "SELECT id
+         FROM kuppi_conductor_votes
+         WHERE application_id = ?
+           AND voter_user_id = ?
+         LIMIT 1",
+        [$applicationId, $voterUserId]
+    );
+
+    if ($existing) {
+        db_query(
+            "DELETE FROM kuppi_conductor_votes
+             WHERE application_id = ?
+               AND voter_user_id = ?",
+            [$applicationId, $voterUserId]
+        );
+        return false;
+    }
+
+    db_insert('kuppi_conductor_votes', [
+        'application_id' => $applicationId,
+        'voter_user_id' => $voterUserId,
+    ]);
+
+    return true;
 }

@@ -61,11 +61,17 @@ route('GET', '/community/{id}/image', 'community_image', ['middleware_auth', 'mi
 route('GET', '/dashboard/kuppi', 'kuppi_index', ['middleware_auth', 'middleware_onboarding_complete']);
 route('GET', '/dashboard/kuppi/create', 'kuppi_create_form', ['middleware_auth', 'middleware_onboarding_complete']);
 route('POST', '/dashboard/kuppi', 'kuppi_store', ['middleware_auth', 'middleware_onboarding_complete']);
+route('GET', '/dashboard/kuppi/{id}/conductors/apply', 'kuppi_conductor_apply_form', ['middleware_auth', 'middleware_onboarding_complete']);
+route('POST', '/dashboard/kuppi/{id}/conductors/apply', 'kuppi_conductor_apply_action', ['middleware_auth', 'middleware_onboarding_complete']);
+route('POST', '/dashboard/kuppi/{id}/conductors/{applicationId}/vote', 'kuppi_conductor_vote_action', ['middleware_auth', 'middleware_onboarding_complete']);
 route('GET', '/dashboard/kuppi/{id}/edit', 'kuppi_edit_form', ['middleware_auth', 'middleware_onboarding_complete']);
 route('GET', '/dashboard/kuppi/{id}', 'kuppi_show', ['middleware_auth', 'middleware_onboarding_complete']);
 route('POST', '/dashboard/kuppi/{id}', 'kuppi_update_action', ['middleware_auth', 'middleware_onboarding_complete']);
 route('POST', '/dashboard/kuppi/{id}/delete', 'kuppi_delete_action', ['middleware_auth', 'middleware_onboarding_complete']);
 route('POST', '/dashboard/kuppi/{id}/vote', 'kuppi_vote_action', ['middleware_auth', 'middleware_onboarding_complete']);
+route('POST', '/dashboard/kuppi/{id}/comments', 'kuppi_comment_store', ['middleware_auth', 'middleware_onboarding_complete']);
+route('POST', '/dashboard/kuppi/{id}/comments/{commentId}', 'kuppi_comment_update', ['middleware_auth', 'middleware_onboarding_complete']);
+route('POST', '/dashboard/kuppi/{id}/comments/{commentId}/delete', 'kuppi_comment_delete', ['middleware_auth', 'middleware_onboarding_complete']);
 
 // ──────────────────────────────────────
 // Subjects — Student view (authenticated)

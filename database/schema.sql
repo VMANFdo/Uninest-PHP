@@ -460,6 +460,34 @@ CREATE TABLE IF NOT EXISTS kuppi_request_votes (
     CONSTRAINT fk_kuppi_request_votes_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
+CREATE TABLE IF NOT EXISTS kuppi_conductor_applications (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    request_id INT NOT NULL,
+    applicant_user_id INT NOT NULL,
+    motivation VARCHAR(300) NOT NULL,
+    availability_csv VARCHAR(200) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY uniq_kuppi_conductor_application (request_id, applicant_user_id),
+    INDEX idx_kuppi_conductor_applications_request (request_id),
+    INDEX idx_kuppi_conductor_applications_user (applicant_user_id),
+    CONSTRAINT fk_kuppi_conductor_applications_request FOREIGN KEY (request_id) REFERENCES kuppi_requests(id) ON DELETE CASCADE,
+    CONSTRAINT fk_kuppi_conductor_applications_user FOREIGN KEY (applicant_user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS kuppi_conductor_votes (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    application_id INT NOT NULL,
+    voter_user_id INT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY uniq_kuppi_conductor_vote (application_id, voter_user_id),
+    INDEX idx_kuppi_conductor_votes_application (application_id),
+    INDEX idx_kuppi_conductor_votes_voter (voter_user_id),
+    CONSTRAINT fk_kuppi_conductor_votes_application FOREIGN KEY (application_id) REFERENCES kuppi_conductor_applications(id) ON DELETE CASCADE,
+    CONSTRAINT fk_kuppi_conductor_votes_voter FOREIGN KEY (voter_user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
 CREATE TABLE IF NOT EXISTS comments (
     id INT AUTO_INCREMENT PRIMARY KEY,
     target_type VARCHAR(50) NOT NULL,

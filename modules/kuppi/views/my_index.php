@@ -57,6 +57,7 @@
                         <div class="kuppi-vote-stats">
                             <span><strong><?= (int) ($request['upvote_count'] ?? 0) ?></strong> upvotes</span>
                             <span><strong><?= (int) ($request['downvote_count'] ?? 0) ?></strong> downvotes</span>
+                            <span><strong><?= (int) ($request['conductor_count'] ?? 0) ?></strong> conductors</span>
                         </div>
                         <div class="kuppi-request-actions">
                             <a href="/dashboard/kuppi/<?= $requestId ?>" class="btn btn-sm btn-outline">Open</a>
