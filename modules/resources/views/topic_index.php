@@ -8,7 +8,7 @@
     </div>
     <div class="page-header-actions">
         <a href="/dashboard/subjects/<?= (int) $subject['id'] ?>/topics/<?= (int) $topic['id'] ?>/resources/create" class="btn btn-primary">+ Upload Resource</a>
-        <a href="/dashboard/subjects/<?= (int) $subject['id'] ?>/topics" class="btn btn-outline">← Back to Topics</a>
+        <a href="/dashboard/subjects/<?= (int) $subject['id'] ?>/topics" class="btn btn-outline"><?= ui_lucide_icon('arrow-left') ?> Back to Topics</a>
     </div>
 </div>
 

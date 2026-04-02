@@ -10,7 +10,7 @@
     </div>
     <div class="page-header-actions">
         <a href="/subjects/<?= (int) $subject['id'] ?>/topics" class="btn btn-outline">Manage Topics</a>
-        <a href="/coordinator/subjects" class="btn btn-outline">← Back to Assigned Subjects</a>
+        <a href="/coordinator/subjects" class="btn btn-outline"><?= ui_lucide_icon('arrow-left') ?> Back to Assigned Subjects</a>
     </div>
 </div>
 

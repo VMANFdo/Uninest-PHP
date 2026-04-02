@@ -5,7 +5,7 @@
         <p class="page-subtitle">Update your post content and media.</p>
     </div>
     <div class="page-header-actions">
-        <a href="/my-posts" class="btn btn-outline">← Back to My Posts</a>
+        <a href="/my-posts" class="btn btn-outline"><?= ui_lucide_icon('arrow-left') ?> Back to My Posts</a>
     </div>
 </div>
 

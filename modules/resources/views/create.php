@@ -7,7 +7,7 @@
         </p>
     </div>
     <div class="page-header-actions">
-        <a href="/dashboard/subjects/<?= (int) $subject['id'] ?>/topics/<?= (int) $topic['id'] ?>/resources" class="btn btn-outline">← Back to Resources</a>
+        <a href="/dashboard/subjects/<?= (int) $subject['id'] ?>/topics/<?= (int) $topic['id'] ?>/resources" class="btn btn-outline"><?= ui_lucide_icon('arrow-left') ?> Back to Resources</a>
     </div>
 </div>
 

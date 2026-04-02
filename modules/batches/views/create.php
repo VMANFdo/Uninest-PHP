@@ -5,7 +5,7 @@
         <p class="page-subtitle">Create and approve a new batch, then assign a primary moderator in one step.</p>
     </div>
     <div class="page-header-actions">
-        <a href="/admin/batches" class="btn btn-outline">← Back to Batches</a>
+        <a href="/admin/batches" class="btn btn-outline"><?= ui_lucide_icon('arrow-left') ?> Back to Batches</a>
     </div>
 </div>
 

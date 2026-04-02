@@ -73,7 +73,7 @@ $buildListUrl = static function (array $params = []) use ($is_admin, $selectedBa
         </div>
         <div class="page-header-actions">
             <?php if (!empty($can_create)): ?>
-                <a href="/dashboard/kuppi/create" class="btn btn-primary">+ Request Session</a>
+                <a href="/dashboard/kuppi/create" class="btn btn-primary"><?= ui_lucide_icon('plus') ?> Request Session</a>
                 <a href="/my-kuppi-requests" class="btn btn-outline">My Requests</a>
             <?php endif; ?>
             <a href="/dashboard" class="btn btn-outline">Dashboard</a>
@@ -167,7 +167,7 @@ $buildListUrl = static function (array $params = []) use ($is_admin, $selectedBa
                             <?php if (!empty($is_admin)): ?>
                                 <input type="hidden" name="batch_id" value="<?= (int) ($selectedBatchId > 0 ? $selectedBatchId : ($request['batch_id'] ?? 0)) ?>">
                             <?php endif; ?>
-                            <button type="submit" class="kuppi-vote-btn <?= $viewerVote === 'up' ? 'is-active' : '' ?>" <?= $canVote ? '' : 'disabled' ?> aria-label="Upvote request">▲</button>
+                            <button type="submit" class="kuppi-vote-btn <?= $viewerVote === 'up' ? 'is-active' : '' ?>" <?= $canVote ? '' : 'disabled' ?> aria-label="Upvote request"><?= ui_lucide_icon('arrow-up') ?></button>
                         </form>
 
                         <strong class="kuppi-vote-score"><?= $voteScore ?></strong>
@@ -179,7 +179,7 @@ $buildListUrl = static function (array $params = []) use ($is_admin, $selectedBa
                             <?php if (!empty($is_admin)): ?>
                                 <input type="hidden" name="batch_id" value="<?= (int) ($selectedBatchId > 0 ? $selectedBatchId : ($request['batch_id'] ?? 0)) ?>">
                             <?php endif; ?>
-                            <button type="submit" class="kuppi-vote-btn <?= $viewerVote === 'down' ? 'is-active is-down' : 'is-down' ?>" <?= $canVote ? '' : 'disabled' ?> aria-label="Downvote request">▼</button>
+                            <button type="submit" class="kuppi-vote-btn <?= $viewerVote === 'down' ? 'is-active is-down' : 'is-down' ?>" <?= $canVote ? '' : 'disabled' ?> aria-label="Downvote request"><?= ui_lucide_icon('arrow-down') ?></button>
                         </form>
                     </aside>
 
@@ -214,40 +214,26 @@ $buildListUrl = static function (array $params = []) use ($is_admin, $selectedBa
                         <footer class="kuppi-request-footer kuppi-request-footer--list">
                             <div class="kuppi-request-metrics">
                                 <span class="kuppi-request-metric">
-                                    <svg class="kuppi-request-metric-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                                        <path d="M21 11.5a8.5 8.5 0 0 1-8.5 8.5H7l-4 4v-5.5A8.5 8.5 0 1 1 21 11.5Z" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"></path>
-                                    </svg>
+                                    <?= ui_lucide_icon('message-circle', 'kuppi-request-metric-icon') ?>
                                     <?= $commentCount ?> comments
                                 </span>
                                 <span class="kuppi-request-metric">
-                                    <svg class="kuppi-request-metric-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                                        <path d="M16 11a4 4 0 1 0-8 0" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"></path>
-                                        <path d="M5.5 19a6.5 6.5 0 0 1 13 0" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"></path>
-                                        <path d="M17.5 4.5a3 3 0 0 1 0 6" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"></path>
-                                    </svg>
+                                    <?= ui_lucide_icon('users', 'kuppi-request-metric-icon') ?>
                                     <?= $interestedCount ?> interested
                                 </span>
                                 <span class="kuppi-request-metric">
-                                    <svg class="kuppi-request-metric-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                                        <path d="M15 10a3 3 0 1 0-6 0" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"></path>
-                                        <path d="M3 20a6 6 0 0 1 12 0" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"></path>
-                                        <path d="m17 19 2 2 4-4" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"></path>
-                                    </svg>
+                                    <?= ui_lucide_icon('user-check', 'kuppi-request-metric-icon') ?>
                                     <?= (int) ($request['conductor_count'] ?? 0) ?> conductors
                                 </span>
                             </div>
                             <div class="kuppi-request-actions kuppi-request-actions--list">
                                 <a href="<?= e($showUrl) ?>#kuppi-comments" class="btn btn-outline kuppi-request-action-btn">
-                                    <svg class="kuppi-btn-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                                        <path d="M21 11.5a8.5 8.5 0 0 1-8.5 8.5H7l-4 4v-5.5A8.5 8.5 0 1 1 21 11.5Z" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"></path>
-                                    </svg>
+                                    <?= ui_lucide_icon('message-circle', 'kuppi-btn-icon') ?>
                                     Comment
                                 </a>
                                 <?php if ($canApplyAsConductor): ?>
                                     <a href="/dashboard/kuppi/<?= $requestId ?>/conductors/apply" class="btn btn-primary kuppi-request-action-btn">
-                                        <svg class="kuppi-btn-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                                            <path d="M12 2v20M7 7h10v5a5 5 0 0 1-10 0V7Z" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"></path>
-                                        </svg>
+                                        <?= ui_lucide_icon('user-check', 'kuppi-btn-icon') ?>
                                         Be a Conductor
                                     </a>
                                 <?php else: ?>

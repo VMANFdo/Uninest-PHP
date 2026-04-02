@@ -27,7 +27,7 @@ $commentMaxLevel = (int) ($comment_max_level ?? (comments_max_depth() + 1));
         <p class="page-subtitle">Review details, vote on demand, and choose the best conductor for this session.</p>
     </div>
     <div class="page-header-actions">
-        <a href="<?= e((string) $back_list_url) ?>" class="btn btn-outline">← Back to All Sessions</a>
+        <a href="<?= e((string) $back_list_url) ?>" class="btn btn-outline"><?= ui_lucide_icon('arrow-left') ?> Back to All Sessions</a>
     </div>
 </div>
 
@@ -119,7 +119,7 @@ $commentMaxLevel = (int) ($comment_max_level ?? (comments_max_depth() + 1));
                                 <form method="POST" action="/dashboard/kuppi/<?= $requestId ?>/conductors/<?= $applicationId ?>/vote">
                                     <?= csrf_field() ?>
                                     <input type="hidden" name="return_to" value="<?= e($currentUri) ?>">
-                                    <button type="submit" class="kuppi-vote-btn <?= !empty($application['is_voted_by_viewer']) ? 'is-active' : '' ?>" <?= $canVoteThisConductor ? '' : 'disabled' ?> aria-label="Vote conductor">▲</button>
+                                    <button type="submit" class="kuppi-vote-btn <?= !empty($application['is_voted_by_viewer']) ? 'is-active' : '' ?>" <?= $canVoteThisConductor ? '' : 'disabled' ?> aria-label="Vote conductor"><?= ui_lucide_icon('arrow-up') ?></button>
                                 </form>
                                 <strong class="kuppi-vote-score"><?= (int) ($application['vote_count'] ?? 0) ?></strong>
                             </aside>
@@ -266,7 +266,7 @@ $commentMaxLevel = (int) ($comment_max_level ?? (comments_max_depth() + 1));
                     <?php if (user_role() === 'admin'): ?>
                         <input type="hidden" name="batch_id" value="<?= (int) ($request['batch_id'] ?? 0) ?>">
                     <?php endif; ?>
-                    <button type="submit" class="kuppi-vote-btn <?= $viewerVote === 'up' ? 'is-active' : '' ?>" <?= (!empty($can_vote_request) && !$isOwnRequest) ? '' : 'disabled' ?> aria-label="Upvote request">▲</button>
+                    <button type="submit" class="kuppi-vote-btn <?= $viewerVote === 'up' ? 'is-active' : '' ?>" <?= (!empty($can_vote_request) && !$isOwnRequest) ? '' : 'disabled' ?> aria-label="Upvote request"><?= ui_lucide_icon('arrow-up') ?></button>
                 </form>
 
                 <div class="kuppi-side-vote-score">
@@ -281,7 +281,7 @@ $commentMaxLevel = (int) ($comment_max_level ?? (comments_max_depth() + 1));
                     <?php if (user_role() === 'admin'): ?>
                         <input type="hidden" name="batch_id" value="<?= (int) ($request['batch_id'] ?? 0) ?>">
                     <?php endif; ?>
-                    <button type="submit" class="kuppi-vote-btn <?= $viewerVote === 'down' ? 'is-active is-down' : 'is-down' ?>" <?= (!empty($can_vote_request) && !$isOwnRequest) ? '' : 'disabled' ?> aria-label="Downvote request">▼</button>
+                    <button type="submit" class="kuppi-vote-btn <?= $viewerVote === 'down' ? 'is-active is-down' : 'is-down' ?>" <?= (!empty($can_vote_request) && !$isOwnRequest) ? '' : 'disabled' ?> aria-label="Downvote request"><?= ui_lucide_icon('arrow-down') ?></button>
                 </form>
             </div>
         </article>

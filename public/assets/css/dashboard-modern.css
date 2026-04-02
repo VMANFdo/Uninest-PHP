@@ -146,6 +146,11 @@
   transition: all 0.18s ease;
 }
 
+.dashboard-body .kuppi-vote-btn .ui-lucide-icon {
+  width: 16px;
+  height: 16px;
+}
+
 .dashboard-body .kuppi-request-card--list .kuppi-vote-btn {
   width: 46px;
   height: 46px;
@@ -972,20 +977,21 @@
   border: 1px solid transparent;
 }
 
-.sidebar-nav li a::before {
-  content: attr(data-icon);
+.sidebar-nav-icon {
   width: 26px;
   height: 26px;
   border-radius: 8px;
   display: grid;
   place-items: center;
-  font-size: 0.62rem;
-  font-weight: 500;
-  letter-spacing: 0.04em;
   color: var(--dash-brand);
   background: var(--dash-brand-soft);
   border: 1px solid rgba(var(--dash-brand-rgb), 0.2);
   flex-shrink: 0;
+}
+
+.sidebar-nav-icon .ui-lucide-icon {
+  width: 14px;
+  height: 14px;
 }
 
 .sidebar-nav li a:hover,
@@ -1050,6 +1056,11 @@
   font-size: 1.05rem;
 }
 
+.sidebar-toggle .ui-lucide-icon {
+  width: 18px;
+  height: 18px;
+}
+
 .topbar-search {
   flex: 1;
   min-width: 220px;
@@ -1064,6 +1075,13 @@
 
 .search-icon {
   color: #8a95a9;
+  display: inline-grid;
+  place-items: center;
+}
+
+.search-icon .ui-lucide-icon {
+  width: 16px;
+  height: 16px;
 }
 
 .topbar-search input {
@@ -2993,16 +3011,26 @@
 .dashboard-body .resource-review-stars {
   display: inline-flex;
   gap: 4px;
-  font-size: 1.35rem;
   line-height: 1;
 }
 
-.dashboard-body .resource-review-stars span {
+.dashboard-body .resource-review-star {
+  display: inline-grid;
+  place-items: center;
   color: #d3dced;
 }
 
-.dashboard-body .resource-review-stars span.is-filled {
+.dashboard-body .resource-review-star .ui-lucide-icon {
+  width: 19px;
+  height: 19px;
+}
+
+.dashboard-body .resource-review-star.is-filled {
   color: var(--dash-brand);
+}
+
+.dashboard-body .resource-review-star.is-filled .ui-lucide-icon {
+  fill: currentColor;
 }
 
 .dashboard-body .resource-review-score small {
@@ -3455,6 +3483,11 @@
     background-color 0.16s ease,
     border-color 0.16s ease,
     color 0.16s ease;
+}
+
+.table-icon-btn .ui-lucide-icon {
+  width: 17px;
+  height: 17px;
 }
 
 .table-icon-btn:hover {

@@ -14,7 +14,7 @@ $activeBatch = (array) ($active_batch ?? []);
         </p>
     </div>
     <div class="page-header-actions">
-        <a href="/dashboard/kuppi" class="btn btn-outline">← Back to Requests</a>
+        <a href="/dashboard/kuppi" class="btn btn-outline"><?= ui_lucide_icon('arrow-left') ?> Back to Requests</a>
         <a href="/my-kuppi-requests" class="btn btn-outline">My Requests</a>
     </div>
 </div>

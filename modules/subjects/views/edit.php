@@ -11,7 +11,7 @@
     <div class="page-header-actions">
         <a href="/subjects/<?= (int) $subject['id'] ?>/topics" class="btn btn-outline">Manage Topics</a>
         <a href="/subjects/<?= (int) $subject['id'] ?>/coordinators" class="btn btn-outline">Manage Coordinators</a>
-        <a href="/subjects" class="btn btn-outline">← Back to Subjects</a>
+        <a href="/subjects" class="btn btn-outline"><?= ui_lucide_icon('arrow-left') ?> Back to Subjects</a>
     </div>
 </div>
 

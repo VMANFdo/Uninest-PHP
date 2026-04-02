@@ -10,7 +10,7 @@ $savedPosts = (array) ($posts ?? []);
         <p class="page-subtitle">Posts you bookmarked for later.</p>
     </div>
     <div class="page-header-actions">
-        <a href="/dashboard/community" class="btn btn-outline">← Back to Feed</a>
+        <a href="/dashboard/community" class="btn btn-outline"><?= ui_lucide_icon('arrow-left') ?> Back to Feed</a>
     </div>
 </div>
 

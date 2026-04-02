@@ -9,7 +9,7 @@
             <a href="/subjects/<?= (int) $subject['id'] ?>/topics" class="btn btn-primary">Manage Topics</a>
             <a href="/subjects/<?= (int) $subject['id'] ?>/topics/create" class="btn btn-outline">+ New Topic</a>
         <?php endif; ?>
-        <a href="/dashboard/subjects" class="btn btn-outline">← Back to Subjects</a>
+        <a href="/dashboard/subjects" class="btn btn-outline"><?= ui_lucide_icon('arrow-left') ?> Back to Subjects</a>
     </div>
 </div>
 

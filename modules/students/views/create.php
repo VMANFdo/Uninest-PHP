@@ -5,7 +5,7 @@
         <p class="page-subtitle">Create a student account and place it in an approved batch in one step.</p>
     </div>
     <div class="page-header-actions">
-        <a href="/students" class="btn btn-outline">← Back to Students</a>
+        <a href="/students" class="btn btn-outline"><?= ui_lucide_icon('arrow-left') ?> Back to Students</a>
     </div>
 </div>
 

@@ -14,7 +14,7 @@ $batchOptions = (array) ($batch_options ?? []);
     </div>
     <div class="page-header-actions">
         <span class="badge badge-warning"><?= $openCount ?> Open</span>
-        <a href="/dashboard/community<?= $isAdmin && $selectedBatchId > 0 ? '?batch_id=' . $selectedBatchId : '' ?>" class="btn btn-outline">← Back to Feed</a>
+        <a href="/dashboard/community<?= $isAdmin && $selectedBatchId > 0 ? '?batch_id=' . $selectedBatchId : '' ?>" class="btn btn-outline"><?= ui_lucide_icon('arrow-left') ?> Back to Feed</a>
     </div>
 </div>
 

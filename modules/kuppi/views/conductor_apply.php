@@ -14,7 +14,7 @@ if (!is_array($selectedAvailability)) {
         <p class="page-subtitle">Lead this Kuppi session and help peers learn with confidence.</p>
     </div>
     <div class="page-header-actions">
-        <a href="<?= e((string) $back_request_url) ?>" class="btn btn-outline">← Back to Session</a>
+        <a href="<?= e((string) $back_request_url) ?>" class="btn btn-outline"><?= ui_lucide_icon('arrow-left') ?> Back to Session</a>
     </div>
 </div>
 

@@ -5,7 +5,7 @@
         <p class="page-subtitle">Create a moderator account and optionally assign it to an approved batch.</p>
     </div>
     <div class="page-header-actions">
-        <a href="/admin/moderators" class="btn btn-outline">← Back to Moderators</a>
+        <a href="/admin/moderators" class="btn btn-outline"><?= ui_lucide_icon('arrow-left') ?> Back to Moderators</a>
     </div>
 </div>
 

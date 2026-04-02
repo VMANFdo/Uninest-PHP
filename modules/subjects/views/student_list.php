@@ -5,7 +5,7 @@
         <p class="page-subtitle">Explore the subjects available in your approved batch.</p>
     </div>
     <div class="page-header-actions">
-        <a href="/dashboard" class="btn btn-outline">← Back to Dashboard</a>
+        <a href="/dashboard" class="btn btn-outline"><?= ui_lucide_icon('arrow-left') ?> Back to Dashboard</a>
     </div>
 </div>
 
@@ -137,7 +137,7 @@ $buildTermUrl = static function (int $year, int $semester) use ($activeStatus, $
     ?>
     <div class="subjects-pagination">
         <?php if (($page ?? 1) > 1): ?>
-            <a href="<?= e($buildPageUrl(((int) $page) - 1)) ?>" class="btn btn-outline">← Previous</a>
+            <a href="<?= e($buildPageUrl(((int) $page) - 1)) ?>" class="btn btn-outline"><?= ui_lucide_icon('arrow-left') ?> Previous</a>
         <?php else: ?>
             <span></span>
         <?php endif; ?>
@@ -147,7 +147,7 @@ $buildTermUrl = static function (int $year, int $semester) use ($activeStatus, $
         </span>
 
         <?php if ((int) $page < (int) $total_pages): ?>
-            <a href="<?= e($buildPageUrl(((int) $page) + 1)) ?>" class="btn btn-outline">Next →</a>
+            <a href="<?= e($buildPageUrl(((int) $page) + 1)) ?>" class="btn btn-outline">Next <?= ui_lucide_icon('arrow-right') ?></a>
         <?php else: ?>
             <span></span>
         <?php endif; ?>

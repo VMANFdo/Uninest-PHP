@@ -5,7 +5,7 @@
         <p class="page-subtitle">Update batch settings, ownership, and status while keeping moderator assignments consistent.</p>
     </div>
     <div class="page-header-actions">
-        <a href="/admin/batches" class="btn btn-outline">← Back to Batches</a>
+        <a href="/admin/batches" class="btn btn-outline"><?= ui_lucide_icon('arrow-left') ?> Back to Batches</a>
     </div>
 </div>
 

@@ -12,7 +12,7 @@ $selectedSourceType = old('source_type', (string) ($form_resource['source_type']
         <p class="page-subtitle">Update your uploaded resource details.</p>
     </div>
     <div class="page-header-actions">
-        <a href="/my-resources" class="btn btn-outline">← Back to My Resources</a>
+        <a href="/my-resources" class="btn btn-outline"><?= ui_lucide_icon('arrow-left') ?> Back to My Resources</a>
     </div>
 </div>
 

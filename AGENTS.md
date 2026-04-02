@@ -35,6 +35,7 @@ Treat this as the project contract.
   - `resources_*` in `modules/resources/*`
   - `comments_*` in `modules/comments/*`
   - `community_*` in `modules/community/*`
+  - `kuppi_*` in `modules/kuppi/*`
 - Legacy onboarding exceptions currently allowed:
   - `onboarding_*`, `admin_*`, `moderator_*`, `university_*`, `universities_*`
 - New code should prefer strict module prefixing, even inside onboarding.
@@ -105,6 +106,10 @@ Primary tables:
 - `feed_post_saves`
 - `feed_reports`
 - `comments` (polymorphic target)
+- `kuppi_requests` (batch-scoped requested sessions)
+- `kuppi_request_votes`
+- `kuppi_conductor_applications`
+- `kuppi_conductor_votes`
 - `password_reset_tokens`
 
 Non-negotiable integrity rules:
@@ -118,6 +123,9 @@ Non-negotiable integrity rules:
 - One join-request row per student (`student_user_id` unique in `student_batch_requests`).
 - `users.first_approved_batch_id` becomes immutable once first approved assignment is recorded.
 - One save row per `(post_id, user_id)` in `feed_post_saves`.
+- One request-vote row per `(request_id, user_id)` in `kuppi_request_votes`.
+- One conductor-application row per `(request_id, applicant_user_id)` in `kuppi_conductor_applications`.
+- One conductor-vote row per `(application_id, voter_user_id)` in `kuppi_conductor_votes`.
 - `feed_reports.target_type` is restricted to `post | comment`.
 - `feed_reports.status` is restricted to `open | dismissed | resolved`.
 
@@ -184,6 +192,29 @@ Use `middleware_exact_role('admin')` for admin provisioning routes.
   - dismiss closes report with no content deletion,
   - remove deletes reported target (post/comment) and resolves related open reports.
 
+## 7.4) Kuppi Interaction Rules (Do Not Break)
+
+- Requested Kuppi sessions are batch-scoped for non-admin users.
+- Admin cross-batch browsing must use explicit selected batch context (for example `batch_id` on index), not implicit unscoped reads.
+- Request CRUD:
+  - create allowed only for `student` and `coordinator`,
+  - edit allowed only for owner and only when request `status` is `open`,
+  - delete allowed for owner, moderator of that request batch, and admin.
+- Request voting:
+  - allowed for readable batch members (`student`, `coordinator`, `moderator`) and admin in selected batch context,
+  - self-voting on own request is blocked,
+  - one active vote per user using `kuppi_request_votes` with toggle/switch behavior (`up`, `down`, or none).
+- Conductor applications:
+  - apply allowed only for `student` on open requests within readable scope,
+  - one application per user per request (`kuppi_conductor_applications` unique `(request_id, applicant_user_id)`).
+- Conductor voting:
+  - allowed only for `student` on open requests within readable scope,
+  - self-voting on own application is blocked,
+  - one vote per `(application_id, voter_user_id)` with toggle behavior.
+- Kuppi comments:
+  - use `comments.target_type = 'kuppi_request'`,
+  - keep comment depth/permissions centralized in comments helpers/controllers (no ad-hoc target checks inside generic model functions).
+
 ## 7.1) Admin Provisioning Route Groups
 
 - Student management:
@@ -244,6 +275,22 @@ Use `middleware_exact_role('admin')` for admin provisioning routes.
   - `GET /dashboard/community/reports`
   - `POST /dashboard/community/reports/{id}/dismiss`
   - `POST /dashboard/community/reports/{id}/remove`
+- Requested Kuppi:
+  - `GET /dashboard/kuppi`
+  - `GET /dashboard/kuppi/create`
+  - `POST /dashboard/kuppi`
+  - `GET /dashboard/kuppi/{id}`
+  - `GET /dashboard/kuppi/{id}/edit`
+  - `POST /dashboard/kuppi/{id}`
+  - `POST /dashboard/kuppi/{id}/delete`
+  - `POST /dashboard/kuppi/{id}/vote`
+  - `GET /dashboard/kuppi/{id}/conductors/apply`
+  - `POST /dashboard/kuppi/{id}/conductors/apply`
+  - `POST /dashboard/kuppi/{id}/conductors/{applicationId}/vote`
+  - `POST /dashboard/kuppi/{id}/comments`
+  - `POST /dashboard/kuppi/{id}/comments/{commentId}`
+  - `POST /dashboard/kuppi/{id}/comments/{commentId}/delete`
+  - `GET /my-kuppi-requests`
 
 ## 8) Auth and Password Reset Rules
 
@@ -260,6 +307,7 @@ Use `middleware_exact_role('admin')` for admin provisioning routes.
 - Keep auth/dashboard views server-rendered, consistent with current aesthetic.
 - Avoid introducing a new design system per page.
 - Keep forms and spacing clean, readable, and consistent with existing components.
+- For Kuppi vote controls, active states must be clearly distinguishable from inactive and disabled states on both list and detail views.
 
 ## 10) How to Add a New CRUD Module
 

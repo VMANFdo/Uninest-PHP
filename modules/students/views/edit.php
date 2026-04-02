@@ -7,7 +7,7 @@
         <p class="page-subtitle">Update student profile details while preserving batch lock constraints.</p>
     </div>
     <div class="page-header-actions">
-        <a href="/students" class="btn btn-outline">← Back to Students</a>
+        <a href="/students" class="btn btn-outline"><?= ui_lucide_icon('arrow-left') ?> Back to Students</a>
     </div>
 </div>
 

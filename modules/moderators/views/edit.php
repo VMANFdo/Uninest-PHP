@@ -28,7 +28,7 @@ if ($ownedBatchId > 0) {
         <p class="page-subtitle">Update moderator profile details and batch assignment rules.</p>
     </div>
     <div class="page-header-actions">
-        <a href="/admin/moderators" class="btn btn-outline">← Back to Moderators</a>
+        <a href="/admin/moderators" class="btn btn-outline"><?= ui_lucide_icon('arrow-left') ?> Back to Moderators</a>
     </div>
 </div>
 

@@ -13,17 +13,17 @@
 
 <div class="features-grid">
     <div class="feature-card">
-        <div class="feature-icon">📚</div>
+        <div class="feature-icon"><?= ui_lucide_icon('book-open') ?></div>
         <h3>Browse Subjects</h3>
         <p>Access a wide range of subjects and course materials curated for your learning journey.</p>
     </div>
     <div class="feature-card">
-        <div class="feature-icon">👥</div>
+        <div class="feature-icon"><?= ui_lucide_icon('users') ?></div>
         <h3>Role-Based Access</h3>
         <p>Students, coordinators, moderators, and admins — each with tailored dashboards.</p>
     </div>
     <div class="feature-card">
-        <div class="feature-icon">⚡</div>
+        <div class="feature-icon"><?= ui_lucide_icon('zap') ?></div>
         <h3>Simple & Scalable</h3>
         <p>Built with plain PHP and MySQL. No bloat, no complexity — just clean, fast code.</p>
     </div>

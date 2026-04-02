@@ -85,14 +85,14 @@ $defaultRole = in_array($inviteRole, ['student', 'moderator'], true) ? $inviteRo
                     <div class="auth-role-grid">
                         <label class="auth-role-option <?= $selectedRole === 'student' ? 'active' : '' ?>" data-role-option="student">
                             <input type="radio" name="role" value="student" <?= $selectedRole === 'student' ? 'checked' : '' ?>>
-                            <span class="auth-role-icon">🎓</span>
+                            <span class="auth-role-icon"><?= ui_lucide_icon('graduation-cap') ?></span>
                             <strong>Student</strong>
                             <small>Join a batch and access peer-learning content.</small>
                         </label>
 
                         <label class="auth-role-option <?= $selectedRole === 'moderator' ? 'active' : '' ?>" data-role-option="moderator">
                             <input type="radio" name="role" value="moderator" <?= $selectedRole === 'moderator' ? 'checked' : '' ?>>
-                            <span class="auth-role-icon">🛡️</span>
+                            <span class="auth-role-icon"><?= ui_lucide_icon('shield-check') ?></span>
                             <strong>Moderator (Batch Rep)</strong>
                             <small>Create your batch and approve student join requests.</small>
                         </label>

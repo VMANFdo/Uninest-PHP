@@ -9,7 +9,7 @@
         <p class="page-subtitle">Set up a new subject and assign it to the right approved batch.</p>
     </div>
     <div class="page-header-actions">
-        <a href="/subjects" class="btn btn-outline">← Back to Subjects</a>
+        <a href="/subjects" class="btn btn-outline"><?= ui_lucide_icon('arrow-left') ?> Back to Subjects</a>
     </div>
 </div>
 

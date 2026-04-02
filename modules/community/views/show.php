@@ -27,7 +27,7 @@ $reportReasonOptions = (array) ($report_reason_options ?? []);
         </p>
     </div>
     <div class="page-header-actions">
-        <a href="<?= e($back_feed_url) ?>" class="btn btn-outline">← Back to Feed</a>
+        <a href="<?= e($back_feed_url) ?>" class="btn btn-outline"><?= ui_lucide_icon('arrow-left') ?> Back to Feed</a>
         <?php if (!empty($can_edit_post)): ?>
             <a href="/my-posts/<?= $postId ?>/edit" class="btn btn-primary">Edit Post</a>
         <?php endif; ?>

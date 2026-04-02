@@ -9,6 +9,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Google+Sans+Flex:opsz,wght@8..144,100..1000&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest" defer></script>
 </head>
 <?php
 $role = user_role() ?? 'student';
@@ -61,11 +62,11 @@ if ($initials === '') {
         <div class="dashboard-stage">
             <header class="dashboard-topbar">
                 <button type="button" class="sidebar-toggle" id="sidebar-toggle" aria-controls="app-sidebar" aria-expanded="false">
-                    ☰
+                    <?= ui_lucide_icon('menu') ?>
                 </button>
 
                 <div class="topbar-search" role="search">
-                    <span class="search-icon" aria-hidden="true">⌕</span>
+                    <span class="search-icon" aria-hidden="true"><?= ui_lucide_icon('search') ?></span>
                     <input type="text" placeholder="Search your workspace" aria-label="Search your workspace">
                 </div>
 
@@ -105,6 +106,17 @@ if ($initials === '') {
 
     <script>
         (function () {
+            function initLucide() {
+                if (!window.lucide || typeof window.lucide.createIcons !== 'function') return;
+                window.lucide.createIcons();
+            }
+
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', initLucide);
+            } else {
+                initLucide();
+            }
+
             const sidebar = document.getElementById('app-sidebar');
             const toggle = document.getElementById('sidebar-toggle');
             const overlay = document.getElementById('dashboard-overlay');

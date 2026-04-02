@@ -22,7 +22,7 @@ $filledStars = max(0, min(5, (int) round($averageRating)));
     </div>
     <div class="page-header-actions">
         <a href="/dashboard/subjects/<?= (int) $subject['id'] ?>/topics/<?= (int) $topic['id'] ?>/resources/create" class="btn btn-primary">+ Upload Resource</a>
-        <a href="/dashboard/subjects/<?= (int) $subject['id'] ?>/topics/<?= (int) $topic['id'] ?>/resources" class="btn btn-outline">← Back to Resources</a>
+        <a href="/dashboard/subjects/<?= (int) $subject['id'] ?>/topics/<?= (int) $topic['id'] ?>/resources" class="btn btn-outline"><?= ui_lucide_icon('arrow-left') ?> Back to Resources</a>
     </div>
 </div>
 
@@ -106,7 +106,7 @@ $filledStars = max(0, min(5, (int) round($averageRating)));
                 <strong><?= e(resources_format_rating_value($averageRating)) ?></strong>
                 <div class="resource-review-stars" aria-label="Average rating <?= e(resources_format_rating_value($averageRating)) ?> out of 5">
                     <?php for ($star = 1; $star <= 5; $star++): ?>
-                        <span class="<?= $star <= $filledStars ? 'is-filled' : '' ?>">★</span>
+                        <span class="resource-review-star <?= $star <= $filledStars ? 'is-filled' : '' ?>"><?= ui_lucide_icon('star') ?></span>
                     <?php endfor; ?>
                 </div>
                 <small><?= e($ratingCount . ' rating' . ($ratingCount === 1 ? '' : 's')) ?></small>

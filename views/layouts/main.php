@@ -9,6 +9,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Google+Sans+Flex:opsz,wght@8..144,100..1000&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest" defer></script>
 </head>
 <?php
 $requestPath = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
@@ -58,5 +59,19 @@ $isAuthPage = in_array($requestPath, ['/login', '/register', '/forgot-password',
             <?= $content ?>
         </main>
     <?php endif; ?>
+    <script>
+        (function () {
+            function initLucide() {
+                if (!window.lucide || typeof window.lucide.createIcons !== 'function') return;
+                window.lucide.createIcons();
+            }
+
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', initLucide);
+            } else {
+                initLucide();
+            }
+        })();
+    </script>
 </body>
 </html>

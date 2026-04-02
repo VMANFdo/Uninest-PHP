@@ -21,7 +21,7 @@ if ($authorName === '') {
         <p class="page-subtitle">Share a useful update, ask a question, or post a resource your batch can use.</p>
     </div>
     <div class="page-header-actions">
-        <a href="<?= e($backFeedUrl) ?>" class="btn btn-outline">← Back to Feed</a>
+        <a href="<?= e($backFeedUrl) ?>" class="btn btn-outline"><?= ui_lucide_icon('arrow-left') ?> Back to Feed</a>
     </div>
 </div>
 

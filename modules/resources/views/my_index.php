@@ -5,7 +5,7 @@
         <p class="page-subtitle">Manage all resources you have uploaded in one place.</p>
     </div>
     <div class="page-header-actions">
-        <a href="/dashboard" class="btn btn-outline">← Back to Dashboard</a>
+        <a href="/dashboard" class="btn btn-outline"><?= ui_lucide_icon('arrow-left') ?> Back to Dashboard</a>
     </div>
 </div>
 

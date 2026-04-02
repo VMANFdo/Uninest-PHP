@@ -9,7 +9,7 @@
     <div class="page-header-actions">
         <a href="/subjects/<?= (int) $subject['id'] ?>/topics/create" class="btn btn-primary">+ New Topic</a>
         <a href="/dashboard/subjects/<?= (int) $subject['id'] ?>/topics" class="btn btn-outline">View Topic Cards</a>
-        <a href="<?= e($back_subjects_url) ?>" class="btn btn-outline">← Back to Subjects</a>
+        <a href="<?= e($back_subjects_url) ?>" class="btn btn-outline"><?= ui_lucide_icon('arrow-left') ?> Back to Subjects</a>
     </div>
 </div>
 

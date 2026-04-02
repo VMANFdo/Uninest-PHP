@@ -22,7 +22,7 @@ $availableCandidates = array_values(array_filter(
     </div>
     <div class="page-header-actions">
         <a href="/subjects/<?= (int) $subject['id'] ?>/edit" class="btn btn-outline">Edit Subject</a>
-        <a href="/subjects" class="btn btn-outline">← Back to Subjects</a>
+        <a href="/subjects" class="btn btn-outline"><?= ui_lucide_icon('arrow-left') ?> Back to Subjects</a>
     </div>
 </div>
 

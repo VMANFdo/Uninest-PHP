@@ -7,7 +7,7 @@
         </p>
     </div>
     <div class="page-header-actions">
-        <a href="/subjects/<?= (int) $subject['id'] ?>/topics" class="btn btn-outline">← Back to Topics</a>
+        <a href="/subjects/<?= (int) $subject['id'] ?>/topics" class="btn btn-outline"><?= ui_lucide_icon('arrow-left') ?> Back to Topics</a>
         <a href="<?= e($back_subjects_url) ?>" class="btn btn-outline">Subjects</a>
     </div>
 </div>

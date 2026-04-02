@@ -8,7 +8,7 @@
     </div>
     <div class="page-header-actions">
         <a href="/dashboard/kuppi/<?= (int) $request['id'] ?>" class="btn btn-outline">Open Request</a>
-        <a href="<?= e((string) $back_list_url) ?>" class="btn btn-outline">← Back to Requests</a>
+        <a href="<?= e((string) $back_list_url) ?>" class="btn btn-outline"><?= ui_lucide_icon('arrow-left') ?> Back to Requests</a>
     </div>
 </div>
 

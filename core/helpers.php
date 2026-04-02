@@ -301,23 +301,16 @@ function ui_avatar_tone_class(string $seed): string
     return 'ui-avatar-tone-' . $tone;
 }
 
-function ui_lucide_icon(string $name): string
+function ui_lucide_icon(string $name, string $extraClass = ''): string
 {
-    $icons = [
-        'pencil' => '<path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 1 1 3 3L7 19l-4 1 1-4Z"/>',
-        'trash-2' => '<path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/>',
-        'users' => '<path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><path d="M8.5 7a4 4 0 1 0 0.01 0Z"/><path d="M20 8v6"/><path d="M23 11h-6"/>',
-        'layers' => '<path d="m12.83 2.18 8 3.2a2 2 0 0 1 0 3.24l-8 3.2a2 2 0 0 1-1.66 0l-8-3.2a2 2 0 0 1 0-3.24l8-3.2a2 2 0 0 1 1.66 0Z"/><path d="m2.66 10.58 8.34 3.34a2 2 0 0 0 1.5 0l8.34-3.34"/><path d="m2.66 14.58 8.34 3.34a2 2 0 0 0 1.5 0l8.34-3.34"/>',
-        'download' => '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/>',
-        'check' => '<path d="m20 6-11 11-5-5"/>',
-        'x' => '<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',
-    ];
-
-    if (!isset($icons[$name])) {
+    $iconName = strtolower(trim($name));
+    if ($iconName === '' || !preg_match('/^[a-z0-9-]+$/', $iconName)) {
         return '';
     }
 
-    return '<svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' . $icons[$name] . '</svg>';
+    $classes = trim('ui-lucide-icon ' . $extraClass);
+
+    return '<i data-lucide="' . e($iconName) . '" class="' . e($classes) . '" aria-hidden="true"></i>';
 }
 
 // ──────────────────────────────────────
