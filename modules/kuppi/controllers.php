@@ -949,3 +949,1123 @@ function kuppi_my_index(): void
         'requests' => kuppi_my_requests((int) auth_id()),
     ], 'dashboard');
 }
+
+function kuppi_user_is_scheduler(): bool
+{
+    return in_array((string) user_role(), ['coordinator', 'moderator', 'admin'], true);
+}
+
+function kuppi_user_can_schedule_subject(int $subjectId, int $batchId): bool
+{
+    if ($subjectId <= 0 || $batchId <= 0) {
+        return false;
+    }
+
+    $role = (string) user_role();
+    $currentUser = (array) auth_user();
+    $currentUserId = (int) ($currentUser['id'] ?? 0);
+    $currentBatchId = (int) ($currentUser['batch_id'] ?? 0);
+
+    if ($role === 'admin') {
+        return kuppi_subject_exists_in_batch($subjectId, $batchId);
+    }
+
+    if ($currentBatchId !== $batchId) {
+        return false;
+    }
+
+    if ($role === 'moderator') {
+        return kuppi_subject_exists_in_batch($subjectId, $batchId);
+    }
+
+    if ($role === 'coordinator') {
+        return subjects_find_for_coordinator($subjectId, $currentUserId) !== null;
+    }
+
+    return false;
+}
+
+function kuppi_user_can_schedule_request(array $request): bool
+{
+    if (!kuppi_user_is_scheduler()) {
+        return false;
+    }
+
+    return kuppi_user_can_schedule_subject(
+        (int) ($request['subject_id'] ?? 0),
+        (int) ($request['batch_id'] ?? 0)
+    );
+}
+
+function kuppi_user_can_manage_scheduled_session(array $session): bool
+{
+    if (!kuppi_user_is_scheduler()) {
+        return false;
+    }
+
+    return kuppi_user_can_schedule_subject(
+        (int) ($session['subject_id'] ?? 0),
+        (int) ($session['batch_id'] ?? 0)
+    );
+}
+
+function kuppi_schedule_draft_key(): string
+{
+    return 'kuppi_schedule_draft';
+}
+
+function kuppi_schedule_get_draft(): array
+{
+    $draft = $_SESSION[kuppi_schedule_draft_key()] ?? [];
+    return is_array($draft) ? $draft : [];
+}
+
+function kuppi_schedule_set_draft(array $draft): void
+{
+    $_SESSION[kuppi_schedule_draft_key()] = $draft;
+}
+
+function kuppi_schedule_clear_draft(): void
+{
+    unset($_SESSION[kuppi_schedule_draft_key()]);
+}
+
+function kuppi_schedule_require_draft(): array
+{
+    $draft = kuppi_schedule_get_draft();
+    if (empty($draft)) {
+        flash('warning', 'Start scheduling by selecting a request or manual mode.');
+        redirect('/dashboard/kuppi/schedule');
+    }
+    return $draft;
+}
+
+function kuppi_schedule_default_draft(): array
+{
+    return [
+        'mode' => 'request',
+        'batch_id' => 0,
+        'subject_id' => 0,
+        'request_id' => 0,
+        'title' => '',
+        'description' => '',
+        'session_date' => '',
+        'start_time' => '',
+        'end_time' => '',
+        'duration_minutes' => 0,
+        'max_attendees' => 25,
+        'location_type' => 'physical',
+        'location_text' => '',
+        'meeting_link' => '',
+        'notes' => '',
+        'host_user_ids' => [],
+    ];
+}
+
+function kuppi_schedule_resolve_request_for_draft(array $draft): ?array
+{
+    $requestId = (int) ($draft['request_id'] ?? 0);
+    if ($requestId <= 0) {
+        return null;
+    }
+
+    $request = kuppi_resolve_readable_request($requestId);
+    if (!$request) {
+        return null;
+    }
+
+    if (!kuppi_user_can_schedule_request($request)) {
+        return null;
+    }
+
+    return $request;
+}
+
+function kuppi_schedule_validate_date_time(
+    string $sessionDate,
+    string $startTime,
+    string $endTime
+): array {
+    $errors = [];
+    $durationMinutes = 0;
+
+    if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $sessionDate) || strtotime($sessionDate) === false) {
+        $errors[] = 'Valid session date is required.';
+    } elseif ($sessionDate < date('Y-m-d')) {
+        $errors[] = 'Session date cannot be in the past.';
+    }
+
+    if (!preg_match('/^\d{2}:\d{2}$/', $startTime)) {
+        $errors[] = 'Valid start time is required.';
+    }
+
+    if (!preg_match('/^\d{2}:\d{2}$/', $endTime)) {
+        $errors[] = 'Valid end time is required.';
+    }
+
+    if (empty($errors)) {
+        $startTs = strtotime($sessionDate . ' ' . $startTime . ':00');
+        $endTs = strtotime($sessionDate . ' ' . $endTime . ':00');
+        if ($startTs === false || $endTs === false || $endTs <= $startTs) {
+            $errors[] = 'End time must be after start time.';
+        } else {
+            $durationMinutes = (int) floor(($endTs - $startTs) / 60);
+        }
+    }
+
+    return [
+        'errors' => $errors,
+        'duration_minutes' => $durationMinutes,
+    ];
+}
+
+function kuppi_schedule_validate_set_input(array $draft): array
+{
+    $role = (string) user_role();
+    $currentUser = (array) auth_user();
+    $currentUserId = (int) ($currentUser['id'] ?? 0);
+    $currentBatchId = (int) ($currentUser['batch_id'] ?? 0);
+    $mode = (string) ($draft['mode'] ?? 'request');
+    $errors = [];
+
+    $batchId = $mode === 'manual'
+        ? ($role === 'admin' ? (int) request_input('batch_id', 0) : $currentBatchId)
+        : (int) ($draft['batch_id'] ?? 0);
+
+    $request = null;
+    if ($mode === 'request') {
+        $request = kuppi_schedule_resolve_request_for_draft($draft);
+        if (!$request) {
+            $errors[] = 'Selected request is no longer available.';
+        } else {
+            $requestId = (int) ($request['id'] ?? 0);
+            if ($requestId > 0 && kuppi_scheduled_session_has_active_for_request($requestId)) {
+                $errors[] = 'This request already has an active scheduled session.';
+            }
+
+            if ((string) ($request['status'] ?? '') !== 'open') {
+                $errors[] = 'Only open requests can be scheduled.';
+            }
+        }
+    }
+
+    if ($batchId <= 0) {
+        $errors[] = 'Batch is required.';
+    }
+
+    $subjectId = $mode === 'request'
+        ? (int) (($request['subject_id'] ?? $draft['subject_id']) ?? 0)
+        : (int) request_input('subject_id', 0);
+    if ($subjectId <= 0) {
+        $errors[] = 'Subject is required.';
+    } elseif (!kuppi_user_can_schedule_subject($subjectId, $batchId)) {
+        $errors[] = 'You do not have permission to schedule this subject.';
+    }
+
+    $title = $mode === 'request'
+        ? (string) (($request['title'] ?? $draft['title']) ?? '')
+        : trim((string) request_input('title', ''));
+    $description = $mode === 'request'
+        ? (string) (($request['description'] ?? $draft['description']) ?? '')
+        : trim((string) request_input('description', ''));
+
+    if ($title === '') {
+        $errors[] = 'Session title is required.';
+    } elseif (strlen($title) > 200) {
+        $errors[] = 'Session title must be at most 200 characters.';
+    }
+
+    if ($description === '') {
+        $errors[] = 'Session description is required.';
+    } elseif (strlen($description) > 2000) {
+        $errors[] = 'Session description must be at most 2000 characters.';
+    }
+
+    $sessionDate = trim((string) request_input('session_date', ''));
+    $startTime = trim((string) request_input('start_time', ''));
+    $endTime = trim((string) request_input('end_time', ''));
+    $timeValidation = kuppi_schedule_validate_date_time($sessionDate, $startTime, $endTime);
+    $errors = array_merge($errors, $timeValidation['errors']);
+    $durationMinutes = (int) ($timeValidation['duration_minutes'] ?? 0);
+
+    $maxAttendees = (int) request_input('max_attendees', 0);
+    if ($maxAttendees <= 0 || $maxAttendees > 2000) {
+        $errors[] = 'Maximum attendees must be between 1 and 2000.';
+    }
+
+    $locationType = trim((string) request_input('location_type', 'physical'));
+    if (!in_array($locationType, kuppi_scheduled_location_types(), true)) {
+        $errors[] = 'Valid location type is required.';
+    }
+
+    $locationText = trim((string) request_input('location_text', ''));
+    $meetingLink = trim((string) request_input('meeting_link', ''));
+    if ($locationType === 'physical') {
+        if ($locationText === '') {
+            $errors[] = 'Physical location is required.';
+        } elseif (strlen($locationText) > 255) {
+            $errors[] = 'Physical location must be at most 255 characters.';
+        }
+        $meetingLink = '';
+    } else {
+        if ($meetingLink === '') {
+            $errors[] = 'Meeting link is required for online sessions.';
+        } elseif (!filter_var($meetingLink, FILTER_VALIDATE_URL)) {
+            $errors[] = 'Meeting link must be a valid URL.';
+        } elseif (strlen($meetingLink) > 255) {
+            $errors[] = 'Meeting link must be at most 255 characters.';
+        }
+        $locationText = '';
+    }
+
+    $notes = trim((string) request_input('notes', ''));
+    if (strlen($notes) > 3000) {
+        $errors[] = 'Notes must be at most 3000 characters.';
+    }
+
+    return [
+        'errors' => $errors,
+        'data' => [
+            'mode' => $mode,
+            'batch_id' => $batchId,
+            'subject_id' => $subjectId,
+            'request_id' => $mode === 'request' ? (int) (($request['id'] ?? $draft['request_id']) ?? 0) : 0,
+            'title' => $title,
+            'description' => $description,
+            'session_date' => $sessionDate,
+            'start_time' => $startTime,
+            'end_time' => $endTime,
+            'duration_minutes' => $durationMinutes,
+            'max_attendees' => $maxAttendees,
+            'location_type' => $locationType,
+            'location_text' => $locationText,
+            'meeting_link' => $meetingLink,
+            'notes' => $notes,
+            'updated_by_user_id' => $currentUserId,
+        ],
+    ];
+}
+
+function kuppi_schedule_host_candidates(array $draft): array
+{
+    $mode = (string) ($draft['mode'] ?? 'request');
+    $candidates = [];
+
+    if ($mode === 'request') {
+        $requestId = (int) ($draft['request_id'] ?? 0);
+        foreach (kuppi_schedule_conductor_candidates_for_request($requestId) as $row) {
+            $candidates[] = [
+                'host_user_id' => (int) ($row['host_user_id'] ?? 0),
+                'host_name' => (string) ($row['host_name'] ?? 'Unknown User'),
+                'host_email' => (string) ($row['host_email'] ?? ''),
+                'host_role' => (string) ($row['host_role'] ?? 'student'),
+                'host_academic_year' => (int) ($row['host_academic_year'] ?? 0),
+                'source_type' => 'request_conductor',
+                'source_application_id' => (int) ($row['application_id'] ?? 0),
+                'vote_count' => (int) ($row['vote_count'] ?? 0),
+                'availability' => kuppi_conductor_availability_from_csv((string) ($row['availability_csv'] ?? '')),
+            ];
+        }
+
+        return $candidates;
+    }
+
+    $batchId = (int) ($draft['batch_id'] ?? 0);
+    foreach (kuppi_schedule_manual_host_candidates_for_batch($batchId) as $row) {
+        $candidates[] = [
+            'host_user_id' => (int) ($row['host_user_id'] ?? 0),
+            'host_name' => (string) ($row['host_name'] ?? 'Unknown User'),
+            'host_email' => (string) ($row['host_email'] ?? ''),
+            'host_role' => (string) ($row['host_role'] ?? 'student'),
+            'host_academic_year' => (int) ($row['host_academic_year'] ?? 0),
+            'source_type' => 'manual',
+            'source_application_id' => null,
+            'vote_count' => 0,
+            'availability' => [],
+        ];
+    }
+
+    return $candidates;
+}
+
+function kuppi_schedule_candidate_map(array $candidates): array
+{
+    $map = [];
+    foreach ($candidates as $candidate) {
+        $hostUserId = (int) ($candidate['host_user_id'] ?? 0);
+        if ($hostUserId <= 0) {
+            continue;
+        }
+        $map[$hostUserId] = $candidate;
+    }
+    return $map;
+}
+
+function kuppi_schedule_default_host_ids(array $draft, array $candidates): array
+{
+    $existing = (array) ($draft['host_user_ids'] ?? []);
+    if (!empty($existing)) {
+        return array_values(array_unique(array_map('intval', $existing)));
+    }
+
+    if ((string) ($draft['mode'] ?? 'request') !== 'request') {
+        return [];
+    }
+
+    $maxVotes = 0;
+    foreach ($candidates as $candidate) {
+        $votes = (int) ($candidate['vote_count'] ?? 0);
+        if ($votes > $maxVotes) {
+            $maxVotes = $votes;
+        }
+    }
+
+    if ($maxVotes <= 0) {
+        return [];
+    }
+
+    $selected = [];
+    foreach ($candidates as $candidate) {
+        if ((int) ($candidate['vote_count'] ?? 0) === $maxVotes) {
+            $selected[] = (int) ($candidate['host_user_id'] ?? 0);
+        }
+    }
+
+    return array_values(array_filter(array_unique($selected), static fn(int $id): bool => $id > 0));
+}
+
+function kuppi_schedule_selected_hosts_from_input(array $candidateMap): array
+{
+    $selectedRaw = $_POST['host_user_ids'] ?? [];
+    $selectedList = is_array($selectedRaw) ? $selectedRaw : [];
+    $selectedIds = array_values(array_filter(array_unique(array_map(
+        static fn($value): int => (int) $value,
+        $selectedList
+    )), static fn(int $id): bool => $id > 0));
+
+    $errors = [];
+    if (empty($selectedIds)) {
+        $errors[] = 'Select at least one host.';
+    }
+
+    $hosts = [];
+    foreach ($selectedIds as $hostUserId) {
+        if (!isset($candidateMap[$hostUserId])) {
+            $errors[] = 'One or more selected hosts are invalid.';
+            continue;
+        }
+
+        $candidate = $candidateMap[$hostUserId];
+        $hosts[] = [
+            'host_user_id' => $hostUserId,
+            'source_type' => (string) ($candidate['source_type'] ?? 'manual'),
+            'source_application_id' => !empty($candidate['source_application_id']) ? (int) $candidate['source_application_id'] : null,
+            'assigned_by_user_id' => (int) auth_id(),
+        ];
+    }
+
+    return [
+        'errors' => array_values(array_unique($errors)),
+        'selected_ids' => $selectedIds,
+        'hosts' => $hosts,
+    ];
+}
+
+function kuppi_schedule_notify(array $session, array $hosts, string $event): void
+{
+    if (!smtp_is_configured()) {
+        return;
+    }
+
+    $batchId = (int) ($session['batch_id'] ?? 0);
+    $requestId = (int) ($session['request_id'] ?? 0);
+    $title = (string) ($session['title'] ?? 'Kuppi Session');
+    $subjectCode = (string) ($session['subject_code'] ?? '');
+    $sessionDate = (string) ($session['session_date'] ?? '');
+    $startTime = (string) ($session['start_time'] ?? '');
+    $endTime = (string) ($session['end_time'] ?? '');
+    $locationType = (string) ($session['location_type'] ?? 'physical');
+    $location = $locationType === 'online'
+        ? (string) ($session['meeting_link'] ?? '')
+        : (string) ($session['location_text'] ?? '');
+
+    $recipientMap = [];
+    foreach (kuppi_scheduled_notification_batch_recipients($batchId) as $row) {
+        $email = strtolower(trim((string) ($row['user_email'] ?? '')));
+        if ($email === '') {
+            continue;
+        }
+        $recipientMap[$email] = (string) ($row['user_name'] ?? 'Student');
+    }
+
+    if ($requestId > 0) {
+        $owner = kuppi_scheduled_notification_request_owner($requestId);
+        if ($owner) {
+            $ownerEmail = strtolower(trim((string) ($owner['user_email'] ?? '')));
+            if ($ownerEmail !== '') {
+                $recipientMap[$ownerEmail] = (string) ($owner['user_name'] ?? 'Student');
+            }
+        }
+    }
+
+    foreach ($hosts as $host) {
+        $hostEmail = strtolower(trim((string) ($host['host_email'] ?? '')));
+        if ($hostEmail !== '') {
+            $recipientMap[$hostEmail] = (string) ($host['host_name'] ?? 'Host');
+        }
+    }
+
+    if (empty($recipientMap)) {
+        return;
+    }
+
+    $subjectPrefix = match ($event) {
+        'created' => 'New Kuppi Session Scheduled',
+        'updated' => 'Kuppi Session Updated',
+        'cancelled' => 'Kuppi Session Cancelled',
+        'deleted' => 'Kuppi Session Removed',
+        default => 'Kuppi Session Notification',
+    };
+
+    $subjectLine = $subjectPrefix . ': ' . $title;
+    $dateLabel = $sessionDate !== '' ? date('F j, Y', strtotime($sessionDate)) : 'TBD';
+
+    foreach ($recipientMap as $email => $name) {
+        $bodyLines = [
+            'Hello ' . $name . ',',
+            '',
+            $subjectPrefix . '.',
+            '',
+            'Title: ' . $title,
+            'Subject: ' . ($subjectCode !== '' ? $subjectCode : 'N/A'),
+            'Date: ' . $dateLabel,
+            'Time: ' . ($startTime !== '' && $endTime !== '' ? (substr($startTime, 0, 5) . ' - ' . substr($endTime, 0, 5)) : 'TBD'),
+            'Location: ' . ($location !== '' ? $location : 'TBD'),
+        ];
+
+        if (!smtp_send_email($email, $subjectLine, implode("\n", $bodyLines))) {
+            error_log('Kuppi schedule email failed for: ' . $email . ' (' . $event . ')');
+        }
+    }
+}
+
+function kuppi_schedule_select_request_step(): void
+{
+    if (!kuppi_user_is_scheduler()) {
+        abort(403, 'You do not have permission to schedule sessions.');
+    }
+
+    $role = (string) user_role();
+    $currentUser = (array) auth_user();
+    $userId = (int) ($currentUser['id'] ?? 0);
+    $userBatchId = (int) ($currentUser['batch_id'] ?? 0);
+    $adminBatchId = $role === 'admin' ? (int) request_input('batch_id', 0) : 0;
+    $selectedSort = trim((string) request_input('sort', 'most_votes'));
+    if (!in_array($selectedSort, kuppi_sort_options(), true)) {
+        $selectedSort = 'most_votes';
+    }
+    $searchQuery = trim((string) request_input('q', ''));
+    if (strlen($searchQuery) > 120) {
+        $searchQuery = substr($searchQuery, 0, 120);
+    }
+
+    $directRequestId = (int) request_input('request_id', 0);
+    if ($directRequestId > 0) {
+        $request = kuppi_resolve_readable_request($directRequestId);
+        if ($request && kuppi_user_can_schedule_request($request) && !kuppi_scheduled_session_has_active_for_request($directRequestId)) {
+            $draft = kuppi_schedule_default_draft();
+            $draft['mode'] = 'request';
+            $draft['request_id'] = $directRequestId;
+            $draft['batch_id'] = (int) ($request['batch_id'] ?? 0);
+            $draft['subject_id'] = (int) ($request['subject_id'] ?? 0);
+            $draft['title'] = (string) ($request['title'] ?? '');
+            $draft['description'] = (string) ($request['description'] ?? '');
+            kuppi_schedule_set_draft($draft);
+            redirect('/dashboard/kuppi/schedule/set');
+        }
+    }
+
+    $requests = kuppi_schedule_open_requests_for_scheduler(
+        $role,
+        $userId,
+        $userBatchId,
+        $searchQuery,
+        $selectedSort,
+        $adminBatchId
+    );
+
+    view('kuppi::schedule_select_request', [
+        'requests' => $requests,
+        'selected_sort' => $selectedSort,
+        'selected_search_query' => $searchQuery,
+        'is_admin' => $role === 'admin',
+        'admin_batch_id' => $adminBatchId,
+        'batch_options' => $role === 'admin' ? kuppi_batch_options_for_admin() : [],
+        'active_batch' => $adminBatchId > 0 ? kuppi_find_batch_option_by_id($adminBatchId) : null,
+    ], 'dashboard');
+}
+
+function kuppi_schedule_manual_start(): void
+{
+    if (!kuppi_user_is_scheduler()) {
+        abort(403, 'You do not have permission to schedule sessions.');
+    }
+
+    $role = (string) user_role();
+    $userBatchId = (int) (auth_user()['batch_id'] ?? 0);
+    $selectedBatchId = $role === 'admin' ? (int) request_input('batch_id', 0) : $userBatchId;
+
+    if ($role === 'admin' && $selectedBatchId <= 0) {
+        flash('warning', 'Select a batch first before starting a manual session.');
+        redirect('/dashboard/kuppi/schedule');
+    }
+
+    $draft = kuppi_schedule_default_draft();
+    $draft['mode'] = 'manual';
+    $draft['batch_id'] = $selectedBatchId;
+    kuppi_schedule_set_draft($draft);
+    redirect('/dashboard/kuppi/schedule/set');
+}
+
+function kuppi_schedule_select_request_action(): void
+{
+    csrf_check();
+
+    if (!kuppi_user_is_scheduler()) {
+        abort(403, 'You do not have permission to schedule sessions.');
+    }
+
+    $requestId = (int) request_input('request_id', 0);
+    $request = kuppi_resolve_readable_request($requestId);
+    if (!$request || !kuppi_user_can_schedule_request($request)) {
+        abort(403, 'Selected request is not available for scheduling.');
+    }
+
+    if (kuppi_scheduled_session_has_active_for_request($requestId)) {
+        flash('error', 'This request already has an active scheduled session.');
+        redirect('/dashboard/kuppi/schedule');
+    }
+
+    $draft = kuppi_schedule_default_draft();
+    $draft['mode'] = 'request';
+    $draft['request_id'] = $requestId;
+    $draft['batch_id'] = (int) ($request['batch_id'] ?? 0);
+    $draft['subject_id'] = (int) ($request['subject_id'] ?? 0);
+    $draft['title'] = (string) ($request['title'] ?? '');
+    $draft['description'] = (string) ($request['description'] ?? '');
+    kuppi_schedule_set_draft($draft);
+
+    redirect('/dashboard/kuppi/schedule/set');
+}
+
+function kuppi_schedule_set_step(): void
+{
+    if (!kuppi_user_is_scheduler()) {
+        abort(403, 'You do not have permission to schedule sessions.');
+    }
+
+    $draft = kuppi_schedule_require_draft();
+    $mode = (string) ($draft['mode'] ?? 'request');
+    $role = (string) user_role();
+    $currentUser = (array) auth_user();
+    $userId = (int) ($currentUser['id'] ?? 0);
+    $userBatchId = (int) ($currentUser['batch_id'] ?? 0);
+    $linkedRequest = null;
+
+    if ($mode === 'request') {
+        $linkedRequest = kuppi_schedule_resolve_request_for_draft($draft);
+        if (!$linkedRequest) {
+            kuppi_schedule_clear_draft();
+            flash('error', 'Selected request is no longer available for scheduling.');
+            redirect('/dashboard/kuppi/schedule');
+        }
+
+        if (kuppi_scheduled_session_has_active_for_request((int) ($linkedRequest['id'] ?? 0))) {
+            kuppi_schedule_clear_draft();
+            flash('error', 'This request already has an active scheduled session.');
+            redirect('/dashboard/kuppi/schedule');
+        }
+
+        $draft['batch_id'] = (int) ($linkedRequest['batch_id'] ?? 0);
+        $draft['subject_id'] = (int) ($linkedRequest['subject_id'] ?? 0);
+        $draft['title'] = (string) ($linkedRequest['title'] ?? '');
+        $draft['description'] = (string) ($linkedRequest['description'] ?? '');
+        kuppi_schedule_set_draft($draft);
+    }
+
+    $adminBatchId = $role === 'admin' ? (int) ($draft['batch_id'] ?? 0) : 0;
+    $subjectOptions = kuppi_scheduler_subject_options_for_user($role, $userId, $userBatchId, $adminBatchId);
+
+    view('kuppi::schedule_set', [
+        'draft' => $draft,
+        'mode' => $mode,
+        'linked_request' => $linkedRequest,
+        'subject_options' => $subjectOptions,
+        'is_admin' => $role === 'admin',
+        'batch_options' => $role === 'admin' ? kuppi_batch_options_for_admin() : [],
+    ], 'dashboard');
+}
+
+function kuppi_schedule_set_action(): void
+{
+    csrf_check();
+
+    if (!kuppi_user_is_scheduler()) {
+        abort(403, 'You do not have permission to schedule sessions.');
+    }
+
+    $draft = kuppi_schedule_require_draft();
+    $validation = kuppi_schedule_validate_set_input($draft);
+    if (!empty($validation['errors'])) {
+        flash('error', implode(' ', $validation['errors']));
+        redirect('/dashboard/kuppi/schedule/set');
+    }
+
+    $nextDraft = array_merge($draft, $validation['data']);
+    $nextDraft['host_user_ids'] = [];
+    kuppi_schedule_set_draft($nextDraft);
+
+    redirect('/dashboard/kuppi/schedule/assign');
+}
+
+function kuppi_schedule_assign_step(): void
+{
+    if (!kuppi_user_is_scheduler()) {
+        abort(403, 'You do not have permission to schedule sessions.');
+    }
+
+    $draft = kuppi_schedule_require_draft();
+    if (trim((string) ($draft['session_date'] ?? '')) === '') {
+        flash('warning', 'Set schedule details first.');
+        redirect('/dashboard/kuppi/schedule/set');
+    }
+
+    $candidates = kuppi_schedule_host_candidates($draft);
+    $selectedHostIds = kuppi_schedule_default_host_ids($draft, $candidates);
+
+    view('kuppi::schedule_assign', [
+        'draft' => $draft,
+        'candidates' => $candidates,
+        'selected_host_ids' => $selectedHostIds,
+        'availability_options' => kuppi_conductor_availability_options(),
+    ], 'dashboard');
+}
+
+function kuppi_schedule_assign_action(): void
+{
+    csrf_check();
+
+    if (!kuppi_user_is_scheduler()) {
+        abort(403, 'You do not have permission to schedule sessions.');
+    }
+
+    $draft = kuppi_schedule_require_draft();
+    $candidateMap = kuppi_schedule_candidate_map(kuppi_schedule_host_candidates($draft));
+    $selection = kuppi_schedule_selected_hosts_from_input($candidateMap);
+
+    if (!empty($selection['errors'])) {
+        flash('error', implode(' ', $selection['errors']));
+        redirect('/dashboard/kuppi/schedule/assign');
+    }
+
+    $draft['host_user_ids'] = $selection['selected_ids'];
+    kuppi_schedule_set_draft($draft);
+    redirect('/dashboard/kuppi/schedule/review');
+}
+
+function kuppi_schedule_review_step(): void
+{
+    if (!kuppi_user_is_scheduler()) {
+        abort(403, 'You do not have permission to schedule sessions.');
+    }
+
+    $draft = kuppi_schedule_require_draft();
+    if (trim((string) ($draft['session_date'] ?? '')) === '') {
+        redirect('/dashboard/kuppi/schedule/set');
+    }
+
+    $candidateMap = kuppi_schedule_candidate_map(kuppi_schedule_host_candidates($draft));
+    $selectedHostIds = array_values(array_filter(array_map('intval', (array) ($draft['host_user_ids'] ?? [])), static fn(int $id): bool => $id > 0));
+    if (empty($selectedHostIds)) {
+        flash('warning', 'Select at least one host.');
+        redirect('/dashboard/kuppi/schedule/assign');
+    }
+
+    $selectedHosts = [];
+    foreach ($selectedHostIds as $hostUserId) {
+        if (isset($candidateMap[$hostUserId])) {
+            $selectedHosts[] = $candidateMap[$hostUserId];
+        }
+    }
+
+    if (empty($selectedHosts)) {
+        flash('warning', 'Selected hosts are no longer available.');
+        redirect('/dashboard/kuppi/schedule/assign');
+    }
+
+    view('kuppi::schedule_review', [
+        'draft' => $draft,
+        'selected_hosts' => $selectedHosts,
+        'linked_request' => kuppi_schedule_resolve_request_for_draft($draft),
+    ], 'dashboard');
+}
+
+function kuppi_schedule_confirm_action(): void
+{
+    csrf_check();
+
+    if (!kuppi_user_is_scheduler()) {
+        abort(403, 'You do not have permission to schedule sessions.');
+    }
+
+    $draft = kuppi_schedule_require_draft();
+    if (trim((string) ($draft['session_date'] ?? '')) === '') {
+        flash('warning', 'Set schedule details first.');
+        redirect('/dashboard/kuppi/schedule/set');
+    }
+
+    $candidateMap = kuppi_schedule_candidate_map(kuppi_schedule_host_candidates($draft));
+    $selectedHostIds = array_values(array_filter(array_map('intval', (array) ($draft['host_user_ids'] ?? [])), static fn(int $id): bool => $id > 0));
+    $hosts = [];
+    foreach ($selectedHostIds as $hostUserId) {
+        if (!isset($candidateMap[$hostUserId])) {
+            flash('error', 'Selected hosts are no longer available.');
+            redirect('/dashboard/kuppi/schedule/assign');
+        }
+        $candidate = $candidateMap[$hostUserId];
+        $hosts[] = [
+            'host_user_id' => $hostUserId,
+            'source_type' => (string) ($candidate['source_type'] ?? 'manual'),
+            'source_application_id' => !empty($candidate['source_application_id']) ? (int) $candidate['source_application_id'] : null,
+            'assigned_by_user_id' => (int) auth_id(),
+        ];
+    }
+
+    if (empty($hosts)) {
+        flash('error', 'At least one host is required.');
+        redirect('/dashboard/kuppi/schedule/assign');
+    }
+
+    $request = null;
+    $requestId = (int) ($draft['request_id'] ?? 0);
+    if ((string) ($draft['mode'] ?? '') === 'request') {
+        $request = kuppi_schedule_resolve_request_for_draft($draft);
+        if (!$request) {
+            kuppi_schedule_clear_draft();
+            flash('error', 'Selected request is no longer available.');
+            redirect('/dashboard/kuppi/schedule');
+        }
+
+        if (kuppi_scheduled_session_has_active_for_request($requestId)) {
+            kuppi_schedule_clear_draft();
+            flash('error', 'This request already has an active scheduled session.');
+            redirect('/dashboard/kuppi/schedule');
+        }
+    } else {
+        $requestId = 0;
+    }
+
+    try {
+        $sessionId = kuppi_scheduled_create_with_hosts([
+            'batch_id' => (int) ($draft['batch_id'] ?? 0),
+            'subject_id' => (int) ($draft['subject_id'] ?? 0),
+            'request_id' => $requestId,
+            'title' => (string) ($draft['title'] ?? ''),
+            'description' => (string) ($draft['description'] ?? ''),
+            'session_date' => (string) ($draft['session_date'] ?? ''),
+            'start_time' => (string) ($draft['start_time'] ?? ''),
+            'end_time' => (string) ($draft['end_time'] ?? ''),
+            'duration_minutes' => (int) ($draft['duration_minutes'] ?? 0),
+            'max_attendees' => (int) ($draft['max_attendees'] ?? 0),
+            'location_type' => (string) ($draft['location_type'] ?? 'physical'),
+            'location_text' => (string) ($draft['location_text'] ?? ''),
+            'meeting_link' => (string) ($draft['meeting_link'] ?? ''),
+            'notes' => (string) ($draft['notes'] ?? ''),
+            'status' => 'scheduled',
+            'created_by_user_id' => (int) auth_id(),
+        ], $hosts);
+    } catch (Throwable) {
+        flash('error', 'Unable to schedule this session right now.');
+        redirect('/dashboard/kuppi/schedule/review');
+    }
+
+    if ($sessionId <= 0) {
+        flash('error', 'This request already has an active scheduled session.');
+        redirect('/dashboard/kuppi/schedule');
+    }
+
+    $session = kuppi_find_scheduled_session_readable($sessionId, (string) user_role(), (int) (auth_user()['batch_id'] ?? 0));
+    $sessionHosts = kuppi_scheduled_hosts_for_session($sessionId);
+    if ($session) {
+        kuppi_schedule_notify($session, $sessionHosts, 'created');
+    }
+
+    kuppi_schedule_clear_draft();
+    flash('success', 'Kuppi session scheduled successfully.');
+    redirect('/dashboard/kuppi/schedule/success?id=' . $sessionId);
+}
+
+function kuppi_schedule_success(): void
+{
+    if (!kuppi_user_is_scheduler()) {
+        abort(403, 'You do not have permission to view this page.');
+    }
+
+    $sessionId = (int) request_input('id', 0);
+    $session = null;
+    if ($sessionId > 0) {
+        $session = kuppi_find_scheduled_session_readable($sessionId, (string) user_role(), (int) (auth_user()['batch_id'] ?? 0));
+    }
+
+    view('kuppi::schedule_success', [
+        'session' => $session,
+    ], 'dashboard');
+}
+
+function kuppi_scheduled_index(): void
+{
+    $role = (string) user_role();
+    $isAdmin = $role === 'admin';
+    $userBatchId = (int) (auth_user()['batch_id'] ?? 0);
+    $adminBatchId = $isAdmin ? (int) request_input('batch_id', 0) : 0;
+    $searchQuery = trim((string) request_input('q', ''));
+    $subjectId = (int) request_input('subject_id', 0);
+    $statusFilter = trim((string) request_input('status', ''));
+
+    $sessions = kuppi_scheduled_sessions_for_scope(
+        $role,
+        $userBatchId,
+        $searchQuery,
+        $subjectId,
+        $statusFilter,
+        $adminBatchId
+    );
+
+    $subjectOptions = $isAdmin
+        ? ($adminBatchId > 0 ? kuppi_subject_options_for_batch($adminBatchId) : [])
+        : kuppi_subject_options_for_batch($userBatchId);
+
+    view('kuppi::scheduled_index', [
+        'sessions' => $sessions,
+        'selected_search_query' => $searchQuery,
+        'selected_subject_id' => $subjectId,
+        'selected_status' => $statusFilter,
+        'subject_options' => $subjectOptions,
+        'status_options' => kuppi_scheduled_statuses(),
+        'is_admin' => $isAdmin,
+        'admin_batch_id' => $adminBatchId,
+        'batch_options' => $isAdmin ? kuppi_batch_options_for_admin() : [],
+    ], 'dashboard');
+}
+
+function kuppi_scheduled_show(string $id): void
+{
+    $sessionId = (int) $id;
+    $session = kuppi_find_scheduled_session_readable($sessionId, (string) user_role(), (int) (auth_user()['batch_id'] ?? 0));
+    if (!$session) {
+        abort(404, 'Scheduled session not found.');
+    }
+
+    $hosts = kuppi_scheduled_hosts_for_session($sessionId);
+
+    view('kuppi::scheduled_show', [
+        'session' => $session,
+        'hosts' => $hosts,
+        'can_manage' => kuppi_user_can_manage_scheduled_session($session),
+        'availability_options' => kuppi_conductor_availability_options(),
+    ], 'dashboard');
+}
+
+function kuppi_scheduled_edit_form(string $id): void
+{
+    $sessionId = (int) $id;
+    $session = kuppi_find_scheduled_session_readable($sessionId, (string) user_role(), (int) (auth_user()['batch_id'] ?? 0));
+    if (!$session) {
+        abort(404, 'Scheduled session not found.');
+    }
+
+    if (!kuppi_user_can_manage_scheduled_session($session)) {
+        abort(403, 'You do not have permission to edit this scheduled session.');
+    }
+
+    if ((string) ($session['status'] ?? '') === 'cancelled') {
+        flash('warning', 'Cancelled sessions cannot be edited.');
+        redirect('/dashboard/kuppi/scheduled/' . $sessionId);
+    }
+
+    $draftLike = [
+        'mode' => (int) ($session['request_id'] ?? 0) > 0 ? 'request' : 'manual',
+        'request_id' => (int) ($session['request_id'] ?? 0),
+        'batch_id' => (int) ($session['batch_id'] ?? 0),
+    ];
+    $candidates = kuppi_schedule_host_candidates($draftLike);
+    $hosts = kuppi_scheduled_hosts_for_session($sessionId);
+    $selectedHostIds = array_values(array_filter(array_map(
+        static fn(array $host): int => (int) ($host['host_user_id'] ?? 0),
+        $hosts
+    ), static fn(int $id): bool => $id > 0));
+
+    view('kuppi::scheduled_edit', [
+        'session' => $session,
+        'hosts' => $hosts,
+        'candidates' => $candidates,
+        'selected_host_ids' => $selectedHostIds,
+        'status_options' => ['scheduled', 'completed'],
+        'availability_options' => kuppi_conductor_availability_options(),
+    ], 'dashboard');
+}
+
+function kuppi_scheduled_update_action(string $id): void
+{
+    csrf_check();
+
+    $sessionId = (int) $id;
+    $session = kuppi_find_scheduled_session_readable($sessionId, (string) user_role(), (int) (auth_user()['batch_id'] ?? 0));
+    if (!$session) {
+        abort(404, 'Scheduled session not found.');
+    }
+
+    if (!kuppi_user_can_manage_scheduled_session($session)) {
+        abort(403, 'You do not have permission to update this scheduled session.');
+    }
+
+    if ((string) ($session['status'] ?? '') === 'cancelled') {
+        flash('error', 'Cancelled sessions cannot be edited.');
+        redirect('/dashboard/kuppi/scheduled/' . $sessionId);
+    }
+
+    $draft = [
+        'mode' => (int) ($session['request_id'] ?? 0) > 0 ? 'request' : 'manual',
+        'batch_id' => (int) ($session['batch_id'] ?? 0),
+        'subject_id' => (int) ($session['subject_id'] ?? 0),
+        'request_id' => (int) ($session['request_id'] ?? 0),
+        'title' => (string) ($session['title'] ?? ''),
+        'description' => (string) ($session['description'] ?? ''),
+    ];
+
+    $_POST['batch_id'] = (string) ($session['batch_id'] ?? 0);
+    $_POST['subject_id'] = (string) ($session['subject_id'] ?? 0);
+    $validation = kuppi_schedule_validate_set_input($draft);
+    if (!empty($validation['errors'])) {
+        flash('error', implode(' ', $validation['errors']));
+        redirect('/dashboard/kuppi/scheduled/' . $sessionId . '/edit');
+    }
+
+    $candidateMap = kuppi_schedule_candidate_map(kuppi_schedule_host_candidates($draft));
+    $selection = kuppi_schedule_selected_hosts_from_input($candidateMap);
+    if (!empty($selection['errors'])) {
+        flash('error', implode(' ', $selection['errors']));
+        redirect('/dashboard/kuppi/scheduled/' . $sessionId . '/edit');
+    }
+
+    $status = trim((string) request_input('status', 'scheduled'));
+    if (!in_array($status, ['scheduled', 'completed'], true)) {
+        $status = 'scheduled';
+    }
+
+    try {
+        $updated = kuppi_scheduled_update_with_hosts($sessionId, [
+            'title' => (string) $validation['data']['title'],
+            'description' => (string) $validation['data']['description'],
+            'session_date' => (string) $validation['data']['session_date'],
+            'start_time' => (string) $validation['data']['start_time'],
+            'end_time' => (string) $validation['data']['end_time'],
+            'duration_minutes' => (int) $validation['data']['duration_minutes'],
+            'max_attendees' => (int) $validation['data']['max_attendees'],
+            'location_type' => (string) $validation['data']['location_type'],
+            'location_text' => (string) $validation['data']['location_text'],
+            'meeting_link' => (string) $validation['data']['meeting_link'],
+            'notes' => (string) $validation['data']['notes'],
+            'status' => $status,
+        ], $selection['hosts']);
+    } catch (Throwable) {
+        flash('error', 'Unable to update scheduled session right now.');
+        redirect('/dashboard/kuppi/scheduled/' . $sessionId . '/edit');
+    }
+
+    if (!$updated) {
+        flash('error', 'Unable to update this scheduled session. It may conflict with another active request session.');
+        redirect('/dashboard/kuppi/scheduled/' . $sessionId . '/edit');
+    }
+
+    $updatedSession = kuppi_find_scheduled_session_readable($sessionId, (string) user_role(), (int) (auth_user()['batch_id'] ?? 0));
+    if ($updatedSession) {
+        kuppi_schedule_notify($updatedSession, kuppi_scheduled_hosts_for_session($sessionId), 'updated');
+    }
+
+    flash('success', 'Scheduled session updated.');
+    redirect('/dashboard/kuppi/scheduled/' . $sessionId);
+}
+
+function kuppi_scheduled_cancel_action(string $id): void
+{
+    csrf_check();
+
+    $sessionId = (int) $id;
+    $session = kuppi_find_scheduled_session_readable($sessionId, (string) user_role(), (int) (auth_user()['batch_id'] ?? 0));
+    if (!$session) {
+        abort(404, 'Scheduled session not found.');
+    }
+
+    if (!kuppi_user_can_manage_scheduled_session($session)) {
+        abort(403, 'You do not have permission to cancel this scheduled session.');
+    }
+
+    if ((string) ($session['status'] ?? '') === 'cancelled') {
+        flash('warning', 'Session is already cancelled.');
+        redirect('/dashboard/kuppi/scheduled/' . $sessionId);
+    }
+
+    try {
+        $ok = kuppi_scheduled_cancel($sessionId, (int) auth_id());
+    } catch (Throwable) {
+        flash('error', 'Unable to cancel this scheduled session right now.');
+        redirect('/dashboard/kuppi/scheduled/' . $sessionId);
+    }
+
+    if (!$ok) {
+        flash('error', 'Unable to cancel this scheduled session.');
+        redirect('/dashboard/kuppi/scheduled/' . $sessionId);
+    }
+
+    $updatedSession = kuppi_find_scheduled_session_readable($sessionId, (string) user_role(), (int) (auth_user()['batch_id'] ?? 0));
+    if ($updatedSession) {
+        kuppi_schedule_notify($updatedSession, kuppi_scheduled_hosts_for_session($sessionId), 'cancelled');
+    }
+
+    flash('success', 'Scheduled session cancelled.');
+    redirect('/dashboard/kuppi/scheduled/' . $sessionId);
+}
+
+function kuppi_scheduled_delete_action(string $id): void
+{
+    csrf_check();
+
+    $sessionId = (int) $id;
+    $session = kuppi_find_scheduled_session_readable($sessionId, (string) user_role(), (int) (auth_user()['batch_id'] ?? 0));
+    if (!$session) {
+        abort(404, 'Scheduled session not found.');
+    }
+
+    if (!kuppi_user_can_manage_scheduled_session($session)) {
+        abort(403, 'You do not have permission to delete this scheduled session.');
+    }
+
+    $hosts = kuppi_scheduled_hosts_for_session($sessionId);
+
+    try {
+        $deleted = kuppi_scheduled_delete($sessionId);
+    } catch (Throwable) {
+        flash('error', 'Unable to delete this scheduled session right now.');
+        redirect('/dashboard/kuppi/scheduled/' . $sessionId);
+    }
+
+    if (!$deleted) {
+        flash('error', 'Unable to delete this scheduled session.');
+        redirect('/dashboard/kuppi/scheduled/' . $sessionId);
+    }
+
+    kuppi_schedule_notify($session, $hosts, 'deleted');
+    flash('success', 'Scheduled session deleted.');
+    redirect('/dashboard/kuppi/scheduled');
+}

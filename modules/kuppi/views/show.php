@@ -72,6 +72,9 @@ $commentMaxLevel = (int) ($comment_max_level ?? (comments_max_depth() + 1));
                         <?php endif; ?>
                     </div>
                     <div class="kuppi-request-actions">
+                        <?php if (kuppi_user_can_schedule_request($request)): ?>
+                            <a href="/dashboard/kuppi/schedule?request_id=<?= $requestId ?>" class="btn btn-sm btn-primary">Schedule Session</a>
+                        <?php endif; ?>
                         <?php if (!empty($can_edit_request)): ?>
                             <a href="/dashboard/kuppi/<?= $requestId ?>/edit" class="btn btn-sm btn-outline">Edit Request</a>
                         <?php endif; ?>
@@ -109,6 +112,12 @@ $commentMaxLevel = (int) ($comment_max_level ?? (comments_max_depth() + 1));
                     <?php foreach ($conductors as $application): ?>
                         <?php
                         $applicationId = (int) ($application['id'] ?? 0);
+                        $applicantName = trim((string) ($application['applicant_name'] ?? 'Unknown User'));
+                        if ($applicantName === '') {
+                            $applicantName = 'Unknown User';
+                        }
+                        $applicantTone = ui_avatar_tone_class((string) (($application['applicant_user_id'] ?? 0) . '-' . $applicantName));
+                        $applicantInitials = ui_initials($applicantName);
                         $isOwnApplication = (int) ($application['applicant_user_id'] ?? 0) === (int) auth_id();
                         $isTopVote = $applicationId > 0 && $applicationId === $topVoteApplicationId;
                         $canVoteThisConductor = !empty($can_vote_conductor) && !$isOwnApplication;
@@ -126,14 +135,17 @@ $commentMaxLevel = (int) ($comment_max_level ?? (comments_max_depth() + 1));
 
                             <div class="kuppi-conductor-body">
                                 <header class="kuppi-conductor-title-row">
-                                    <div>
-                                        <h3><?= e((string) ($application['applicant_name'] ?? 'Unknown User')) ?></h3>
-                                        <p class="kuppi-request-meta">
-                                            <?= e(ucfirst((string) ($application['applicant_role'] ?? 'student'))) ?>
-                                            <?php if ((int) ($application['applicant_academic_year'] ?? 0) > 0): ?>
-                                                • Year <?= (int) $application['applicant_academic_year'] ?>
-                                            <?php endif; ?>
-                                        </p>
+                                    <div class="kuppi-conductor-identity">
+                                        <span class="kuppi-conductor-avatar <?= e($applicantTone) ?>"><?= e($applicantInitials) ?></span>
+                                        <div class="kuppi-conductor-identity-text">
+                                            <h3><?= e($applicantName) ?></h3>
+                                            <p class="kuppi-request-meta">
+                                                <?= e(ucfirst((string) ($application['applicant_role'] ?? 'student'))) ?>
+                                                <?php if ((int) ($application['applicant_academic_year'] ?? 0) > 0): ?>
+                                                    • Year <?= (int) $application['applicant_academic_year'] ?>
+                                                <?php endif; ?>
+                                            </p>
+                                        </div>
                                     </div>
                                     <?php if ($isTopVote): ?>
                                         <span class="badge badge-warning">Top Vote</span>
@@ -299,6 +311,9 @@ $commentMaxLevel = (int) ($comment_max_level ?? (comments_max_depth() + 1));
         <article class="kuppi-side-card">
             <h3>Actions</h3>
             <div class="kuppi-side-actions">
+                <?php if (kuppi_user_can_schedule_request($request)): ?>
+                    <a href="/dashboard/kuppi/schedule?request_id=<?= $requestId ?>" class="btn btn-outline">Schedule Session</a>
+                <?php endif; ?>
                 <?php if (!empty($can_apply_as_conductor) && !$viewerApplication): ?>
                     <a href="/dashboard/kuppi/<?= $requestId ?>/conductors/apply" class="btn btn-primary">Apply to Conduct</a>
                 <?php endif; ?>

@@ -76,6 +76,10 @@ $buildListUrl = static function (array $params = []) use ($is_admin, $selectedBa
                 <a href="/dashboard/kuppi/create" class="btn btn-primary"><?= ui_lucide_icon('plus') ?> Request Session</a>
                 <a href="/my-kuppi-requests" class="btn btn-outline">My Requests</a>
             <?php endif; ?>
+            <?php if (kuppi_user_is_scheduler()): ?>
+                <a href="/dashboard/kuppi/schedule" class="btn btn-primary"><?= ui_lucide_icon('calendar-plus') ?> Schedule Session</a>
+                <a href="/dashboard/kuppi/scheduled" class="btn btn-outline"><?= ui_lucide_icon('calendar') ?> Scheduled Sessions</a>
+            <?php endif; ?>
             <a href="/dashboard" class="btn btn-outline">Dashboard</a>
         </div>
     </div>
@@ -152,6 +156,7 @@ $buildListUrl = static function (array $params = []) use ($is_admin, $selectedBa
                 $canDelete = kuppi_can_delete_request($request);
                 $canVote = kuppi_user_can_vote_request($request) && !$isOwn;
                 $canApplyAsConductor = kuppi_user_can_apply_as_conductor($request);
+                $canSchedule = kuppi_user_can_schedule_request($request);
                 $tags = kuppi_tags_to_array((string) ($request['tags_csv'] ?? ''));
                 $showUrl = '/dashboard/kuppi/' . $requestId;
                 if (!empty($is_admin) && $selectedBatchId > 0) {
@@ -227,6 +232,12 @@ $buildListUrl = static function (array $params = []) use ($is_admin, $selectedBa
                                 </span>
                             </div>
                             <div class="kuppi-request-actions kuppi-request-actions--list">
+                                <?php if ($canSchedule): ?>
+                                    <a href="/dashboard/kuppi/schedule?request_id=<?= $requestId ?>" class="btn btn-outline kuppi-request-action-btn">
+                                        <?= ui_lucide_icon('calendar-plus', 'kuppi-btn-icon') ?>
+                                        Schedule
+                                    </a>
+                                <?php endif; ?>
                                 <a href="<?= e($showUrl) ?>#kuppi-comments" class="btn btn-outline kuppi-request-action-btn">
                                     <?= ui_lucide_icon('message-circle', 'kuppi-btn-icon') ?>
                                     Comment

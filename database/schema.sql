@@ -488,6 +488,59 @@ CREATE TABLE IF NOT EXISTS kuppi_conductor_votes (
     CONSTRAINT fk_kuppi_conductor_votes_voter FOREIGN KEY (voter_user_id) REFERENCES users(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
+CREATE TABLE IF NOT EXISTS kuppi_scheduled_sessions (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    batch_id INT NOT NULL,
+    subject_id INT NOT NULL,
+    request_id INT NULL,
+    title VARCHAR(200) NOT NULL,
+    description TEXT NOT NULL,
+    session_date DATE NOT NULL,
+    start_time TIME NOT NULL,
+    end_time TIME NOT NULL,
+    duration_minutes SMALLINT UNSIGNED NOT NULL,
+    max_attendees SMALLINT UNSIGNED NOT NULL,
+    location_type ENUM('physical', 'online') NOT NULL DEFAULT 'physical',
+    location_text VARCHAR(255) NULL,
+    meeting_link VARCHAR(255) NULL,
+    notes TEXT NULL,
+    status ENUM('scheduled', 'completed', 'cancelled') NOT NULL DEFAULT 'scheduled',
+    created_by_user_id INT NOT NULL,
+    cancelled_by_user_id INT NULL,
+    cancelled_at DATETIME NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_kuppi_scheduled_batch_date (batch_id, session_date, start_time, id),
+    INDEX idx_kuppi_scheduled_subject_date (subject_id, session_date, start_time, id),
+    INDEX idx_kuppi_scheduled_status_date (status, session_date, start_time, id),
+    INDEX idx_kuppi_scheduled_request_status (request_id, status),
+    INDEX idx_kuppi_scheduled_created_by (created_by_user_id),
+    CONSTRAINT fk_kuppi_scheduled_batch FOREIGN KEY (batch_id) REFERENCES batches(id) ON DELETE CASCADE,
+    CONSTRAINT fk_kuppi_scheduled_subject FOREIGN KEY (subject_id) REFERENCES subjects(id) ON DELETE CASCADE,
+    CONSTRAINT fk_kuppi_scheduled_request FOREIGN KEY (request_id) REFERENCES kuppi_requests(id) ON DELETE SET NULL,
+    CONSTRAINT fk_kuppi_scheduled_created_by FOREIGN KEY (created_by_user_id) REFERENCES users(id) ON DELETE RESTRICT,
+    CONSTRAINT fk_kuppi_scheduled_cancelled_by FOREIGN KEY (cancelled_by_user_id) REFERENCES users(id) ON DELETE SET NULL
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS kuppi_scheduled_session_hosts (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    session_id INT NOT NULL,
+    host_user_id INT NOT NULL,
+    source_type ENUM('request_conductor', 'manual') NOT NULL,
+    source_application_id INT NULL,
+    assigned_by_user_id INT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY uniq_kuppi_scheduled_session_host (session_id, host_user_id),
+    INDEX idx_kuppi_scheduled_host_session (session_id),
+    INDEX idx_kuppi_scheduled_host_user (host_user_id),
+    INDEX idx_kuppi_scheduled_host_application (source_application_id),
+    CONSTRAINT fk_kuppi_scheduled_host_session FOREIGN KEY (session_id) REFERENCES kuppi_scheduled_sessions(id) ON DELETE CASCADE,
+    CONSTRAINT fk_kuppi_scheduled_host_user FOREIGN KEY (host_user_id) REFERENCES users(id) ON DELETE CASCADE,
+    CONSTRAINT fk_kuppi_scheduled_host_application FOREIGN KEY (source_application_id) REFERENCES kuppi_conductor_applications(id) ON DELETE SET NULL,
+    CONSTRAINT fk_kuppi_scheduled_host_assigned_by FOREIGN KEY (assigned_by_user_id) REFERENCES users(id) ON DELETE RESTRICT
+) ENGINE=InnoDB;
+
 CREATE TABLE IF NOT EXISTS comments (
     id INT AUTO_INCREMENT PRIMARY KEY,
     target_type VARCHAR(50) NOT NULL,

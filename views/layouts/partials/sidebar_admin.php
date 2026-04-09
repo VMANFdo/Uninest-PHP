@@ -8,7 +8,13 @@ $isBatches = str_starts_with($currentPath, '/admin/batches');
 $isModerators = str_starts_with($currentPath, '/admin/moderators');
 $isCommunityReports = str_starts_with($currentPath, '/dashboard/community/reports');
 $isCommunityFeed = str_starts_with($currentPath, '/dashboard/community') && !$isCommunityReports;
-$isKuppi = str_starts_with($currentPath, '/dashboard/kuppi') || str_starts_with($currentPath, '/my-kuppi-requests');
+$isKuppiScheduleFlow = $currentPath === '/dashboard/kuppi/schedule' || str_starts_with($currentPath, '/dashboard/kuppi/schedule/');
+$isKuppiScheduled = str_starts_with($currentPath, '/dashboard/kuppi/scheduled');
+$isKuppiRequested = (
+    str_starts_with($currentPath, '/dashboard/kuppi')
+    && !$isKuppiScheduleFlow
+    && !$isKuppiScheduled
+) || str_starts_with($currentPath, '/my-kuppi-requests');
 ?>
 <nav class="sidebar-nav">
     <div class="sidebar-section-label">Overview</div>
@@ -25,7 +31,9 @@ $isKuppi = str_starts_with($currentPath, '/dashboard/kuppi') || str_starts_with(
     <div class="sidebar-section-label">Content</div>
     <ul>
         <li><a href="/dashboard/community" class="<?= $isCommunityFeed ? 'active' : '' ?>"><span class="sidebar-nav-icon"><?= ui_lucide_icon('message-square') ?></span><span>Community Feed</span></a></li>
-        <li><a href="/dashboard/kuppi" class="<?= $isKuppi ? 'active' : '' ?>"><span class="sidebar-nav-icon"><?= ui_lucide_icon('book-open') ?></span><span>Requested Kuppi</span></a></li>
+        <li><a href="/dashboard/kuppi" class="<?= $isKuppiRequested ? 'active' : '' ?>"><span class="sidebar-nav-icon"><?= ui_lucide_icon('book-open') ?></span><span>Requested Kuppi</span></a></li>
+        <li><a href="/dashboard/kuppi/scheduled" class="<?= $isKuppiScheduled ? 'active' : '' ?>"><span class="sidebar-nav-icon"><?= ui_lucide_icon('calendar') ?></span><span>Scheduled Kuppi</span></a></li>
+        <li><a href="/dashboard/kuppi/schedule" class="<?= $isKuppiScheduleFlow ? 'active' : '' ?>"><span class="sidebar-nav-icon"><?= ui_lucide_icon('calendar-plus') ?></span><span>Schedule Session</span></a></li>
         <li><a href="/saved-posts" class="<?= str_starts_with($currentPath, '/saved-posts') ? 'active' : '' ?>"><span class="sidebar-nav-icon"><?= ui_lucide_icon('bookmark') ?></span><span>Saved Posts</span></a></li>
         <li><a href="/dashboard/community/reports" class="<?= $isCommunityReports ? 'active' : '' ?>"><span class="sidebar-nav-icon"><?= ui_lucide_icon('flag') ?></span><span>Reports Queue</span></a></li>
         <li><a href="/subjects" class="<?= $isSubjects ? 'active' : '' ?>"><span class="sidebar-nav-icon"><?= ui_lucide_icon('layers') ?></span><span>Subjects</span></a></li>

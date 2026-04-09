@@ -15,6 +15,659 @@
   --dash-danger-soft: #fff0f0;
 }
 
+/* Kuppi Scheduler Wizard V2 */
+.dashboard-body .kuppi-wizard-header {
+  margin-bottom: 14px;
+}
+
+.dashboard-body .kuppi-wizard-stepper {
+  --kw-active: #4f33ef;
+  --kw-complete: #2c9f5d;
+  --kw-muted: #9ca6b8;
+  margin: 0 0 20px;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.dashboard-body .kuppi-wizard-step {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  align-content: start;
+  gap: 10px;
+  text-align: center;
+  min-height: 86px;
+}
+
+.dashboard-body .kuppi-wizard-step::after {
+  content: "";
+  position: absolute;
+  top: 21px;
+  left: 50%;
+  width: 100%;
+  height: 2px;
+  background: #d8deea;
+  z-index: 0;
+}
+
+.dashboard-body .kuppi-wizard-step:last-child::after {
+  display: none;
+}
+
+.dashboard-body .kuppi-wizard-step-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 999px;
+  border: 2px solid #cfd7e5;
+  color: #7b889f;
+  background: #fff;
+  display: inline-grid;
+  place-items: center;
+  position: relative;
+  z-index: 1;
+}
+
+.dashboard-body .kuppi-wizard-step-icon .ui-lucide-icon {
+  width: 21px;
+  height: 21px;
+}
+
+.dashboard-body .kuppi-wizard-step strong {
+  margin: 0;
+  color: #66758e;
+  font-size: 1.01rem;
+  font-weight: 500;
+}
+
+.dashboard-body .kuppi-wizard-step.is-active strong {
+  color: #1a2438;
+  font-weight: 600;
+}
+
+.dashboard-body .kuppi-wizard-step.is-active .kuppi-wizard-step-icon {
+  background: var(--kw-active);
+  border-color: #d7d0ff;
+  color: #fff;
+  box-shadow: 0 0 0 4px #ede9ff;
+}
+
+.dashboard-body .kuppi-wizard-step.is-complete .kuppi-wizard-step-icon {
+  border-color: var(--kw-complete);
+  color: var(--kw-complete);
+  background: #fff;
+}
+
+.dashboard-body .kuppi-wizard-step.is-complete::after {
+  background: #b7dfc9;
+}
+
+.dashboard-body .kuppi-wizard-card {
+  border: 1px solid #d0d9e8;
+  border-radius: 22px;
+  background: #fff;
+  box-shadow: none;
+}
+
+.dashboard-body .kuppi-wizard-card > .card-body {
+  padding: 34px 38px;
+  display: grid;
+  gap: 18px;
+}
+
+.dashboard-body .kuppi-wizard-card h2 {
+  margin: 0;
+  font-size: clamp(1.6rem, 0.8vw + 1.2rem, 2.1rem);
+  color: #172236;
+}
+
+.dashboard-body .kuppi-wizard-card h3 {
+  margin: 0;
+  color: #1d2a43;
+}
+
+.dashboard-body .kuppi-wizard-muted {
+  margin: 0;
+  color: #68788f;
+  font-size: 1.05rem;
+  line-height: 1.6;
+}
+
+.dashboard-body .kuppi-wizard-muted-inline {
+  margin: 0;
+  color: #6a7892;
+  font-size: 0.96rem;
+  line-height: 1.4;
+}
+
+.dashboard-body .kuppi-wizard-filter-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 220px auto;
+  gap: 14px;
+  align-items: end;
+}
+
+.dashboard-body .kuppi-wizard-filter-grow {
+  min-width: 0;
+}
+
+.dashboard-body .kuppi-wizard-filter-sort {
+  min-width: 0;
+}
+
+.dashboard-body .kuppi-wizard-filter-submit {
+  display: flex;
+  align-items: center;
+}
+
+.dashboard-body .kuppi-wizard-filter-submit .btn {
+  min-height: 48px;
+  border-radius: 999px;
+  padding: 10px 22px;
+}
+
+.dashboard-body .kuppi-wizard-request-list {
+  display: grid;
+  gap: 14px;
+}
+
+.dashboard-body .kuppi-wizard-request-option {
+  border: 1px solid #d4dde9;
+  border-radius: 14px;
+  background: #fff;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 14px;
+  align-items: center;
+  padding: 18px 20px;
+  transition: border-color 0.16s ease, background-color 0.16s ease;
+}
+
+.dashboard-body .kuppi-wizard-request-option.is-selected {
+  border-color: #5b3ef1;
+  background: #fdfcff;
+}
+
+.dashboard-body .kuppi-wizard-request-option.is-disabled {
+  background: #f8fafc;
+  border-color: #dce3ee;
+  color: #8a96aa;
+}
+
+.dashboard-body .kuppi-wizard-request-radio-wrap {
+  width: 28px;
+  display: grid;
+  place-items: center;
+}
+
+.dashboard-body .kuppi-wizard-request-radio {
+  width: 24px;
+  height: 24px;
+  accent-color: #4f33ef;
+  cursor: pointer;
+}
+
+.dashboard-body .kuppi-wizard-request-dot {
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  border: 2px solid #c8d0df;
+}
+
+.dashboard-body .kuppi-wizard-request-dot.is-disabled {
+  border-color: #d9e0eb;
+  background: #f3f6fa;
+}
+
+.dashboard-body .kuppi-wizard-request-content {
+  min-width: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.dashboard-body .kuppi-wizard-request-subject {
+  margin: 0;
+  color: #4a36e3;
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dashboard-body .kuppi-wizard-request-subject .ui-lucide-icon {
+  width: 20px;
+  height: 20px;
+}
+
+.dashboard-body .kuppi-wizard-request-content h3 {
+  margin: 0;
+  font-size: clamp(1.35rem, 0.62vw + 1.02rem, 1.85rem);
+  color: #19253a;
+  line-height: 1.3;
+}
+
+.dashboard-body .kuppi-wizard-request-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  color: #68788f;
+  font-size: 1.02rem;
+}
+
+.dashboard-body .kuppi-wizard-request-meta span {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dashboard-body .kuppi-wizard-request-meta .ui-lucide-icon {
+  width: 21px;
+  height: 21px;
+}
+
+.dashboard-body .kuppi-wizard-request-option .badge {
+  justify-self: end;
+}
+
+.dashboard-body .kuppi-wizard-context {
+  border: 1px solid #d9e0ea;
+  border-radius: 12px;
+  background: #f7f9fd;
+  padding: 18px 20px;
+  display: grid;
+  gap: 8px;
+}
+
+.dashboard-body .kuppi-wizard-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px 18px;
+}
+
+.dashboard-body .kuppi-wizard-readonly {
+  min-height: 54px;
+  border-radius: 12px;
+  border: 1px solid #cfd8e6;
+  background: #f8fafc;
+  color: #354661;
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  font-size: 1.06rem;
+}
+
+.dashboard-body .kuppi-wizard-counter {
+  display: inline-flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.dashboard-body .kuppi-wizard-counter-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  border: 1px solid #c5cfdf;
+  background: #fff;
+  color: #1d2a42;
+  font-size: 1.62rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.dashboard-body .kuppi-wizard-counter input[type="number"] {
+  width: 118px;
+  text-align: center;
+  font-size: 1.32rem;
+  font-weight: 700;
+  border: 0;
+  background: transparent;
+  color: #17233a;
+  box-shadow: none;
+  padding: 0;
+}
+
+.dashboard-body .kuppi-wizard-choice-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.dashboard-body .kuppi-wizard-choice {
+  margin: 0;
+}
+
+.dashboard-body .kuppi-wizard-choice input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.dashboard-body .kuppi-wizard-choice span {
+  min-height: 58px;
+  border: 1px solid #cfd8e6;
+  border-radius: 12px;
+  background: #fff;
+  color: #62718a;
+  display: inline-flex;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.dashboard-body .kuppi-wizard-choice span .ui-lucide-icon {
+  width: 20px;
+  height: 20px;
+}
+
+.dashboard-body .kuppi-wizard-choice input:checked + span {
+  border-color: #5b3ef1;
+  color: #4f33ef;
+  background: #fcfbff;
+}
+
+.dashboard-body .kuppi-wizard-host-list {
+  display: grid;
+  gap: 12px;
+}
+
+.dashboard-body .kuppi-wizard-host-option {
+  border: 1px solid #d4dde9;
+  border-radius: 12px;
+  background: #fff;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 14px;
+  align-items: center;
+  padding: 14px 16px;
+}
+
+.dashboard-body .kuppi-wizard-host-option.is-selected {
+  border-color: #5b3ef1;
+  background: #fcfbff;
+}
+
+.dashboard-body .kuppi-wizard-host-radio-wrap {
+  width: 26px;
+  display: grid;
+  place-items: center;
+}
+
+.dashboard-body .kuppi-wizard-host-checkbox {
+  width: 22px;
+  height: 22px;
+  accent-color: #4f33ef;
+}
+
+.dashboard-body .kuppi-wizard-host-content {
+  display: grid;
+  gap: 8px;
+}
+
+.dashboard-body .kuppi-wizard-host-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.dashboard-body .kuppi-wizard-host-identity {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.dashboard-body .kuppi-wizard-host-identity h3 {
+  margin: 0;
+  font-size: 1.06rem;
+}
+
+.dashboard-body .kuppi-wizard-host-badges {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dashboard-body .kuppi-wizard-info-box {
+  border: 1px solid #f0e2c8;
+  border-radius: 12px;
+  background: #fdf8ef;
+  color: #6d5941;
+  padding: 12px 14px;
+  display: grid;
+  gap: 4px;
+}
+
+.dashboard-body .kuppi-wizard-info-box p {
+  margin: 0;
+  color: #7d6a51;
+}
+
+.dashboard-body .kuppi-wizard-review-card {
+  gap: 20px;
+}
+
+.dashboard-body .kuppi-wizard-review-section {
+  display: grid;
+  gap: 12px;
+}
+
+.dashboard-body .kuppi-wizard-review-section h3 {
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-size: 0.98rem;
+  color: #1e2a3f;
+}
+
+.dashboard-body .kuppi-wizard-review-block {
+  border-top: 1px solid #d6deea;
+}
+
+.dashboard-body .kuppi-wizard-review-grid-two {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 24px;
+}
+
+.dashboard-body .kuppi-wizard-review-row {
+  border-bottom: 1px solid #d6deea;
+  padding: 10px 0 12px;
+  display: grid;
+  gap: 6px;
+}
+
+.dashboard-body .kuppi-wizard-review-row > span {
+  color: #697a93;
+  font-size: 0.86rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: 700;
+}
+
+.dashboard-body .kuppi-wizard-review-row > strong {
+  color: #1a263d;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.dashboard-body .kuppi-wizard-review-hosts {
+  display: grid;
+  gap: 10px;
+}
+
+.dashboard-body .kuppi-wizard-review-host-card {
+  border: 1px solid #d9e0ea;
+  border-radius: 12px;
+  background: #f7f9fd;
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.dashboard-body .kuppi-wizard-ready-box {
+  border: 1px solid #cfe8da;
+  border-radius: 12px;
+  background: #edf8f2;
+  color: #2f6f4c;
+  padding: 14px 16px;
+  display: grid;
+  gap: 6px;
+}
+
+.dashboard-body .kuppi-wizard-ready-box strong {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dashboard-body .kuppi-wizard-ready-box p {
+  margin: 0;
+  color: #446f59;
+}
+
+.dashboard-body .kuppi-wizard-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.dashboard-body .kuppi-wizard-actions-right {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.dashboard-body .kuppi-wizard-actions form {
+  margin: 0;
+}
+
+.dashboard-body .kuppi-wizard-actions .btn {
+  min-height: 56px;
+  padding: 11px 26px;
+  border-radius: 999px;
+  font-size: 1.04rem;
+}
+
+.dashboard-body .kuppi-wizard-cta {
+  border: 0;
+  color: #fff;
+  background: linear-gradient(135deg, #4f33ef 0%, #5f3bff 100%);
+  box-shadow: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dashboard-body .kuppi-wizard-cta:hover:not(:disabled) {
+  background: linear-gradient(135deg, #4229d7 0%, #5232e6 100%);
+  color: #fff;
+}
+
+.dashboard-body .kuppi-wizard-cta:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.dashboard-body .kuppi-wizard-success-card > .card-body {
+  min-height: 360px;
+  justify-items: center;
+  align-content: center;
+  text-align: center;
+}
+
+.dashboard-body .kuppi-wizard-success-mark {
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
+  border: 2px solid #2c9f5d;
+  color: #2c9f5d;
+  display: grid;
+  place-items: center;
+}
+
+.dashboard-body .kuppi-wizard-success-mark .ui-lucide-icon {
+  width: 22px;
+  height: 22px;
+}
+
+.dashboard-body .kuppi-wizard-actions-center {
+  justify-content: center;
+}
+
+@media (max-width: 980px) {
+  .dashboard-body .kuppi-wizard-stepper {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .dashboard-body .kuppi-wizard-step {
+    min-height: 0;
+    justify-items: start;
+    grid-template-columns: auto 1fr;
+    align-items: center;
+    text-align: left;
+    gap: 10px;
+  }
+
+  .dashboard-body .kuppi-wizard-step::after {
+    display: none;
+  }
+
+  .dashboard-body .kuppi-wizard-card > .card-body {
+    padding: 20px 16px;
+    gap: 14px;
+  }
+
+  .dashboard-body .kuppi-wizard-filter-row {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-body .kuppi-wizard-form-grid,
+  .dashboard-body .kuppi-wizard-review-grid-two,
+  .dashboard-body .kuppi-wizard-choice-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .dashboard-body .kuppi-wizard-request-option {
+    grid-template-columns: auto minmax(0, 1fr);
+    padding: 14px;
+  }
+
+  .dashboard-body .kuppi-wizard-request-option .badge {
+    grid-column: 1 / -1;
+    justify-self: start;
+  }
+
+  .dashboard-body .kuppi-wizard-host-head {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .dashboard-body .kuppi-wizard-actions,
+  .dashboard-body .kuppi-wizard-actions-right {
+    width: 100%;
+    justify-content: stretch;
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-body .kuppi-wizard-actions .btn,
+  .dashboard-body .kuppi-wizard-actions-right .btn {
+    width: 100%;
+  }
+}
+
 /* ── Requested Kuppi ─────────────────────── */
 .dashboard-body .kuppi-filter-card {
   background: #fff;
@@ -657,10 +1310,37 @@
   flex-wrap: wrap;
 }
 
+.dashboard-body .kuppi-conductor-identity {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.dashboard-body .kuppi-conductor-avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 999px;
+  display: inline-grid;
+  place-items: center;
+  flex-shrink: 0;
+  font-size: 0.84rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  border: 1px solid rgba(17, 24, 39, 0.08);
+}
+
+.dashboard-body .kuppi-conductor-identity-text {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
 .dashboard-body .kuppi-conductor-title-row h3 {
   margin: 0;
   font-size: 1.17rem;
   color: #1d2b44;
+  line-height: 1.25;
 }
 
 .dashboard-body .kuppi-conductor-body .kuppi-request-description {
@@ -725,7 +1405,412 @@
   height: 18px;
 }
 
+.dashboard-body .kuppi-scheduler-stepper {
+  margin: 4px 0 16px;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.dashboard-body .kuppi-scheduler-step {
+  position: relative;
+  border: 1px solid #d7dfec;
+  background: #fff;
+  border-radius: 14px;
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 54px;
+}
+
+.dashboard-body .kuppi-scheduler-step span {
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  border: 1px solid #cbd6e8;
+  background: #f7f9fd;
+  color: #6a7891;
+  display: inline-grid;
+  place-items: center;
+  font-size: 0.78rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.dashboard-body .kuppi-scheduler-step strong {
+  font-size: 0.91rem;
+  color: #51617b;
+}
+
+.dashboard-body .kuppi-scheduler-step.is-active {
+  border-color: #b9a9ff;
+  background: #f9f6ff;
+}
+
+.dashboard-body .kuppi-scheduler-step.is-active span {
+  border-color: #5a2ff0;
+  background: #5a2ff0;
+  color: #fff;
+}
+
+.dashboard-body .kuppi-scheduler-step.is-active strong {
+  color: #2f1c7b;
+}
+
+.dashboard-body .kuppi-scheduler-step.is-complete {
+  border-color: #cbe6d8;
+  background: #f7fcf9;
+}
+
+.dashboard-body .kuppi-scheduler-step.is-complete span {
+  border-color: #1f9b5f;
+  background: #1f9b5f;
+  color: #fff;
+}
+
+.dashboard-body .kuppi-scheduler-step.is-complete strong {
+  color: #1c6e48;
+}
+
+.dashboard-body .kuppi-scheduler-card {
+  border: 1px solid #d2dceb;
+  border-radius: 18px;
+  box-shadow: none;
+}
+
+.dashboard-body .kuppi-scheduler-card .card-body {
+  padding: 20px;
+  display: grid;
+  gap: 16px;
+}
+
+.dashboard-body .kuppi-scheduler-card h2 {
+  margin: 0;
+  color: #18243a;
+}
+
+.dashboard-body .kuppi-scheduler-card h3 {
+  margin: 0;
+  color: #1f2d47;
+}
+
+.dashboard-body .kuppi-scheduler-filters {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  align-items: end;
+}
+
+.dashboard-body .kuppi-scheduler-filters .kuppi-filter-actions {
+  justify-content: flex-start;
+}
+
+.dashboard-body .kuppi-scheduler-request-list {
+  display: grid;
+  gap: 12px;
+}
+
+.dashboard-body .kuppi-scheduler-request-item {
+  border: 1px solid #d5deed;
+  border-radius: 14px;
+  background: #fff;
+  padding: 14px 16px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: 12px;
+  align-items: center;
+}
+
+.dashboard-body .kuppi-scheduler-request-item.is-blocked {
+  border-color: #e1e6f0;
+  background: #f9fafd;
+}
+
+.dashboard-body .kuppi-scheduler-request-meta {
+  display: grid;
+  gap: 4px;
+}
+
+.dashboard-body .kuppi-scheduler-request-meta .badge {
+  width: fit-content;
+}
+
+.dashboard-body .kuppi-scheduler-request-meta strong {
+  font-size: 1.16rem;
+  color: #1a2740;
+  line-height: 1.25;
+}
+
+.dashboard-body .kuppi-scheduler-request-stats {
+  display: grid;
+  gap: 4px;
+  justify-items: end;
+  color: #5e6f8a;
+  font-weight: 600;
+}
+
+.dashboard-body .kuppi-scheduler-request-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dashboard-body .kuppi-scheduler-context-card {
+  border: 1px solid #d5deed;
+  background: #f9fbff;
+  border-radius: 14px;
+  padding: 14px 16px;
+  display: grid;
+  gap: 6px;
+}
+
+.dashboard-body .kuppi-scheduler-context-card .kuppi-request-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.dashboard-body .kuppi-scheduler-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.dashboard-body .form-group-span-2 {
+  grid-column: 1 / -1;
+}
+
+.dashboard-body .kuppi-scheduler-location-type {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.dashboard-body .kuppi-scheduler-choice {
+  margin: 0;
+  border: 1px solid #d6dfec;
+  border-radius: 12px;
+  background: #f9fbff;
+  min-height: 48px;
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+}
+
+.dashboard-body .kuppi-scheduler-choice input {
+  width: 18px;
+  height: 18px;
+}
+
+.dashboard-body .kuppi-scheduler-choice span {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #415271;
+  font-weight: 600;
+}
+
+.dashboard-body .kuppi-host-candidate-list {
+  display: grid;
+  gap: 10px;
+}
+
+.dashboard-body .kuppi-host-candidate {
+  border: 1px solid #d5deed;
+  border-radius: 14px;
+  background: #fff;
+  padding: 12px 14px;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 12px;
+  cursor: pointer;
+}
+
+.dashboard-body .kuppi-host-candidate.is-selected {
+  border-color: #b8a8ff;
+  background: #f9f6ff;
+}
+
+.dashboard-body .kuppi-host-candidate-select {
+  display: grid;
+  align-content: start;
+  padding-top: 4px;
+}
+
+.dashboard-body .kuppi-host-candidate-select input {
+  width: 18px;
+  height: 18px;
+}
+
+.dashboard-body .kuppi-host-candidate-body {
+  display: grid;
+  gap: 8px;
+}
+
+.dashboard-body .kuppi-host-candidate-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.dashboard-body .kuppi-host-candidate-identity {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.dashboard-body .kuppi-host-candidate-identity h3 {
+  margin: 0;
+  font-size: 1.08rem;
+}
+
+.dashboard-body .kuppi-host-candidate-badges {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dashboard-body .kuppi-scheduler-review-body {
+  gap: 18px;
+}
+
+.dashboard-body .kuppi-scheduler-review-grid {
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px 14px;
+}
+
+.dashboard-body .kuppi-scheduler-review-grid div {
+  border: 1px solid #dbe4f1;
+  border-radius: 12px;
+  background: #f9fbff;
+  padding: 10px 12px;
+}
+
+.dashboard-body .kuppi-scheduler-review-grid dt {
+  margin: 0 0 4px;
+  color: #64758f;
+  font-size: 0.76rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-weight: 700;
+}
+
+.dashboard-body .kuppi-scheduler-review-grid dd {
+  margin: 0;
+  color: #1d2b43;
+  line-height: 1.55;
+}
+
+.dashboard-body .kuppi-scheduler-success-card .card-body {
+  justify-items: center;
+  text-align: center;
+}
+
+.dashboard-body .kuppi-scheduler-success-icon {
+  width: 60px;
+  height: 60px;
+  border-radius: 999px;
+  border: 1px solid #cbe6d8;
+  background: #f7fcf9;
+  color: #1f9b5f;
+  display: inline-grid;
+  place-items: center;
+}
+
+.dashboard-body .kuppi-scheduler-success-icon .ui-lucide-icon {
+  width: 30px;
+  height: 30px;
+}
+
+.dashboard-body .kuppi-scheduler-success-actions {
+  justify-content: center;
+}
+
+.dashboard-body .kuppi-scheduled-list {
+  display: grid;
+  gap: 14px;
+}
+
+.dashboard-body .kuppi-scheduled-card {
+  border: 1px solid #cfdaea;
+  border-radius: 16px;
+  background: #fff;
+  padding: 16px 18px;
+  display: grid;
+  gap: 10px;
+}
+
+.dashboard-body .kuppi-scheduled-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: start;
+}
+
+.dashboard-body .kuppi-scheduled-head h3 {
+  margin: 2px 0 0;
+  font-size: 1.2rem;
+}
+
+.dashboard-body .kuppi-scheduled-head h3 a {
+  color: #1a2740;
+}
+
+.dashboard-body .kuppi-scheduled-head h3 a:hover {
+  color: #3c27c8;
+}
+
+.dashboard-body .kuppi-scheduled-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
 @media (max-width: 980px) {
+  .dashboard-body .kuppi-scheduler-stepper {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-body .kuppi-scheduler-request-item {
+    grid-template-columns: 1fr;
+    align-items: start;
+  }
+
+  .dashboard-body .kuppi-scheduler-request-stats {
+    justify-items: start;
+  }
+
+  .dashboard-body .kuppi-scheduler-form-grid,
+  .dashboard-body .kuppi-scheduler-review-grid,
+  .dashboard-body .kuppi-scheduler-location-type {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-body .form-group-span-2 {
+    grid-column: auto;
+  }
+
+  .dashboard-body .kuppi-host-candidate {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-body .kuppi-host-candidate-select {
+    padding-top: 0;
+  }
+
+  .dashboard-body .kuppi-scheduled-head {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
   .dashboard-body .kuppi-filter-grid {
     grid-template-columns: 1fr;
   }
