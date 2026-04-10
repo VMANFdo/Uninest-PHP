@@ -34,12 +34,12 @@ foreach ($requests as $request) {
         <strong>Select Request</strong>
     </div>
     <div class="kuppi-wizard-step">
-        <span class="kuppi-wizard-step-icon"><?= ui_lucide_icon('calendar') ?></span>
-        <strong>Set Schedule</strong>
+        <span class="kuppi-wizard-step-icon"><?= ui_lucide_icon('user-check') ?></span>
+        <strong>Assign Hosts</strong>
     </div>
     <div class="kuppi-wizard-step">
-        <span class="kuppi-wizard-step-icon"><?= ui_lucide_icon('user-check') ?></span>
-        <strong>Assign Conductor</strong>
+        <span class="kuppi-wizard-step-icon"><?= ui_lucide_icon('calendar') ?></span>
+        <strong>Set Schedule</strong>
     </div>
     <div class="kuppi-wizard-step">
         <span class="kuppi-wizard-step-icon"><?= ui_lucide_icon('check-circle') ?></span>

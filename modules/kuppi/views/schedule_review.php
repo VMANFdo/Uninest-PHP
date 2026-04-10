@@ -37,12 +37,12 @@ $requesterLabel = $isRequestMode
         <strong>Select Request</strong>
     </div>
     <div class="kuppi-wizard-step is-complete">
-        <span class="kuppi-wizard-step-icon"><?= ui_lucide_icon('calendar') ?></span>
-        <strong>Set Schedule</strong>
+        <span class="kuppi-wizard-step-icon"><?= ui_lucide_icon('user-check') ?></span>
+        <strong>Assign Hosts</strong>
     </div>
     <div class="kuppi-wizard-step is-complete">
-        <span class="kuppi-wizard-step-icon"><?= ui_lucide_icon('user-check') ?></span>
-        <strong>Assign Conductor</strong>
+        <span class="kuppi-wizard-step-icon"><?= ui_lucide_icon('calendar') ?></span>
+        <strong>Set Schedule</strong>
     </div>
     <div class="kuppi-wizard-step is-active">
         <span class="kuppi-wizard-step-icon"><?= ui_lucide_icon('check-circle') ?></span>
@@ -111,7 +111,7 @@ $requesterLabel = $isRequestMode
         </section>
 
         <section class="kuppi-wizard-review-section">
-            <h3>Assigned Conductors</h3>
+            <h3>Assigned Hosts</h3>
             <div class="kuppi-wizard-review-hosts">
                 <?php foreach ($selectedHosts as $host): ?>
                     <?php
@@ -146,7 +146,7 @@ $requesterLabel = $isRequestMode
         </section>
 
         <div class="kuppi-wizard-actions">
-            <a href="/dashboard/kuppi/schedule/assign" class="btn btn-outline"><?= ui_lucide_icon('arrow-left') ?> Back</a>
+            <a href="/dashboard/kuppi/schedule/set" class="btn btn-outline"><?= ui_lucide_icon('arrow-left') ?> Back</a>
             <form method="POST" action="/dashboard/kuppi/schedule/confirm">
                 <?= csrf_field() ?>
                 <button type="submit" class="btn btn-primary kuppi-wizard-cta"><?= ui_lucide_icon('check') ?> Schedule Session</button>

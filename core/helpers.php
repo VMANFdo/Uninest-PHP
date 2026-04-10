@@ -356,7 +356,7 @@ function smtp_send_email(string $toEmail, string $subject, string $textBody): bo
 
     $host = 'smtp.gmail.com';
     $port = 587;
-    $timeout = 20;
+    $timeout = max(2, (int) env('SMTP_TIMEOUT_SECONDS', 6));
 
     $socket = @stream_socket_client("tcp://{$host}:{$port}", $errno, $errstr, $timeout);
     if (!$socket) {
@@ -421,7 +421,33 @@ function smtp_send_command($socket, string $command, array $expectedCodes): bool
 function smtp_expect_code($socket, array $expectedCodes): bool
 {
     $response = '';
-    while (($line = fgets($socket, 515)) !== false) {
+    $deadline = microtime(true) + 6.0;
+
+    while (microtime(true) < $deadline) {
+        $read = [$socket];
+        $write = null;
+        $except = null;
+        $secondsLeft = (int) max(1, ceil($deadline - microtime(true)));
+        $ready = @stream_select($read, $write, $except, $secondsLeft);
+
+        if ($ready === false) {
+            error_log('SMTP stream select failed.');
+            return false;
+        }
+
+        if ($ready === 0) {
+            continue;
+        }
+
+        $line = fgets($socket, 515);
+        if ($line === false) {
+            $meta = stream_get_meta_data($socket);
+            if (!empty($meta['timed_out'])) {
+                error_log('SMTP read timed out.');
+            }
+            break;
+        }
+
         $response .= $line;
         if (strlen($line) < 4 || $line[3] !== '-') {
             break;

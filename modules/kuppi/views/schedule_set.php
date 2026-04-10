@@ -2,6 +2,11 @@
 $draft = (array) ($draft ?? []);
 $mode = (string) ($mode ?? ($draft['mode'] ?? 'request'));
 $linkedRequest = (array) ($linked_request ?? []);
+$selectedHosts = (array) ($selected_hosts ?? []);
+$availabilityStats = (array) ($availability_stats ?? []);
+$selectedSlotKey = (string) ($selected_slot_key ?? '');
+$selectedSlotMatch = (array) ($selected_slot_match ?? []);
+$availabilityOptions = (array) ($availability_options ?? []);
 $subjectOptions = (array) ($subject_options ?? []);
 $isAdmin = !empty($is_admin);
 $batchOptions = (array) ($batch_options ?? []);
@@ -21,6 +26,9 @@ $locationText = (string) ($draft['location_text'] ?? '');
 $meetingLink = (string) ($draft['meeting_link'] ?? '');
 $notes = (string) ($draft['notes'] ?? '');
 $durationMinutes = max(0, (int) ($draft['duration_minutes'] ?? 0));
+$recommendedSlots = array_values((array) ($availabilityStats['recommended_slots'] ?? []));
+$rankedSlotCounts = (array) ($availabilityStats['ranked_counts'] ?? []);
+$hostsWithAvailability = (int) ($availabilityStats['hosts_with_availability'] ?? 0);
 
 $durationLabel = 'Automatically calculated from start and end time';
 if ($durationMinutes > 0) {
@@ -51,13 +59,13 @@ if ($durationMinutes > 0) {
         <span class="kuppi-wizard-step-icon"><?= ui_lucide_icon('file-text') ?></span>
         <strong>Select Request</strong>
     </div>
+    <div class="kuppi-wizard-step is-complete">
+        <span class="kuppi-wizard-step-icon"><?= ui_lucide_icon('user-check') ?></span>
+        <strong>Assign Hosts</strong>
+    </div>
     <div class="kuppi-wizard-step is-active">
         <span class="kuppi-wizard-step-icon"><?= ui_lucide_icon('calendar') ?></span>
         <strong>Set Schedule</strong>
-    </div>
-    <div class="kuppi-wizard-step">
-        <span class="kuppi-wizard-step-icon"><?= ui_lucide_icon('user-check') ?></span>
-        <strong>Assign Conductor</strong>
     </div>
     <div class="kuppi-wizard-step">
         <span class="kuppi-wizard-step-icon"><?= ui_lucide_icon('check-circle') ?></span>
@@ -78,6 +86,44 @@ if ($durationMinutes > 0) {
                     <span><?= ui_lucide_icon('user') ?> Requested by <strong><?= e((string) ($linkedRequest['requester_name'] ?? 'Unknown User')) ?></strong></span>
                     <span><?= ui_lucide_icon('arrow-up') ?> <?= (int) ($linkedRequest['vote_score'] ?? 0) ?> votes</span>
                 </div>
+            </article>
+        <?php endif; ?>
+
+        <?php if (!empty($selectedHosts)): ?>
+            <article class="kuppi-wizard-context">
+                <p class="kuppi-wizard-request-subject"><?= ui_lucide_icon('user-check') ?> Selected Hosts (<?= count($selectedHosts) ?>)</p>
+                <div class="kuppi-tags">
+                    <?php foreach ($selectedHosts as $host): ?>
+                        <?php $hostName = trim((string) ($host['host_name'] ?? 'Unknown User')); ?>
+                        <span class="badge"><?= e($hostName !== '' ? $hostName : 'Unknown User') ?></span>
+                    <?php endforeach; ?>
+                </div>
+
+                <?php if ($hostsWithAvailability > 0 && !empty($rankedSlotCounts)): ?>
+                    <p class="kuppi-wizard-muted-inline">Suggested schedule windows from selected conductors:</p>
+                    <div class="kuppi-tags">
+                        <?php foreach ($rankedSlotCounts as $slot => $count): ?>
+                            <?php
+                            $label = (string) ($availabilityOptions[$slot] ?? $slot);
+                            $isRecommended = in_array($slot, $recommendedSlots, true);
+                            ?>
+                            <span class="badge <?= $isRecommended ? 'badge-info' : '' ?>">
+                                <?= e($label) ?> · <?= (int) $count ?>/<?= $hostsWithAvailability ?>
+                            </span>
+                        <?php endforeach; ?>
+                    </div>
+
+                    <?php if ($selectedSlotKey !== '' && isset($availabilityOptions[$selectedSlotKey])): ?>
+                        <?php
+                        $matchedHosts = (int) ($selectedSlotMatch['matched_hosts'] ?? 0);
+                        $isFullMatch = !empty($selectedSlotMatch['is_full_match']);
+                        ?>
+                        <p class="kuppi-wizard-muted-inline <?= $isFullMatch ? 'text-success' : 'text-warning' ?>">
+                            Current time window: <?= e((string) ($availabilityOptions[$selectedSlotKey] ?? $selectedSlotKey)) ?>
+                            (<?= $matchedHosts ?>/<?= $hostsWithAvailability ?> hosts available)
+                        </p>
+                    <?php endif; ?>
+                <?php endif; ?>
             </article>
         <?php endif; ?>
 
@@ -189,7 +235,7 @@ if ($durationMinutes > 0) {
             </div>
 
             <div class="kuppi-wizard-actions form-group-span-2">
-                <a href="/dashboard/kuppi/schedule" class="btn btn-outline"><?= ui_lucide_icon('arrow-left') ?> Back</a>
+                <a href="/dashboard/kuppi/schedule/assign" class="btn btn-outline"><?= ui_lucide_icon('arrow-left') ?> Back</a>
                 <button type="submit" class="btn btn-primary kuppi-wizard-cta">Continue <?= ui_lucide_icon('arrow-right') ?></button>
             </div>
         </form>

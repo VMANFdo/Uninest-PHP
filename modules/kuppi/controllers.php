@@ -169,6 +169,139 @@ function kuppi_conductor_availability_from_csv(string $csv): array
     ), static fn(string $value): bool => $value !== ''));
 }
 
+function kuppi_schedule_normalize_host_ids(array $hostUserIds): array
+{
+    return array_values(array_filter(array_unique(array_map(
+        static fn($value): int => (int) $value,
+        $hostUserIds
+    )), static fn(int $id): bool => $id > 0));
+}
+
+function kuppi_schedule_slot_key_for_datetime(string $sessionDate, string $startTime): ?string
+{
+    if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $sessionDate) || !preg_match('/^\d{2}:\d{2}$/', $startTime)) {
+        return null;
+    }
+
+    $dayTs = strtotime($sessionDate . ' 00:00:00');
+    $timeTs = strtotime('1970-01-01 ' . $startTime . ':00');
+    if ($dayTs === false || $timeTs === false) {
+        return null;
+    }
+
+    $prefix = ((int) date('N', $dayTs) >= 6) ? 'weekend' : 'weekday';
+    $hour = (int) date('G', $timeTs);
+    $suffix = $hour < 12 ? 'mornings' : ($hour < 17 ? 'afternoons' : 'evenings');
+    return $prefix . '_' . $suffix;
+}
+
+function kuppi_schedule_selected_hosts(array $draft): array
+{
+    $candidateMap = kuppi_schedule_candidate_map(kuppi_schedule_host_candidates($draft));
+    $selectedHostIds = kuppi_schedule_normalize_host_ids((array) ($draft['host_user_ids'] ?? []));
+    $selectedHosts = [];
+
+    foreach ($selectedHostIds as $hostUserId) {
+        if (isset($candidateMap[$hostUserId])) {
+            $selectedHosts[] = $candidateMap[$hostUserId];
+        }
+    }
+
+    return [
+        'candidate_map' => $candidateMap,
+        'selected_host_ids' => $selectedHostIds,
+        'selected_hosts' => $selectedHosts,
+    ];
+}
+
+function kuppi_schedule_selected_host_availability_stats(array $selectedHosts): array
+{
+    $allowedSlots = array_keys(kuppi_conductor_availability_options());
+    $counts = array_fill_keys($allowedSlots, 0);
+    $hostsWithAvailability = 0;
+
+    foreach ($selectedHosts as $host) {
+        $availability = array_values(array_filter(array_unique(array_map(
+            static fn($slot): string => trim((string) $slot),
+            (array) ($host['availability'] ?? [])
+        )), static fn(string $slot): bool => $slot !== '' && isset($counts[$slot])));
+
+        if (empty($availability)) {
+            continue;
+        }
+
+        $hostsWithAvailability++;
+        foreach ($availability as $slot) {
+            $counts[$slot]++;
+        }
+    }
+
+    $nonZero = array_filter($counts, static fn(int $count): bool => $count > 0);
+    arsort($nonZero);
+
+    $maxCount = 0;
+    $recommendedSlots = [];
+    foreach ($nonZero as $slot => $count) {
+        if ($count > $maxCount) {
+            $maxCount = $count;
+            $recommendedSlots = [$slot];
+            continue;
+        }
+
+        if ($count === $maxCount) {
+            $recommendedSlots[] = $slot;
+        }
+    }
+
+    return [
+        'hosts_with_availability' => $hostsWithAvailability,
+        'counts' => $counts,
+        'ranked_counts' => $nonZero,
+        'max_count' => $maxCount,
+        'recommended_slots' => $recommendedSlots,
+    ];
+}
+
+function kuppi_schedule_selected_host_slot_match(array $selectedHosts, ?string $slotKey): array
+{
+    if ($slotKey === null) {
+        return [
+            'slot_key' => null,
+            'hosts_with_availability' => 0,
+            'matched_hosts' => 0,
+            'is_full_match' => false,
+            'has_any_match' => false,
+        ];
+    }
+
+    $hostsWithAvailability = 0;
+    $matchedHosts = 0;
+
+    foreach ($selectedHosts as $host) {
+        $availability = array_values(array_filter(array_unique(array_map(
+            static fn($slot): string => trim((string) $slot),
+            (array) ($host['availability'] ?? [])
+        )), static fn(string $slot): bool => $slot !== ''));
+
+        if (empty($availability)) {
+            continue;
+        }
+
+        $hostsWithAvailability++;
+        if (in_array($slotKey, $availability, true)) {
+            $matchedHosts++;
+        }
+    }
+
+    return [
+        'slot_key' => $slotKey,
+        'hosts_with_availability' => $hostsWithAvailability,
+        'matched_hosts' => $matchedHosts,
+        'is_full_match' => $hostsWithAvailability > 0 && $matchedHosts === $hostsWithAvailability,
+        'has_any_match' => $matchedHosts > 0,
+    ];
+}
+
 function kuppi_validate_conductor_application_input(): array
 {
     $motivationRaw = (string) request_input('motivation', '');
@@ -1253,17 +1386,42 @@ function kuppi_schedule_host_candidates(array $draft): array
 
     if ($mode === 'request') {
         $requestId = (int) ($draft['request_id'] ?? 0);
-        foreach (kuppi_schedule_conductor_candidates_for_request($requestId) as $row) {
+        $requestCandidates = kuppi_schedule_conductor_candidates_for_request($requestId);
+        if (!empty($requestCandidates)) {
+            foreach ($requestCandidates as $row) {
+                $candidates[] = [
+                    'host_user_id' => (int) ($row['host_user_id'] ?? 0),
+                    'host_name' => (string) ($row['host_name'] ?? 'Unknown User'),
+                    'host_email' => (string) ($row['host_email'] ?? ''),
+                    'host_role' => (string) ($row['host_role'] ?? 'student'),
+                    'host_academic_year' => (int) ($row['host_academic_year'] ?? 0),
+                    'source_type' => 'request_conductor',
+                    'source_application_id' => (int) ($row['application_id'] ?? 0),
+                    'vote_count' => (int) ($row['vote_count'] ?? 0),
+                    'availability' => kuppi_conductor_availability_from_csv((string) ($row['availability_csv'] ?? '')),
+                ];
+            }
+
+            return $candidates;
+        }
+
+        $batchId = (int) ($draft['batch_id'] ?? 0);
+        if ($batchId <= 0) {
+            $resolvedRequest = kuppi_schedule_resolve_request_for_draft($draft);
+            $batchId = (int) ($resolvedRequest['batch_id'] ?? 0);
+        }
+
+        foreach (kuppi_schedule_manual_host_candidates_for_batch($batchId) as $row) {
             $candidates[] = [
                 'host_user_id' => (int) ($row['host_user_id'] ?? 0),
                 'host_name' => (string) ($row['host_name'] ?? 'Unknown User'),
                 'host_email' => (string) ($row['host_email'] ?? ''),
                 'host_role' => (string) ($row['host_role'] ?? 'student'),
                 'host_academic_year' => (int) ($row['host_academic_year'] ?? 0),
-                'source_type' => 'request_conductor',
-                'source_application_id' => (int) ($row['application_id'] ?? 0),
-                'vote_count' => (int) ($row['vote_count'] ?? 0),
-                'availability' => kuppi_conductor_availability_from_csv((string) ($row['availability_csv'] ?? '')),
+                'source_type' => 'manual',
+                'source_application_id' => null,
+                'vote_count' => 0,
+                'availability' => [],
             ];
         }
 
@@ -1338,10 +1496,7 @@ function kuppi_schedule_selected_hosts_from_input(array $candidateMap): array
 {
     $selectedRaw = $_POST['host_user_ids'] ?? [];
     $selectedList = is_array($selectedRaw) ? $selectedRaw : [];
-    $selectedIds = array_values(array_filter(array_unique(array_map(
-        static fn($value): int => (int) $value,
-        $selectedList
-    )), static fn(int $id): bool => $id > 0));
+    $selectedIds = kuppi_schedule_normalize_host_ids($selectedList);
 
     $errors = [];
     if (empty($selectedIds)) {
@@ -1429,8 +1584,15 @@ function kuppi_schedule_notify(array $session, array $hosts, string $event): voi
 
     $subjectLine = $subjectPrefix . ': ' . $title;
     $dateLabel = $sessionDate !== '' ? date('F j, Y', strtotime($sessionDate)) : 'TBD';
+    $startedAt = microtime(true);
+    $timeBudgetSeconds = 8.0;
 
     foreach ($recipientMap as $email => $name) {
+        if ((microtime(true) - $startedAt) >= $timeBudgetSeconds) {
+            error_log('Kuppi schedule email budget exceeded; remaining recipients skipped.');
+            break;
+        }
+
         $bodyLines = [
             'Hello ' . $name . ',',
             '',
@@ -1481,7 +1643,7 @@ function kuppi_schedule_select_request_step(): void
             $draft['title'] = (string) ($request['title'] ?? '');
             $draft['description'] = (string) ($request['description'] ?? '');
             kuppi_schedule_set_draft($draft);
-            redirect('/dashboard/kuppi/schedule/set');
+            redirect('/dashboard/kuppi/schedule/assign');
         }
     }
 
@@ -1524,7 +1686,7 @@ function kuppi_schedule_manual_start(): void
     $draft['mode'] = 'manual';
     $draft['batch_id'] = $selectedBatchId;
     kuppi_schedule_set_draft($draft);
-    redirect('/dashboard/kuppi/schedule/set');
+    redirect('/dashboard/kuppi/schedule/assign');
 }
 
 function kuppi_schedule_select_request_action(): void
@@ -1555,7 +1717,7 @@ function kuppi_schedule_select_request_action(): void
     $draft['description'] = (string) ($request['description'] ?? '');
     kuppi_schedule_set_draft($draft);
 
-    redirect('/dashboard/kuppi/schedule/set');
+    redirect('/dashboard/kuppi/schedule/assign');
 }
 
 function kuppi_schedule_set_step(): void
@@ -1593,13 +1755,45 @@ function kuppi_schedule_set_step(): void
         kuppi_schedule_set_draft($draft);
     }
 
+    $selectedHostData = kuppi_schedule_selected_hosts($draft);
+    if (empty($selectedHostData['selected_host_ids'])) {
+        flash('warning', 'Select one or more hosts first.');
+        redirect('/dashboard/kuppi/schedule/assign');
+    }
+
+    if (empty($selectedHostData['selected_hosts'])) {
+        $draft['host_user_ids'] = [];
+        kuppi_schedule_set_draft($draft);
+        flash('warning', 'Selected hosts are no longer available. Please select hosts again.');
+        redirect('/dashboard/kuppi/schedule/assign');
+    }
+
+    if (count($selectedHostData['selected_host_ids']) !== count($selectedHostData['selected_hosts'])) {
+        $draft['host_user_ids'] = array_values(array_map(
+            static fn(array $host): int => (int) ($host['host_user_id'] ?? 0),
+            $selectedHostData['selected_hosts']
+        ));
+        kuppi_schedule_set_draft($draft);
+    }
+
     $adminBatchId = $role === 'admin' ? (int) ($draft['batch_id'] ?? 0) : 0;
     $subjectOptions = kuppi_scheduler_subject_options_for_user($role, $userId, $userBatchId, $adminBatchId);
+    $availabilityStats = kuppi_schedule_selected_host_availability_stats((array) $selectedHostData['selected_hosts']);
+    $selectedSlotKey = kuppi_schedule_slot_key_for_datetime(
+        trim((string) ($draft['session_date'] ?? '')),
+        trim((string) ($draft['start_time'] ?? ''))
+    );
+    $slotMatch = kuppi_schedule_selected_host_slot_match((array) $selectedHostData['selected_hosts'], $selectedSlotKey);
 
     view('kuppi::schedule_set', [
         'draft' => $draft,
         'mode' => $mode,
         'linked_request' => $linkedRequest,
+        'selected_hosts' => $selectedHostData['selected_hosts'],
+        'availability_stats' => $availabilityStats,
+        'selected_slot_key' => $selectedSlotKey,
+        'selected_slot_match' => $slotMatch,
+        'availability_options' => kuppi_conductor_availability_options(),
         'subject_options' => $subjectOptions,
         'is_admin' => $role === 'admin',
         'batch_options' => $role === 'admin' ? kuppi_batch_options_for_admin() : [],
@@ -1615,6 +1809,22 @@ function kuppi_schedule_set_action(): void
     }
 
     $draft = kuppi_schedule_require_draft();
+    $selectedHostData = kuppi_schedule_selected_hosts($draft);
+    if (empty($selectedHostData['selected_host_ids']) || empty($selectedHostData['selected_hosts'])) {
+        flash('warning', 'Select one or more hosts first.');
+        redirect('/dashboard/kuppi/schedule/assign');
+    }
+
+    if (count((array) $selectedHostData['selected_host_ids']) !== count((array) $selectedHostData['selected_hosts'])) {
+        $draft['host_user_ids'] = array_values(array_map(
+            static fn(array $host): int => (int) ($host['host_user_id'] ?? 0),
+            (array) $selectedHostData['selected_hosts']
+        ));
+        kuppi_schedule_set_draft($draft);
+        flash('warning', 'Some selected hosts are no longer available. Please review host selection.');
+        redirect('/dashboard/kuppi/schedule/assign');
+    }
+
     $validation = kuppi_schedule_validate_set_input($draft);
     if (!empty($validation['errors'])) {
         flash('error', implode(' ', $validation['errors']));
@@ -1622,10 +1832,9 @@ function kuppi_schedule_set_action(): void
     }
 
     $nextDraft = array_merge($draft, $validation['data']);
-    $nextDraft['host_user_ids'] = [];
     kuppi_schedule_set_draft($nextDraft);
 
-    redirect('/dashboard/kuppi/schedule/assign');
+    redirect('/dashboard/kuppi/schedule/review');
 }
 
 function kuppi_schedule_assign_step(): void
@@ -1635,9 +1844,27 @@ function kuppi_schedule_assign_step(): void
     }
 
     $draft = kuppi_schedule_require_draft();
-    if (trim((string) ($draft['session_date'] ?? '')) === '') {
-        flash('warning', 'Set schedule details first.');
-        redirect('/dashboard/kuppi/schedule/set');
+    $mode = (string) ($draft['mode'] ?? 'request');
+    $linkedRequest = null;
+    if ($mode === 'request') {
+        $linkedRequest = kuppi_schedule_resolve_request_for_draft($draft);
+        if (!$linkedRequest) {
+            kuppi_schedule_clear_draft();
+            flash('error', 'Selected request is no longer available for scheduling.');
+            redirect('/dashboard/kuppi/schedule');
+        }
+
+        if (kuppi_scheduled_session_has_active_for_request((int) ($linkedRequest['id'] ?? 0))) {
+            kuppi_schedule_clear_draft();
+            flash('error', 'This request already has an active scheduled session.');
+            redirect('/dashboard/kuppi/schedule');
+        }
+
+        $draft['batch_id'] = (int) ($linkedRequest['batch_id'] ?? 0);
+        $draft['subject_id'] = (int) ($linkedRequest['subject_id'] ?? 0);
+        $draft['title'] = (string) ($linkedRequest['title'] ?? '');
+        $draft['description'] = (string) ($linkedRequest['description'] ?? '');
+        kuppi_schedule_set_draft($draft);
     }
 
     $candidates = kuppi_schedule_host_candidates($draft);
@@ -1645,6 +1872,8 @@ function kuppi_schedule_assign_step(): void
 
     view('kuppi::schedule_assign', [
         'draft' => $draft,
+        'mode' => $mode,
+        'linked_request' => $linkedRequest,
         'candidates' => $candidates,
         'selected_host_ids' => $selectedHostIds,
         'availability_options' => kuppi_conductor_availability_options(),
@@ -1670,7 +1899,7 @@ function kuppi_schedule_assign_action(): void
 
     $draft['host_user_ids'] = $selection['selected_ids'];
     kuppi_schedule_set_draft($draft);
-    redirect('/dashboard/kuppi/schedule/review');
+    redirect('/dashboard/kuppi/schedule/set');
 }
 
 function kuppi_schedule_review_step(): void
@@ -1680,32 +1909,30 @@ function kuppi_schedule_review_step(): void
     }
 
     $draft = kuppi_schedule_require_draft();
-    if (trim((string) ($draft['session_date'] ?? '')) === '') {
-        redirect('/dashboard/kuppi/schedule/set');
-    }
-
-    $candidateMap = kuppi_schedule_candidate_map(kuppi_schedule_host_candidates($draft));
-    $selectedHostIds = array_values(array_filter(array_map('intval', (array) ($draft['host_user_ids'] ?? [])), static fn(int $id): bool => $id > 0));
-    if (empty($selectedHostIds)) {
+    $selectedHostData = kuppi_schedule_selected_hosts($draft);
+    if (empty($selectedHostData['selected_host_ids']) || empty($selectedHostData['selected_hosts'])) {
         flash('warning', 'Select at least one host.');
         redirect('/dashboard/kuppi/schedule/assign');
     }
 
-    $selectedHosts = [];
-    foreach ($selectedHostIds as $hostUserId) {
-        if (isset($candidateMap[$hostUserId])) {
-            $selectedHosts[] = $candidateMap[$hostUserId];
-        }
+    if (count((array) $selectedHostData['selected_host_ids']) !== count((array) $selectedHostData['selected_hosts'])) {
+        $draft['host_user_ids'] = array_values(array_map(
+            static fn(array $host): int => (int) ($host['host_user_id'] ?? 0),
+            (array) $selectedHostData['selected_hosts']
+        ));
+        kuppi_schedule_set_draft($draft);
+        flash('warning', 'Some selected hosts are no longer available. Please review host selection.');
+        redirect('/dashboard/kuppi/schedule/assign');
     }
 
-    if (empty($selectedHosts)) {
-        flash('warning', 'Selected hosts are no longer available.');
-        redirect('/dashboard/kuppi/schedule/assign');
+    if (trim((string) ($draft['session_date'] ?? '')) === '') {
+        flash('warning', 'Set schedule details before review.');
+        redirect('/dashboard/kuppi/schedule/set');
     }
 
     view('kuppi::schedule_review', [
         'draft' => $draft,
-        'selected_hosts' => $selectedHosts,
+        'selected_hosts' => $selectedHostData['selected_hosts'],
         'linked_request' => kuppi_schedule_resolve_request_for_draft($draft),
     ], 'dashboard');
 }
@@ -1719,20 +1946,29 @@ function kuppi_schedule_confirm_action(): void
     }
 
     $draft = kuppi_schedule_require_draft();
+    $selectedHostData = kuppi_schedule_selected_hosts($draft);
+    if (empty($selectedHostData['selected_host_ids']) || empty($selectedHostData['selected_hosts'])) {
+        flash('error', 'At least one host is required.');
+        redirect('/dashboard/kuppi/schedule/assign');
+    }
+
     if (trim((string) ($draft['session_date'] ?? '')) === '') {
         flash('warning', 'Set schedule details first.');
         redirect('/dashboard/kuppi/schedule/set');
     }
 
-    $candidateMap = kuppi_schedule_candidate_map(kuppi_schedule_host_candidates($draft));
-    $selectedHostIds = array_values(array_filter(array_map('intval', (array) ($draft['host_user_ids'] ?? [])), static fn(int $id): bool => $id > 0));
+    if (count((array) $selectedHostData['selected_host_ids']) !== count((array) $selectedHostData['selected_hosts'])) {
+        flash('error', 'Selected hosts are no longer available.');
+        redirect('/dashboard/kuppi/schedule/assign');
+    }
+
     $hosts = [];
-    foreach ($selectedHostIds as $hostUserId) {
-        if (!isset($candidateMap[$hostUserId])) {
-            flash('error', 'Selected hosts are no longer available.');
-            redirect('/dashboard/kuppi/schedule/assign');
+    foreach ((array) $selectedHostData['selected_hosts'] as $candidate) {
+        $hostUserId = (int) ($candidate['host_user_id'] ?? 0);
+        if ($hostUserId <= 0) {
+            continue;
         }
-        $candidate = $candidateMap[$hostUserId];
+
         $hosts[] = [
             'host_user_id' => $hostUserId,
             'source_type' => (string) ($candidate['source_type'] ?? 'manual'),

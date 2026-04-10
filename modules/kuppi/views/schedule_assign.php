@@ -5,6 +5,17 @@ $selectedHostIds = array_values(array_filter(array_map('intval', (array) ($selec
 $selectedMap = array_fill_keys($selectedHostIds, true);
 $availabilityOptions = (array) ($availability_options ?? []);
 $mode = (string) ($draft['mode'] ?? 'request');
+$linkedRequest = (array) ($linked_request ?? []);
+$hasRequestConductorCandidates = false;
+if ($mode === 'request') {
+    foreach ($candidates as $candidate) {
+        if ((string) ($candidate['source_type'] ?? '') === 'request_conductor') {
+            $hasRequestConductorCandidates = true;
+            break;
+        }
+    }
+}
+$isRequestFallbackPool = $mode === 'request' && !$hasRequestConductorCandidates && !empty($candidates);
 
 $maxVotes = 0;
 foreach ($candidates as $candidate) {
@@ -14,10 +25,6 @@ foreach ($candidates as $candidate) {
     }
 }
 
-$locationType = (string) ($draft['location_type'] ?? 'physical');
-$locationLabel = $locationType === 'online'
-    ? (string) ($draft['meeting_link'] ?? 'Online session')
-    : (string) ($draft['location_text'] ?? 'Physical location');
 ?>
 
 <div class="page-header kuppi-wizard-header">
@@ -35,13 +42,13 @@ $locationLabel = $locationType === 'online'
         <span class="kuppi-wizard-step-icon"><?= ui_lucide_icon('file-text') ?></span>
         <strong>Select Request</strong>
     </div>
-    <div class="kuppi-wizard-step is-complete">
-        <span class="kuppi-wizard-step-icon"><?= ui_lucide_icon('calendar') ?></span>
-        <strong>Set Schedule</strong>
-    </div>
     <div class="kuppi-wizard-step is-active">
         <span class="kuppi-wizard-step-icon"><?= ui_lucide_icon('user-check') ?></span>
-        <strong>Assign Conductor</strong>
+        <strong>Assign Hosts</strong>
+    </div>
+    <div class="kuppi-wizard-step">
+        <span class="kuppi-wizard-step-icon"><?= ui_lucide_icon('calendar') ?></span>
+        <strong>Set Schedule</strong>
     </div>
     <div class="kuppi-wizard-step">
         <span class="kuppi-wizard-step-icon"><?= ui_lucide_icon('check-circle') ?></span>
@@ -51,15 +58,31 @@ $locationLabel = $locationType === 'online'
 
 <div class="card kuppi-wizard-card">
     <div class="card-body">
-        <h2>Assign Session Conductor</h2>
-        <p class="kuppi-wizard-muted">Select one or more qualified conductors to lead this kuppi session.</p>
+        <h2>Assign Session Hosts</h2>
+        <p class="kuppi-wizard-muted">
+            <?php if ($isRequestFallbackPool): ?>
+                No conductor applications yet. Select one or more students from this batch as hosts.
+            <?php else: ?>
+                Select one or more conductors first. You will set the schedule in the next step.
+            <?php endif; ?>
+        </p>
 
         <article class="kuppi-wizard-context">
-            <p class="kuppi-wizard-request-subject"><?= ui_lucide_icon('book-open') ?> <?= e((string) ($draft['title'] ?? 'Session')) ?></p>
-            <div class="kuppi-wizard-request-meta">
-                <span><?= ui_lucide_icon('calendar') ?> <?= e((string) ($draft['session_date'] ?? '')) ?> at <?= e(substr((string) ($draft['start_time'] ?? ''), 0, 5)) ?> - <?= e(substr((string) ($draft['end_time'] ?? ''), 0, 5)) ?></span>
-                <span><?= ui_lucide_icon($locationType === 'online' ? 'video' : 'map-pin') ?> <?= e($locationLabel) ?></span>
-            </div>
+            <?php if ($mode === 'request' && !empty($linkedRequest)): ?>
+                <p class="kuppi-wizard-request-subject"><?= ui_lucide_icon('book-open') ?> <?= e((string) ($linkedRequest['subject_code'] ?? 'SUB')) ?> - <?= e((string) ($linkedRequest['subject_name'] ?? 'Subject')) ?></p>
+                <h3><?= e((string) ($linkedRequest['title'] ?? 'Requested Session')) ?></h3>
+                <div class="kuppi-wizard-request-meta">
+                    <span><?= ui_lucide_icon('user') ?> Requested by <strong><?= e((string) ($linkedRequest['requester_name'] ?? 'Unknown User')) ?></strong></span>
+                    <span><?= ui_lucide_icon('arrow-up') ?> <?= (int) ($linkedRequest['vote_score'] ?? 0) ?> votes</span>
+                </div>
+            <?php else: ?>
+                <p class="kuppi-wizard-request-subject"><?= ui_lucide_icon('book-open') ?> Manual Session</p>
+                <h3><?= e((string) ($draft['title'] ?? 'New Kuppi Session')) ?></h3>
+                <div class="kuppi-wizard-request-meta">
+                    <span><?= ui_lucide_icon('users') ?> Pick one or more hosts for this session.</span>
+                    <span><?= ui_lucide_icon('calendar') ?> Schedule details are set in the next step.</span>
+                </div>
+            <?php endif; ?>
         </article>
 
         <?php if (empty($candidates)): ?>
@@ -75,7 +98,7 @@ $locationLabel = $locationType === 'online'
             </article>
 
             <div class="kuppi-wizard-actions">
-                <a href="/dashboard/kuppi/schedule/set" class="btn btn-outline"><?= ui_lucide_icon('arrow-left') ?> Back</a>
+                <a href="/dashboard/kuppi/schedule" class="btn btn-outline"><?= ui_lucide_icon('arrow-left') ?> Back</a>
                 <a href="/dashboard/kuppi" class="btn btn-outline">Cancel</a>
             </div>
         <?php else: ?>
@@ -102,7 +125,10 @@ $locationLabel = $locationType === 'online'
 
                         $availability = (array) ($candidate['availability'] ?? []);
                         $voteCount = (int) ($candidate['vote_count'] ?? 0);
-                        $isTopVote = $mode === 'request' && $voteCount > 0 && $voteCount === $maxVotes;
+                        $isTopVote = $mode === 'request'
+                            && (string) ($candidate['source_type'] ?? '') === 'request_conductor'
+                            && $voteCount > 0
+                            && $voteCount === $maxVotes;
                         $isSelected = !empty($selectedMap[$hostId]);
                         $toneClass = ui_avatar_tone_class((string) ($hostId . '-' . $hostName));
 
@@ -129,7 +155,7 @@ $locationLabel = $locationType === 'online'
                                     </div>
 
                                     <div class="kuppi-wizard-host-badges">
-                                        <?php if ($mode === 'request'): ?>
+                                        <?php if ($mode === 'request' && (string) ($candidate['source_type'] ?? '') === 'request_conductor'): ?>
                                             <span class="badge badge-info"><?= $voteCount ?> votes</span>
                                         <?php endif; ?>
                                         <?php if ($isTopVote): ?>
@@ -158,11 +184,17 @@ $locationLabel = $locationType === 'online'
 
                 <div class="kuppi-wizard-info-box">
                     <strong>Conductor Notification</strong>
-                    <p>The selected conductors will receive an email notification with session details after confirmation.</p>
+                    <p>
+                        <?php if ($isRequestFallbackPool): ?>
+                            Selected students will be assigned as hosts for this request.
+                        <?php else: ?>
+                            Availability-based schedule suggestions will appear in the next step.
+                        <?php endif; ?>
+                    </p>
                 </div>
 
                 <div class="kuppi-wizard-actions">
-                    <a href="/dashboard/kuppi/schedule/set" class="btn btn-outline"><?= ui_lucide_icon('arrow-left') ?> Back</a>
+                    <a href="/dashboard/kuppi/schedule" class="btn btn-outline"><?= ui_lucide_icon('arrow-left') ?> Back</a>
                     <button type="submit" id="kuppi-host-continue" class="btn btn-primary kuppi-wizard-cta">Continue <?= ui_lucide_icon('arrow-right') ?></button>
                 </div>
             </form>
