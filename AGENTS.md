@@ -33,6 +33,7 @@ Treat this as the project contract.
   - `moderators_*` in `modules/moderators/*`
   - `topics_*` in `modules/topics/*`
   - `resources_*` in `modules/resources/*`
+  - `quizzes_*` in `modules/quizzes/*`
   - `comments_*` in `modules/comments/*`
   - `community_*` in `modules/community/*`
   - `kuppi_*` in `modules/kuppi/*`
@@ -98,6 +99,11 @@ Primary tables:
 - `subjects` (batch-scoped)
 - `topics` (subject-scoped)
 - `subject_coordinators`
+- `quizzes` (subject-scoped, approval-gated, mode-based)
+- `quiz_questions`
+- `quiz_options`
+- `quiz_attempts`
+- `quiz_attempt_answers`
 - `resources` (topic-scoped, approval-based)
 - `resource_update_requests` (staged edits)
 - `resource_ratings`
@@ -118,6 +124,8 @@ Non-negotiable integrity rules:
 
 - `subjects.batch_id` is required.
 - `topics.subject_id` is required.
+- `quizzes.subject_id` is required.
+- `quizzes.mode` is required and restricted to `practice | exam`.
 - `batch_code` is unique.
 - Each batch has exactly one primary moderator owner (`batches.moderator_user_id`).
 - A moderator can own at most one batch (`batches.moderator_user_id` unique).
@@ -128,8 +136,10 @@ Non-negotiable integrity rules:
 - One request-vote row per `(request_id, user_id)` in `kuppi_request_votes`.
 - One conductor-application row per `(request_id, applicant_user_id)` in `kuppi_conductor_applications`.
 - One conductor-vote row per `(application_id, voter_user_id)` in `kuppi_conductor_votes`.
+- One attempt-answer row per `(attempt_id, question_id)` in `quiz_attempt_answers`.
 - `feed_reports.target_type` is restricted to `post | comment`.
 - `feed_reports.status` is restricted to `open | dismissed | resolved`.
+- Leaderboard data is derived only from approved exam quizzes and student attempts.
 
 When changing DB schema:
 
@@ -141,18 +151,24 @@ When changing DB schema:
 - Student:
   - can only see subjects from their `users.batch_id`.
   - can only view topics for subjects in their own batch.
+  - can create quizzes in readable subjects.
+  - can attempt approved quizzes in readable subjects.
 - Moderator:
   - can only manage data for their own batch (unless explicitly admin flow).
   - can remove students from their own batch only (no student add/edit/delete account actions).
   - can CRUD topics only for subjects in their own batch.
+  - can review pending quizzes only for own-batch subjects.
 - Coordinator:
   - can CRUD topics only for subjects assigned to them in `subject_coordinators`.
+  - can create quizzes in readable subjects.
+  - can review pending quizzes only for assigned subjects.
 - Admin:
   - unrestricted access for approvals and cross-batch management.
   - has full student CRUD access from admin flows.
   - has full moderator CRUD access from admin provisioning flows.
   - has full batch CRUD access from admin provisioning flows.
   - has full topic CRUD access for all subjects.
+  - has full quiz review and analytics access across all subjects.
 
 Never introduce queries that bypass batch scoping for non-admin users.
 Use `middleware_exact_role('admin')` for admin provisioning routes.
@@ -171,6 +187,10 @@ Use `middleware_exact_role('admin')` for admin provisioning routes.
   - only author can edit their own comment,
   - delete allowed for author, moderator/admin, and coordinator only within assigned subjects.
 - Keep comment target access centralized in helpers/controllers; do not hardcode target-specific access rules in generic comment model functions.
+- Quiz discussions also use `comments` polymorphic targets:
+  - `target_type = 'quiz'` for quiz-level thread,
+  - `target_type = 'quiz_question'` for per-question thread.
+  - keep quiz comment access checks centralized in quiz controllers/helpers.
 
 ## 7.3) Community Interaction Rules (Do Not Break)
 
@@ -231,6 +251,36 @@ Use `middleware_exact_role('admin')` for admin provisioning routes.
   - failures should be logged via `error_log`,
   - recipient deduplication is required before send.
 
+## 7.5) Quiz Interaction Rules (Do Not Break)
+
+- Scope and visibility:
+  - quiz belongs to exactly one subject,
+  - learners can browse/attempt only approved quizzes in readable subjects,
+  - non-admin users must never get cross-batch quiz leakage.
+- Roles:
+  - create/edit draft/rejected quizzes: `student | coordinator`,
+  - review queue actions (approve/reject): `coordinator | moderator | admin` with scope checks,
+  - coordinator review is assigned-subject only; moderator review is own-batch only; admin review is global.
+- Lifecycle:
+  - `draft -> pending -> approved/rejected`,
+  - rejected quizzes are editable and can be resubmitted,
+  - approved quizzes are immutable in v1/v2 flows.
+- Mode behavior:
+  - `practice`: immediate per-question server-side check and lock-on-check,
+  - `exam`: correctness hidden until result page,
+  - timer and expiry are server-enforced for all modes.
+- Attempts and scoring:
+  - multiple attempts allowed, best score is retained (`score_percent DESC`, tie by latest `submitted_at DESC`),
+  - score formula remains `correct / total * 100` with no negative marking.
+- Leaderboard:
+  - subject-scoped only,
+  - includes only student attempts on approved exam quizzes,
+  - ranking tie-break: latest high-score `submitted_at DESC`.
+- Analytics:
+  - student analytics shows only own data,
+  - reviewer analytics must be scope-filtered by role and subject visibility,
+  - v2 analytics depth is question-level (no topic-tagging assumption).
+
 ## 7.1) Admin Provisioning Route Groups
 
 - Student management:
@@ -264,6 +314,34 @@ Use `middleware_exact_role('admin')` for admin provisioning routes.
   - `GET /subjects/{id}/topics/{topicId}/edit`
   - `POST /subjects/{id}/topics/{topicId}`
   - `POST /subjects/{id}/topics/{topicId}/delete`
+- Quizzes:
+  - `GET /dashboard/quizzes`
+  - `GET /dashboard/subjects/{id}/quizzes`
+  - `GET /dashboard/subjects/{id}/quizzes/create`
+  - `POST /dashboard/subjects/{id}/quizzes`
+  - `GET /dashboard/subjects/{id}/quizzes/leaderboard`
+  - `GET /dashboard/subjects/{id}/quizzes/{quizId}`
+  - `POST /dashboard/subjects/{id}/quizzes/{quizId}/attempts/start`
+  - `GET /dashboard/subjects/{id}/quizzes/{quizId}/attempts/{attemptId}`
+  - `POST /dashboard/subjects/{id}/quizzes/{quizId}/attempts/{attemptId}/questions/{questionId}/check`
+  - `POST /dashboard/subjects/{id}/quizzes/{quizId}/attempts/{attemptId}/submit`
+  - `GET /dashboard/subjects/{id}/quizzes/{quizId}/attempts/{attemptId}/result`
+  - `GET /my-quizzes`
+  - `GET /my-quizzes/{id}/edit`
+  - `POST /my-quizzes/{id}`
+  - `POST /my-quizzes/{id}/submit`
+  - `POST /my-quizzes/{id}/delete`
+  - `GET /dashboard/quiz-requests`
+  - `POST /dashboard/quiz-requests/{id}/approve`
+  - `POST /dashboard/quiz-requests/{id}/reject`
+  - `GET /my-quiz-analytics`
+  - `GET /dashboard/quiz-analytics`
+  - `POST /dashboard/subjects/{id}/quizzes/{quizId}/comments`
+  - `POST /dashboard/subjects/{id}/quizzes/{quizId}/comments/{commentId}`
+  - `POST /dashboard/subjects/{id}/quizzes/{quizId}/comments/{commentId}/delete`
+  - `POST /dashboard/subjects/{id}/quizzes/{quizId}/questions/{questionId}/comments`
+  - `POST /dashboard/subjects/{id}/quizzes/{quizId}/questions/{questionId}/comments/{commentId}`
+  - `POST /dashboard/subjects/{id}/quizzes/{quizId}/questions/{questionId}/comments/{commentId}/delete`
 - Community:
   - `GET /dashboard/community`
   - `GET /dashboard/community/create`
@@ -377,6 +455,8 @@ After generation:
 - Do not introduce direct SQL using untrusted input without bound params.
 - Do not add duplicate global helper names.
 - Do not remove polymorphic resource-comment cleanup from resource/topic/subject/batch deletion flows.
+- Do not weaken quiz mode gating, timer enforcement, or attempt scope checks.
+- Do not expose leaderboard/analytics rows outside subject and role scope rules.
 
 ## 12) Definition of Done
 
