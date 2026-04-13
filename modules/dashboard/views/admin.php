@@ -7,6 +7,7 @@
         <a href="/dashboard/quizzes" class="btn btn-outline">Quiz Hub</a>
         <a href="/admin/student-requests" class="btn btn-outline">Review Student Requests</a>
         <a href="/dashboard/quiz-requests" class="btn btn-outline">Review Quiz Requests</a>
+        <a href="/dashboard/gpa/grade-scale" class="btn btn-outline">Grade Point Config</a>
         <a href="/dashboard/community" class="btn btn-outline">Community Feed</a>
         <a href="/my-resources" class="btn btn-outline">My Resources</a>
         <a href="/admin/moderators" class="btn btn-outline">Manage Moderators</a>

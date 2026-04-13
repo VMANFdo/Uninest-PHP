@@ -22,6 +22,7 @@ $statusLabel = ucfirst($batchStatus ?: 'pending');
         <a href="/my-posts" class="btn btn-outline">My Posts</a>
         <a href="/students" class="btn btn-outline">Manage Students</a>
         <a href="/dashboard/quiz-requests" class="btn btn-outline">Review Quiz Requests</a>
+        <a href="/dashboard/gpa/grade-scale" class="btn btn-outline">Grade Point Config</a>
         <a href="/my-resources" class="btn btn-outline">My Resources</a>
         <a href="/subjects/create" class="btn btn-outline">Create Subject</a>
         <a href="/subjects" class="btn btn-outline">Manage Subjects</a>

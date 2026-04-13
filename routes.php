@@ -38,6 +38,13 @@ route('POST', '/onboarding/student/resubmit',    'onboarding_student_resubmit', 
 
 route('GET', '/dashboard', 'dashboard_index', ['middleware_auth', 'middleware_onboarding_complete']);
 route('GET', '/dashboard/quizzes', 'quizzes_hub_index', ['middleware_auth', 'middleware_onboarding_complete']);
+route('GET', '/dashboard/gpa', 'gpa_calculator_index', ['middleware_auth', 'middleware_onboarding_complete']);
+route('POST', '/dashboard/gpa', 'gpa_calculator_store', ['middleware_auth', 'middleware_onboarding_complete']);
+route('GET', '/dashboard/gpa/analytics', 'gpa_analytics_index', ['middleware_auth', 'middleware_onboarding_complete']);
+route('GET', '/dashboard/gpa/grade-scale', 'gpa_grade_scale_index', ['middleware_auth', 'middleware_onboarding_complete']);
+route('POST', '/dashboard/gpa/grade-scale', 'gpa_grade_scale_store', ['middleware_auth', 'middleware_onboarding_complete', fn() => middleware_role('moderator')]);
+route('POST', '/dashboard/gpa/grade-scale/{id}', 'gpa_grade_scale_update', ['middleware_auth', 'middleware_onboarding_complete', fn() => middleware_role('moderator')]);
+route('POST', '/dashboard/gpa/grade-scale/{id}/delete', 'gpa_grade_scale_delete', ['middleware_auth', 'middleware_onboarding_complete', fn() => middleware_role('moderator')]);
 route('GET', '/dashboard/community', 'community_index', ['middleware_auth', 'middleware_onboarding_complete']);
 route('POST', '/dashboard/community', 'community_store', ['middleware_auth', 'middleware_onboarding_complete']);
 route('GET', '/dashboard/community/create', 'community_create_form', ['middleware_auth', 'middleware_onboarding_complete']);

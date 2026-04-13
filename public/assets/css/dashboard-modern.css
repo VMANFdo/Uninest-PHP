@@ -15,6 +15,375 @@
   --dash-danger-soft: #fff0f0;
 }
 
+/* GPA Module */
+.dashboard-body .gpa-page-header .page-header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.dashboard-body .gpa-empty-state > .card-body {
+  min-height: 200px;
+  display: grid;
+  place-content: center;
+  text-align: center;
+  gap: 8px;
+}
+
+.dashboard-body .gpa-empty-state-inline {
+  border: 1px dashed #cfd8e6;
+  border-radius: 14px;
+  background: #f8faff;
+  padding: 24px;
+  display: grid;
+  gap: 8px;
+}
+
+.dashboard-body .gpa-term-filter-card > .card-body {
+  padding: 22px 24px;
+}
+
+.dashboard-body .gpa-term-filter-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 220px)) auto;
+  gap: 14px;
+  align-items: end;
+}
+
+.dashboard-body .gpa-term-filter-form .form-group {
+  margin: 0;
+}
+
+.dashboard-body .gpa-term-filter-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.dashboard-body .gpa-warning-banner {
+  margin: 18px 0;
+  border: 1px solid #f4d69a;
+  background: #fff8e7;
+  color: #7b4e00;
+  border-radius: 14px;
+  padding: 14px 16px;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.dashboard-body .gpa-warning-banner .ui-lucide-icon {
+  width: 20px;
+  height: 20px;
+}
+
+.dashboard-body .gpa-calculator-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.dashboard-body .gpa-calculator-card > .card-body,
+.dashboard-body .gpa-summary-card > .card-body,
+.dashboard-body .gpa-guide-card > .card-body,
+.dashboard-body .gpa-grade-scale-card > .card-body,
+.dashboard-body .gpa-analytics-trend-card > .card-body,
+.dashboard-body .gpa-analytics-side-card > .card-body,
+.dashboard-body .gpa-history-card > .card-body {
+  padding: 24px;
+}
+
+.dashboard-body .gpa-card-subtitle {
+  margin: 0 0 14px;
+  color: #66748a;
+}
+
+.dashboard-body .gpa-table-wrap {
+  overflow-x: auto;
+  border: 1px solid #d8dfec;
+  border-radius: 14px;
+}
+
+.dashboard-body .gpa-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 620px;
+}
+
+.dashboard-body .gpa-table th,
+.dashboard-body .gpa-table td {
+  border-bottom: 1px solid #e5ebf4;
+  padding: 14px;
+  text-align: left;
+  vertical-align: middle;
+}
+
+.dashboard-body .gpa-table th {
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: #64748b;
+  background: #f8faff;
+}
+
+.dashboard-body .gpa-table td p {
+  margin: 3px 0 0;
+  color: #6c7a90;
+  font-size: 0.9rem;
+}
+
+.dashboard-body .gpa-grade-select {
+  min-width: 168px;
+}
+
+.dashboard-body .gpa-form-actions {
+  margin-top: 16px;
+  display: flex;
+  justify-content: flex-start;
+}
+
+.dashboard-body .gpa-summary-card h3 {
+  margin: 18px 0 10px;
+}
+
+.dashboard-body .gpa-summary-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.dashboard-body .gpa-summary-list li {
+  border: 1px solid #e3e8f2;
+  border-radius: 12px;
+  padding: 10px 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.dashboard-body .gpa-summary-list span {
+  color: #64748b;
+}
+
+.dashboard-body .gpa-summary-list strong {
+  color: #131b2f;
+}
+
+.dashboard-body .gpa-term-chart-wrap {
+  position: relative;
+  height: 200px;
+  margin: 16px 0 8px;
+}
+
+.dashboard-body .gpa-term-chart-wrap--small {
+  height: 170px;
+}
+
+.dashboard-body .gpa-saved-note {
+  margin-top: 10px;
+}
+
+.dashboard-body .gpa-guide-list {
+  list-style: none;
+  margin: 0 0 18px;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.dashboard-body .gpa-guide-list li {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dashboard-body .gpa-guide-list .ui-lucide-icon {
+  width: 18px;
+  height: 18px;
+  color: #4723d6;
+}
+
+.dashboard-body .gpa-scale-table-wrap {
+  overflow-x: auto;
+  border: 1px solid #d8dfec;
+  border-radius: 14px;
+}
+
+.dashboard-body .gpa-scale-table,
+.dashboard-body .gpa-history-table,
+.dashboard-body .gpa-grade-config-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.dashboard-body .gpa-scale-table th,
+.dashboard-body .gpa-scale-table td,
+.dashboard-body .gpa-history-table th,
+.dashboard-body .gpa-history-table td,
+.dashboard-body .gpa-grade-config-table th,
+.dashboard-body .gpa-grade-config-table td {
+  border-bottom: 1px solid #e5ebf4;
+  padding: 12px 14px;
+  text-align: left;
+}
+
+.dashboard-body .gpa-scale-table th,
+.dashboard-body .gpa-history-table th,
+.dashboard-body .gpa-grade-config-table th {
+  color: #64748b;
+  background: #f8faff;
+  font-size: 0.84rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.dashboard-body .gpa-grade-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 46px;
+  padding: 6px 10px;
+  border-radius: 10px;
+  background: #111c32;
+  color: #fff;
+  font-weight: 600;
+}
+
+.dashboard-body .gpa-analytics-kpis {
+  margin: 12px 0 16px;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.dashboard-body .gpa-kpi-card > .card-body {
+  padding: 16px 18px;
+  display: grid;
+  gap: 4px;
+}
+
+.dashboard-body .gpa-kpi-card span {
+  color: #6d7b91;
+  font-size: 0.86rem;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.dashboard-body .gpa-kpi-card strong {
+  font-size: clamp(1.25rem, 0.65vw + 1rem, 1.85rem);
+  color: #152136;
+}
+
+.dashboard-body .gpa-analytics-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.dashboard-body .gpa-chart-header {
+  margin-bottom: 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+
+.dashboard-body .gpa-chart-header h2 {
+  margin: 0;
+}
+
+.dashboard-body .gpa-line-chart-wrap {
+  position: relative;
+  height: 320px;
+}
+
+.dashboard-body .gpa-history-table-wrap,
+.dashboard-body .gpa-grade-table-wrap {
+  overflow-x: auto;
+  border: 1px solid #d8dfec;
+  border-radius: 14px;
+}
+
+.dashboard-body .gpa-inline-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.dashboard-body .gpa-inline-actions form {
+  margin: 0;
+}
+
+.dashboard-body .gpa-grade-config-table input[type="text"],
+.dashboard-body .gpa-grade-config-table input[type="number"] {
+  width: 100%;
+  min-width: 100px;
+}
+
+.dashboard-body .gpa-grade-add-wrap {
+  margin-top: 18px;
+  border-top: 1px solid #e3e8f2;
+  padding-top: 18px;
+}
+
+.dashboard-body .gpa-grade-add-wrap h3 {
+  margin: 0 0 12px;
+}
+
+.dashboard-body .gpa-grade-add-form {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) auto;
+  gap: 12px;
+  align-items: end;
+}
+
+.dashboard-body .gpa-grade-add-form .form-group {
+  margin: 0;
+}
+
+@media (max-width: 1120px) {
+  .dashboard-body .gpa-calculator-layout,
+  .dashboard-body .gpa-analytics-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-body .gpa-term-filter-form,
+  .dashboard-body .gpa-grade-add-form {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .dashboard-body .gpa-term-filter-actions,
+  .dashboard-body .gpa-grade-add-form .gpa-term-filter-actions {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 760px) {
+  .dashboard-body .gpa-analytics-kpis {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-body .gpa-term-filter-form,
+  .dashboard-body .gpa-grade-add-form {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-body .gpa-inline-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .dashboard-body .gpa-inline-actions .btn {
+    width: 100%;
+  }
+}
+
 /* Kuppi Scheduler Wizard V2 */
 .dashboard-body .kuppi-wizard-header {
   margin-bottom: 14px;

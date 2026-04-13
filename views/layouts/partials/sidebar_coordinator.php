@@ -13,6 +13,8 @@ $isQuizHub = $currentPath === '/dashboard/quizzes'
     || (str_starts_with($currentPath, '/dashboard/subjects/') && str_contains($currentPath, '/quizzes'));
 $isMyQuizzes = str_starts_with($currentPath, '/my-quizzes');
 $isMyQuizAnalytics = $currentPath === '/my-quiz-analytics';
+$isGpaCalculator = $currentPath === '/dashboard/gpa';
+$isGpaAnalytics = $currentPath === '/dashboard/gpa/analytics';
 ?>
 <nav class="sidebar-nav">
     <?php $isCoordinatorSubjects = str_starts_with($currentPath, '/coordinator/subjects'); ?>
@@ -34,6 +36,8 @@ $isMyQuizAnalytics = $currentPath === '/my-quiz-analytics';
         <li><a href="/my-resources" class="<?= str_starts_with($currentPath, '/my-resources') ? 'active' : '' ?>"><span class="sidebar-nav-icon"><?= ui_lucide_icon('file-text') ?></span><span>My Resources</span></a></li>
         <li><a href="/my-quizzes" class="<?= $isMyQuizzes ? 'active' : '' ?>"><span class="sidebar-nav-icon"><?= ui_lucide_icon('clipboard-list') ?></span><span>My Quizzes</span></a></li>
         <li><a href="/my-quiz-analytics" class="<?= $isMyQuizAnalytics ? 'active' : '' ?>"><span class="sidebar-nav-icon"><?= ui_lucide_icon('line-chart') ?></span><span>Quiz Analytics</span></a></li>
+        <li><a href="/dashboard/gpa" class="<?= $isGpaCalculator ? 'active' : '' ?>"><span class="sidebar-nav-icon"><?= ui_lucide_icon('calculator') ?></span><span>GPA Calculator</span></a></li>
+        <li><a href="/dashboard/gpa/analytics" class="<?= $isGpaAnalytics ? 'active' : '' ?>"><span class="sidebar-nav-icon"><?= ui_lucide_icon('line-chart') ?></span><span>GPA Analytics</span></a></li>
     </ul>
 
     <div class="sidebar-section-label">Coordinator</div>

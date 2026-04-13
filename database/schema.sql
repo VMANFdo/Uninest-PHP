@@ -361,6 +361,71 @@ CREATE TABLE IF NOT EXISTS quiz_attempt_answers (
 ) ENGINE=InnoDB;
 
 -- ──────────────────────────────────────
+-- GPA Utility (batch-scoped grade scale + personal term records)
+-- ──────────────────────────────────────
+
+CREATE TABLE IF NOT EXISTS gpa_batch_grade_scales (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    batch_id INT NOT NULL,
+    letter_grade VARCHAR(12) NOT NULL,
+    description VARCHAR(120) NULL,
+    grade_point DECIMAL(3,2) NOT NULL,
+    sort_order INT UNSIGNED NOT NULL DEFAULT 1,
+    created_by_user_id INT NOT NULL,
+    updated_by_user_id INT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY uniq_gpa_grade_scale_letter (batch_id, letter_grade),
+    INDEX idx_gpa_grade_scale_batch_sort (batch_id, sort_order, id),
+    INDEX idx_gpa_grade_scale_batch_point (batch_id, grade_point),
+    CONSTRAINT chk_gpa_grade_point_range CHECK (grade_point >= 0.00 AND grade_point <= 4.00),
+    CONSTRAINT fk_gpa_grade_scale_batch FOREIGN KEY (batch_id) REFERENCES batches(id) ON DELETE CASCADE,
+    CONSTRAINT fk_gpa_grade_scale_created_by FOREIGN KEY (created_by_user_id) REFERENCES users(id) ON DELETE RESTRICT,
+    CONSTRAINT fk_gpa_grade_scale_updated_by FOREIGN KEY (updated_by_user_id) REFERENCES users(id) ON DELETE RESTRICT
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS gpa_term_records (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    batch_id INT NOT NULL,
+    academic_year TINYINT UNSIGNED NOT NULL,
+    semester TINYINT UNSIGNED NOT NULL,
+    semester_gpa DECIMAL(4,2) NOT NULL,
+    total_credits DECIMAL(6,2) NOT NULL,
+    graded_subject_count INT UNSIGNED NOT NULL DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY uniq_gpa_term_record (user_id, batch_id, academic_year, semester),
+    INDEX idx_gpa_term_user_order (user_id, academic_year, semester, id),
+    INDEX idx_gpa_term_batch_order (batch_id, academic_year, semester, id),
+    CONSTRAINT chk_gpa_term_gpa_range CHECK (semester_gpa >= 0.00 AND semester_gpa <= 4.00),
+    CONSTRAINT chk_gpa_term_credit_non_negative CHECK (total_credits >= 0.00),
+    CONSTRAINT fk_gpa_term_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    CONSTRAINT fk_gpa_term_batch FOREIGN KEY (batch_id) REFERENCES batches(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS gpa_term_subject_entries (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    term_record_id INT NOT NULL,
+    subject_id INT NULL,
+    subject_name_snapshot VARCHAR(255) NOT NULL,
+    credit_value DECIMAL(5,2) NOT NULL,
+    letter_grade VARCHAR(12) NOT NULL,
+    grade_point_snapshot DECIMAL(3,2) NOT NULL,
+    quality_points DECIMAL(7,2) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY uniq_gpa_term_subject (term_record_id, subject_id),
+    INDEX idx_gpa_term_entries_record (term_record_id, id),
+    INDEX idx_gpa_term_entries_subject (subject_id),
+    CONSTRAINT chk_gpa_term_entry_grade_point_range CHECK (grade_point_snapshot >= 0.00 AND grade_point_snapshot <= 4.00),
+    CONSTRAINT chk_gpa_term_entry_credit_non_negative CHECK (credit_value >= 0.00),
+    CONSTRAINT chk_gpa_term_entry_quality_non_negative CHECK (quality_points >= 0.00),
+    CONSTRAINT fk_gpa_term_entries_record FOREIGN KEY (term_record_id) REFERENCES gpa_term_records(id) ON DELETE CASCADE,
+    CONSTRAINT fk_gpa_term_entries_subject FOREIGN KEY (subject_id) REFERENCES subjects(id) ON DELETE SET NULL
+) ENGINE=InnoDB;
+
+-- ──────────────────────────────────────
 -- Topic Resources (topic-scoped, approval-based publishing)
 -- ──────────────────────────────────────
 
