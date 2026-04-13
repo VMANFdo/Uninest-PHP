@@ -80,6 +80,7 @@ $buildListUrl = static function (array $params = []) use ($is_admin, $selectedBa
                 <a href="/dashboard/kuppi/schedule" class="btn btn-primary"><?= ui_lucide_icon('calendar-plus') ?> Schedule Session</a>
                 <a href="/dashboard/kuppi/scheduled" class="btn btn-outline"><?= ui_lucide_icon('calendar') ?> Scheduled Sessions</a>
             <?php endif; ?>
+            <a href="/dashboard/kuppi/timetable<?= !empty($is_admin) && $selectedBatchId > 0 ? '?batch_id=' . $selectedBatchId : '' ?>" class="btn btn-outline"><?= ui_lucide_icon('calendar-clock') ?> University Timetable</a>
             <a href="/dashboard" class="btn btn-outline">Dashboard</a>
         </div>
     </div>

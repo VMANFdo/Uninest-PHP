@@ -10,10 +10,12 @@ $isCommunityReports = str_starts_with($currentPath, '/dashboard/community/report
 $isCommunityFeed = str_starts_with($currentPath, '/dashboard/community') && !$isCommunityReports;
 $isKuppiScheduleFlow = $currentPath === '/dashboard/kuppi/schedule' || str_starts_with($currentPath, '/dashboard/kuppi/schedule/');
 $isKuppiScheduled = str_starts_with($currentPath, '/dashboard/kuppi/scheduled');
+$isKuppiTimetable = str_starts_with($currentPath, '/dashboard/kuppi/timetable');
 $isKuppiRequested = (
     str_starts_with($currentPath, '/dashboard/kuppi')
     && !$isKuppiScheduleFlow
     && !$isKuppiScheduled
+    && !$isKuppiTimetable
 ) || str_starts_with($currentPath, '/my-kuppi-requests');
 $isQuizHub = $currentPath === '/dashboard/quizzes'
     || (str_starts_with($currentPath, '/dashboard/subjects/') && str_contains($currentPath, '/quizzes'));
@@ -41,6 +43,7 @@ $isQuizAnalytics = str_starts_with($currentPath, '/dashboard/quiz-analytics');
         <li><a href="/dashboard/kuppi" class="<?= $isKuppiRequested ? 'active' : '' ?>"><span class="sidebar-nav-icon"><?= ui_lucide_icon('book-open') ?></span><span>Requested Kuppi</span></a></li>
         <li><a href="/dashboard/kuppi/scheduled" class="<?= $isKuppiScheduled ? 'active' : '' ?>"><span class="sidebar-nav-icon"><?= ui_lucide_icon('calendar') ?></span><span>Scheduled Kuppi</span></a></li>
         <li><a href="/dashboard/kuppi/schedule" class="<?= $isKuppiScheduleFlow ? 'active' : '' ?>"><span class="sidebar-nav-icon"><?= ui_lucide_icon('calendar-plus') ?></span><span>Schedule Session</span></a></li>
+        <li><a href="/dashboard/kuppi/timetable" class="<?= $isKuppiTimetable ? 'active' : '' ?>"><span class="sidebar-nav-icon"><?= ui_lucide_icon('calendar-clock') ?></span><span>University Timetable</span></a></li>
         <li><a href="/saved-posts" class="<?= str_starts_with($currentPath, '/saved-posts') ? 'active' : '' ?>"><span class="sidebar-nav-icon"><?= ui_lucide_icon('bookmark') ?></span><span>Saved Posts</span></a></li>
         <li><a href="/dashboard/community/reports" class="<?= $isCommunityReports ? 'active' : '' ?>"><span class="sidebar-nav-icon"><?= ui_lucide_icon('flag') ?></span><span>Reports Queue</span></a></li>
         <li><a href="/subjects" class="<?= $isSubjects ? 'active' : '' ?>"><span class="sidebar-nav-icon"><?= ui_lucide_icon('layers') ?></span><span>Subjects</span></a></li>

@@ -29,6 +29,31 @@ $durationMinutes = max(0, (int) ($draft['duration_minutes'] ?? 0));
 $recommendedSlots = array_values((array) ($availabilityStats['recommended_slots'] ?? []));
 $rankedSlotCounts = (array) ($availabilityStats['ranked_counts'] ?? []);
 $hostsWithAvailability = (int) ($availabilityStats['hosts_with_availability'] ?? 0);
+$timetableSlots = (array) ($timetable_slots ?? []);
+$timetableSelectedDaySlots = (array) ($timetable_selected_day_slots ?? []);
+$timetableConflicts = (array) ($timetable_conflicts ?? []);
+$timetableDayLabels = (array) ($timetable_day_labels ?? kuppi_timetable_day_labels());
+$hasTimetableConflict = !empty($timetableConflicts);
+
+$timetableSlotsForJs = array_map(static function (array $slot): array {
+    return [
+        'day_of_week' => (int) ($slot['day_of_week'] ?? 0),
+        'start_time' => kuppi_timetable_time_label((string) ($slot['start_time'] ?? '')),
+        'end_time' => kuppi_timetable_time_label((string) ($slot['end_time'] ?? '')),
+        'start_minutes' => (int) (kuppi_timetable_time_to_minutes((string) ($slot['start_time'] ?? '')) ?? 0),
+        'end_minutes' => (int) (kuppi_timetable_time_to_minutes((string) ($slot['end_time'] ?? '')) ?? 0),
+        'reason' => kuppi_timetable_reason_label($slot),
+    ];
+}, $timetableSlots);
+
+$timetableSlotsJson = json_encode(
+    $timetableSlotsForJs,
+    JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT
+) ?: '[]';
+$timetableDayLabelsJson = json_encode(
+    $timetableDayLabels,
+    JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT
+) ?: '{}';
 
 $durationLabel = 'Automatically calculated from start and end time';
 if ($durationMinutes > 0) {
@@ -126,6 +151,42 @@ if ($durationMinutes > 0) {
                 <?php endif; ?>
             </article>
         <?php endif; ?>
+
+        <article class="kuppi-wizard-context kuppi-wizard-context--timetable">
+            <div class="kuppi-wizard-context-head">
+                <p class="kuppi-wizard-request-subject"><?= ui_lucide_icon('calendar-clock') ?> Official University Timetable</p>
+                <a href="/dashboard/kuppi/timetable<?= $isAdmin && $selectedBatchId > 0 ? '?batch_id=' . $selectedBatchId : '' ?>" class="btn btn-outline btn-sm">View Timetable</a>
+            </div>
+            <p class="kuppi-wizard-muted-inline">
+                Official lecture slots are strict blockers. You cannot continue while your selected time overlaps any blocked slot.
+            </p>
+
+            <div class="kuppi-schedule-blocked-panel" id="kuppi-blocked-panel">
+                <h4><?= ui_lucide_icon('calendar-days') ?> Selected Day: Blocked Slots</h4>
+                <ul id="kuppi-blocked-slots-list">
+                    <?php if (!empty($timetableSelectedDaySlots)): ?>
+                        <?php foreach ($timetableSelectedDaySlots as $slot): ?>
+                            <li>
+                                <strong><?= e(kuppi_timetable_time_label((string) ($slot['start_time'] ?? ''))) ?> - <?= e(kuppi_timetable_time_label((string) ($slot['end_time'] ?? ''))) ?></strong>
+                                <span><?= e(kuppi_timetable_reason_label($slot)) ?></span>
+                            </li>
+                        <?php endforeach; ?>
+                    <?php else: ?>
+                        <li class="is-empty">No official blocked slots for the selected day.</li>
+                    <?php endif; ?>
+                </ul>
+            </div>
+
+            <div class="kuppi-schedule-conflict-warning <?= $hasTimetableConflict ? '' : 'is-hidden' ?>" id="kuppi-conflict-warning" role="alert" aria-live="polite">
+                <h4><?= ui_lucide_icon('triangle-alert') ?> Conflict Detected</h4>
+                <p>This session overlaps official lecture time. Update date/time to continue.</p>
+                <ul id="kuppi-conflict-list">
+                    <?php foreach ($timetableConflicts as $slot): ?>
+                        <li><?= e(kuppi_timetable_slot_summary($slot)) ?></li>
+                    <?php endforeach; ?>
+                </ul>
+            </div>
+        </article>
 
         <form method="POST" action="/dashboard/kuppi/schedule/set" class="kuppi-wizard-form-grid" id="kuppi-schedule-set-form">
             <?= csrf_field() ?>
@@ -236,14 +297,52 @@ if ($durationMinutes > 0) {
 
             <div class="kuppi-wizard-actions form-group-span-2">
                 <a href="/dashboard/kuppi/schedule/assign" class="btn btn-outline"><?= ui_lucide_icon('arrow-left') ?> Back</a>
-                <button type="submit" class="btn btn-primary kuppi-wizard-cta">Continue <?= ui_lucide_icon('arrow-right') ?></button>
+                <button type="submit" class="btn btn-primary kuppi-wizard-cta" id="kuppi-schedule-continue" <?= $hasTimetableConflict ? 'disabled' : '' ?>>Continue <?= ui_lucide_icon('arrow-right') ?></button>
             </div>
         </form>
     </div>
 </div>
 
+<script id="kuppi-timetable-slots-data" type="application/json"><?= $timetableSlotsJson ?></script>
+<script id="kuppi-timetable-day-labels-data" type="application/json"><?= $timetableDayLabelsJson ?></script>
 <script>
 (function () {
+    function readJsonScript(id, fallback) {
+        const el = document.getElementById(id);
+        if (!el) {
+            return fallback;
+        }
+        try {
+            return JSON.parse(el.textContent || '');
+        } catch (error) {
+            return fallback;
+        }
+    }
+
+    function toMinutes(value) {
+        if (!/^\d{2}:\d{2}$/.test(value || '')) {
+            return null;
+        }
+        const hours = Number(value.slice(0, 2));
+        const minutes = Number(value.slice(3, 5));
+        if (Number.isNaN(hours) || Number.isNaN(minutes)) {
+            return null;
+        }
+        return (hours * 60) + minutes;
+    }
+
+    function dayOfWeekFromDate(dateValue) {
+        if (!dateValue) {
+            return null;
+        }
+        const parsed = new Date(dateValue + 'T00:00:00');
+        if (Number.isNaN(parsed.getTime())) {
+            return null;
+        }
+        const jsDay = parsed.getDay();
+        return jsDay === 0 ? 7 : jsDay;
+    }
+
     const counter = document.querySelector('[data-counter]');
     if (counter) {
         const input = counter.querySelector('input[type="number"]');
@@ -283,5 +382,112 @@ if ($durationMinutes > 0) {
 
     radios.forEach((radio) => radio.addEventListener('change', syncLocationVisibility));
     syncLocationVisibility();
+
+    const slots = readJsonScript('kuppi-timetable-slots-data', []);
+    const dayLabels = readJsonScript('kuppi-timetable-day-labels-data', {});
+    const dateInput = document.getElementById('session_date');
+    const startInput = document.getElementById('start_time');
+    const endInput = document.getElementById('end_time');
+    const blockedSlotsList = document.getElementById('kuppi-blocked-slots-list');
+    const conflictWarning = document.getElementById('kuppi-conflict-warning');
+    const conflictList = document.getElementById('kuppi-conflict-list');
+    const continueButton = document.getElementById('kuppi-schedule-continue');
+
+    function renderBlockedSlots(dayOfWeek) {
+        if (!blockedSlotsList) {
+            return;
+        }
+
+        blockedSlotsList.innerHTML = '';
+        if (!dayOfWeek) {
+            const empty = document.createElement('li');
+            empty.className = 'is-empty';
+            empty.textContent = 'Select a date to see blocked slots for that day.';
+            blockedSlotsList.appendChild(empty);
+            return;
+        }
+
+        const daySlots = slots
+            .filter((slot) => Number(slot.day_of_week) === Number(dayOfWeek))
+            .sort((a, b) => Number(a.start_minutes) - Number(b.start_minutes));
+
+        if (daySlots.length === 0) {
+            const empty = document.createElement('li');
+            empty.className = 'is-empty';
+            const dayName = dayLabels[String(dayOfWeek)] || dayLabels[dayOfWeek] || 'selected day';
+            empty.textContent = 'No official blocked slots for ' + dayName + '.';
+            blockedSlotsList.appendChild(empty);
+            return;
+        }
+
+        daySlots.forEach((slot) => {
+            const li = document.createElement('li');
+            const strong = document.createElement('strong');
+            strong.textContent = String(slot.start_time || '') + ' - ' + String(slot.end_time || '');
+            const reason = document.createElement('span');
+            reason.textContent = String(slot.reason || 'Official lecture slot');
+            li.appendChild(strong);
+            li.appendChild(reason);
+            blockedSlotsList.appendChild(li);
+        });
+    }
+
+    function renderConflicts(conflicts) {
+        if (!conflictWarning || !conflictList) {
+            return;
+        }
+
+        conflictList.innerHTML = '';
+        if (conflicts.length === 0) {
+            conflictWarning.classList.add('is-hidden');
+            return;
+        }
+
+        conflicts.forEach((slot) => {
+            const li = document.createElement('li');
+            const dayName = dayLabels[String(slot.day_of_week)] || dayLabels[slot.day_of_week] || 'Selected day';
+            li.textContent = dayName + ' ' + String(slot.start_time || '') + ' - ' + String(slot.end_time || '') + ' (' + String(slot.reason || 'Official lecture slot') + ')';
+            conflictList.appendChild(li);
+        });
+
+        conflictWarning.classList.remove('is-hidden');
+    }
+
+    function evaluateTimetableConflict() {
+        const dayOfWeek = dayOfWeekFromDate(dateInput?.value || '');
+        renderBlockedSlots(dayOfWeek);
+
+        const startMinutes = toMinutes(startInput?.value || '');
+        const endMinutes = toMinutes(endInput?.value || '');
+        let conflicts = [];
+
+        if (dayOfWeek && startMinutes !== null && endMinutes !== null && endMinutes > startMinutes) {
+            conflicts = slots.filter((slot) => (
+                Number(slot.day_of_week) === Number(dayOfWeek)
+                && Number(slot.start_minutes) < endMinutes
+                && Number(slot.end_minutes) > startMinutes
+            ));
+        }
+
+        renderConflicts(conflicts);
+        if (continueButton) {
+            continueButton.disabled = conflicts.length > 0;
+        }
+    }
+
+    if (dateInput) {
+        dateInput.addEventListener('change', evaluateTimetableConflict);
+        dateInput.addEventListener('input', evaluateTimetableConflict);
+    }
+    if (startInput) {
+        startInput.addEventListener('change', evaluateTimetableConflict);
+        startInput.addEventListener('input', evaluateTimetableConflict);
+    }
+    if (endInput) {
+        endInput.addEventListener('change', evaluateTimetableConflict);
+        endInput.addEventListener('input', evaluateTimetableConflict);
+    }
+
+    evaluateTimetableConflict();
 })();
 </script>

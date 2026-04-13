@@ -62,6 +62,10 @@ route('GET', '/community/{id}/image', 'community_image', ['middleware_auth', 'mi
 route('GET', '/dashboard/kuppi', 'kuppi_index', ['middleware_auth', 'middleware_onboarding_complete']);
 route('GET', '/dashboard/kuppi/create', 'kuppi_create_form', ['middleware_auth', 'middleware_onboarding_complete']);
 route('POST', '/dashboard/kuppi', 'kuppi_store', ['middleware_auth', 'middleware_onboarding_complete']);
+route('GET', '/dashboard/kuppi/timetable', 'kuppi_timetable_index', ['middleware_auth', 'middleware_onboarding_complete']);
+route('POST', '/dashboard/kuppi/timetable', 'kuppi_timetable_store', ['middleware_auth', 'middleware_onboarding_complete', fn() => middleware_role('moderator')]);
+route('POST', '/dashboard/kuppi/timetable/{id}', 'kuppi_timetable_update', ['middleware_auth', 'middleware_onboarding_complete', fn() => middleware_role('moderator')]);
+route('POST', '/dashboard/kuppi/timetable/{id}/delete', 'kuppi_timetable_delete', ['middleware_auth', 'middleware_onboarding_complete', fn() => middleware_role('moderator')]);
 route('GET', '/dashboard/kuppi/schedule', 'kuppi_schedule_select_request_step', ['middleware_auth', 'middleware_onboarding_complete', fn() => middleware_role('coordinator')]);
 route('GET', '/dashboard/kuppi/schedule/manual', 'kuppi_schedule_manual_start', ['middleware_auth', 'middleware_onboarding_complete', fn() => middleware_role('coordinator')]);
 route('POST', '/dashboard/kuppi/schedule/select-request', 'kuppi_schedule_select_request_action', ['middleware_auth', 'middleware_onboarding_complete', fn() => middleware_role('coordinator')]);

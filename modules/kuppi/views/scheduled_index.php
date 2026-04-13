@@ -37,6 +37,7 @@ foreach ($sessions as $sessionRow) {
         <?php if (kuppi_user_is_scheduler()): ?>
             <a href="/dashboard/kuppi/schedule" class="btn btn-primary"><?= ui_lucide_icon('calendar-plus') ?> Schedule Session</a>
         <?php endif; ?>
+        <a href="/dashboard/kuppi/timetable<?= $isAdmin && $adminBatchId > 0 ? '?batch_id=' . $adminBatchId : '' ?>" class="btn btn-outline"><?= ui_lucide_icon('calendar-clock') ?> University Timetable</a>
         <a href="/dashboard/kuppi" class="btn btn-outline">Requested Sessions</a>
     </div>
 </div>

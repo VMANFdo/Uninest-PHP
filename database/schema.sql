@@ -631,6 +631,26 @@ CREATE TABLE IF NOT EXISTS kuppi_scheduled_session_hosts (
     CONSTRAINT fk_kuppi_scheduled_host_assigned_by FOREIGN KEY (assigned_by_user_id) REFERENCES users(id) ON DELETE RESTRICT
 ) ENGINE=InnoDB;
 
+CREATE TABLE IF NOT EXISTS kuppi_university_timetable_slots (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    batch_id INT NOT NULL,
+    day_of_week TINYINT UNSIGNED NOT NULL,
+    start_time TIME NOT NULL,
+    end_time TIME NOT NULL,
+    reason VARCHAR(255) NULL,
+    created_by_user_id INT NOT NULL,
+    updated_by_user_id INT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_kuppi_timetable_batch_day_time (batch_id, day_of_week, start_time, end_time),
+    INDEX idx_kuppi_timetable_batch_created (batch_id, created_at, id),
+    CONSTRAINT chk_kuppi_timetable_day CHECK (day_of_week BETWEEN 1 AND 7),
+    CONSTRAINT chk_kuppi_timetable_time_range CHECK (start_time < end_time),
+    CONSTRAINT fk_kuppi_timetable_batch FOREIGN KEY (batch_id) REFERENCES batches(id) ON DELETE CASCADE,
+    CONSTRAINT fk_kuppi_timetable_created_by FOREIGN KEY (created_by_user_id) REFERENCES users(id) ON DELETE RESTRICT,
+    CONSTRAINT fk_kuppi_timetable_updated_by FOREIGN KEY (updated_by_user_id) REFERENCES users(id) ON DELETE RESTRICT
+) ENGINE=InnoDB;
+
 CREATE TABLE IF NOT EXISTS comments (
     id INT AUTO_INCREMENT PRIMARY KEY,
     target_type VARCHAR(50) NOT NULL,
