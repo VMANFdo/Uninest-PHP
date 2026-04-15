@@ -184,6 +184,8 @@ $buildFeedUrl = static function (array $params = []) use ($is_admin, $selectedBa
                         if ($actorName === '') {
                             $actorName = 'Unknown User';
                         }
+                        $actorUserId = (int) ($item['actor_user_id'] ?? 0);
+                        $actorToneClass = ui_avatar_tone_class($actorName . ':' . $actorUserId);
 
                         $title = trim((string) ($item['title'] ?? 'Untitled'));
                         $summary = trim((string) ($item['summary'] ?? ''));
@@ -207,6 +209,7 @@ $buildFeedUrl = static function (array $params = []) use ($is_admin, $selectedBa
                         $communityCommentCount = (int) ($item['community_comment_count'] ?? 0);
                         $communityIsLiked = (int) ($item['community_is_liked_by_viewer'] ?? 0) === 1;
                         $communityIsSaved = (int) ($item['community_is_saved_by_viewer'] ?? 0) === 1;
+                        $communityHasImage = (int) ($item['community_has_image'] ?? 0) === 1;
 
                         $kuppiVoteScore = (int) ($item['kuppi_vote_score'] ?? 0);
                         $kuppiUpvoteCount = (int) ($item['kuppi_upvote_count'] ?? 0);
@@ -228,7 +231,7 @@ $buildFeedUrl = static function (array $params = []) use ($is_admin, $selectedBa
                         <article class="feed-post feed-post--<?= e($itemType) ?>">
                             <header class="feed-post-header">
                                 <div class="feed-post-author">
-                                    <span class="feed-post-avatar"><?= e(ui_initials($actorName)) ?></span>
+                                    <span class="feed-post-avatar <?= e($actorToneClass) ?>"><?= e(ui_initials($actorName)) ?></span>
                                     <div class="feed-post-author-copy">
                                         <strong><?= e($actorName) ?></strong>
                                         <small title="<?= e($eventAtDisplay) ?>"><?= e($eventLabel) ?></small>
@@ -261,6 +264,11 @@ $buildFeedUrl = static function (array $params = []) use ($is_admin, $selectedBa
                                         <span class="feed-attachment-chip"><?= ui_lucide_icon('message-circle', 'feed-mini-icon') ?> <?= $communityCommentCount ?> comments</span>
                                     </div>
                                 </div>
+                                <?php if ($communityHasImage): ?>
+                                    <a href="<?= e($targetUrl) ?>" class="feed-community-media" aria-label="Open community post image">
+                                        <img src="/community/<?= $itemId ?>/image" alt="Community post image by <?= e($actorName) ?>" loading="lazy">
+                                    </a>
+                                <?php endif; ?>
                             <?php elseif ($itemType === 'resource'): ?>
                                 <div class="feed-post-attachment feed-post-attachment--resource">
                                     <div class="feed-attachment-row">

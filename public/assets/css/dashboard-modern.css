@@ -8065,26 +8065,6 @@
   padding: 14px 16px 12px;
 }
 
-.dashboard-body .feed-post--community {
-  border-left: 4px solid #2563eb;
-}
-
-.dashboard-body .feed-post--resource {
-  border-left: 4px solid #0f766e;
-}
-
-.dashboard-body .feed-post--quiz {
-  border-left: 4px solid #ca8a04;
-}
-
-.dashboard-body .feed-post--kuppi_request {
-  border-left: 4px solid #4f46e5;
-}
-
-.dashboard-body .feed-post--kuppi_scheduled {
-  border-left: 4px solid #15803d;
-}
-
 .dashboard-body .feed-post-header {
   display: flex;
   align-items: center;
@@ -8107,10 +8087,42 @@
   align-items: center;
   justify-content: center;
   border: 1px solid #dbe2f2;
-  background: linear-gradient(150deg, #f8fafc, #eff6ff);
+  background: #f8fafc;
   color: #1f2937;
   font-weight: 700;
   font-size: 0.86rem;
+}
+
+.dashboard-body .feed-post-avatar.ui-avatar-tone-1 {
+  background: #ffe9e9;
+}
+
+.dashboard-body .feed-post-avatar.ui-avatar-tone-2 {
+  background: #fff0df;
+}
+
+.dashboard-body .feed-post-avatar.ui-avatar-tone-3 {
+  background: #fff7d7;
+}
+
+.dashboard-body .feed-post-avatar.ui-avatar-tone-4 {
+  background: #e7f7e8;
+}
+
+.dashboard-body .feed-post-avatar.ui-avatar-tone-5 {
+  background: #e5f7f7;
+}
+
+.dashboard-body .feed-post-avatar.ui-avatar-tone-6 {
+  background: #e7efff;
+}
+
+.dashboard-body .feed-post-avatar.ui-avatar-tone-7 {
+  background: #f0e9ff;
+}
+
+.dashboard-body .feed-post-avatar.ui-avatar-tone-8 {
+  background: #fde8f6;
 }
 
 .dashboard-body .feed-post-author-copy {
@@ -8219,6 +8231,22 @@
 .dashboard-body .feed-post-attachment--kuppi-scheduled {
   background: linear-gradient(145deg, #f4fff6, #ecfdf5);
   border-color: #d1fae5;
+}
+
+.dashboard-body .feed-community-media {
+  margin-top: 10px;
+  display: block;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid #dbe4f2;
+  background: #f8fafc;
+}
+
+.dashboard-body .feed-community-media img {
+  width: 100%;
+  max-height: 420px;
+  object-fit: cover;
+  display: block;
 }
 
 .dashboard-body .feed-attachment-row,
