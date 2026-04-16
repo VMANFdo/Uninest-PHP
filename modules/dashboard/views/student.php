@@ -1,7 +1,7 @@
 <?php
 $batchId = (int) ($user['batch_id'] ?? 0);
 $subjectRows = (array) ($subjects ?? []);
-$featuredSubjects = array_slice($subjectRows, 0, 6);
+$featuredSubjects = array_slice($subjectRows, 0, 4);
 $batchMeta = (array) ($batch_meta ?? []);
 $recentActivityItems = (array) ($recent_activity_items ?? []);
 $nextSession = (array) ($next_session ?? []);
@@ -37,21 +37,7 @@ $gpaLatestSemester = isset($gpaSummary['latest_semester']) ? (int) $gpaSummary['
 $batchCode = trim((string) ($batchMeta['batch_code'] ?? ''));
 $batchName = trim((string) ($batchMeta['name'] ?? ''));
 $batchUniversityName = trim((string) ($batchMeta['university_name'] ?? ''));
-
 $todayBlockedHours = $todayBlockedMinutes > 0 ? $todayBlockedMinutes / 60 : 0;
-
-$formatDateTime = static function (?string $value, string $fallback = '-'): string {
-    if ($value === null || trim($value) === '') {
-        return $fallback;
-    }
-
-    $timestamp = strtotime($value);
-    if ($timestamp === false) {
-        return $fallback;
-    }
-
-    return date('M d, Y h:i A', $timestamp);
-};
 
 $truncate = static function (string $text, int $length = 120): string {
     $normalized = trim((string) preg_replace('/\s+/', ' ', $text));
@@ -62,42 +48,109 @@ $truncate = static function (string $text, int $length = 120): string {
 };
 ?>
 
-<section class="student-home-hero">
-    <div class="student-home-hero-main">
-        <p class="student-home-eyebrow">Student Dashboard</p>
-        <h1>Focus your week. Learn faster with your batch.</h1>
-        <p class="student-home-copy">
+<section class="student-dash-hero">
+    <div class="student-dash-hero-main">
+        <p class="student-dash-eyebrow">Student Dashboard</p>
+        <h1>Stay on track with your batch goals.</h1>
+        <p class="student-dash-copy">
             Welcome back, <?= e((string) ($user['name'] ?? 'Student')) ?>.
             <?php if ($batchCode !== ''): ?>
-                You are in <span class="student-home-inline-strong"><?= e($batchCode) ?></span>
+                You are learning in <span class="student-dash-inline-strong"><?= e($batchCode) ?></span>
                 <?php if ($batchName !== ''): ?> · <?= e($batchName) ?><?php endif; ?>
                 <?php if ($batchUniversityName !== ''): ?> · <?= e($batchUniversityName) ?><?php endif; ?>.
             <?php elseif ($batchId > 0): ?>
-                Your active learning space is <span class="student-home-inline-strong">Batch #<?= $batchId ?></span>.
+                You are learning in <span class="student-dash-inline-strong">Batch #<?= $batchId ?></span>.
             <?php endif; ?>
         </p>
 
-        <div class="student-home-scope-pills">
+        <div class="student-dash-chips">
+            <span><?= ui_lucide_icon('book-open') ?> <?= $subjectCount ?> subjects</span>
             <span><?= ui_lucide_icon('folder-open') ?> <?= $resourceCount ?> resources</span>
             <span><?= ui_lucide_icon('clipboard-check') ?> <?= $quizCount ?> approved quizzes</span>
-            <span><?= ui_lucide_icon('message-square') ?> <?= $communityCount ?> community posts</span>
-        </div>
-
-        <div class="student-home-priority-actions">
-            <a href="/dashboard/feed" class="btn btn-primary"><?= ui_lucide_icon('newspaper') ?> Central Feed</a>
-            <a href="/dashboard/subjects" class="btn btn-primary"><?= ui_lucide_icon('book-open') ?> Subjects</a>
-            <a href="/dashboard/quizzes" class="btn btn-outline"><?= ui_lucide_icon('clipboard-check') ?> Quiz Hub</a>
-            <a href="/dashboard/kuppi" class="btn btn-outline"><?= ui_lucide_icon('calendar-plus') ?> Kuppi Sessions</a>
-            <a href="/dashboard/gpa/analytics" class="btn btn-outline"><?= ui_lucide_icon('line-chart') ?> GPA Analytics</a>
-            <a href="/dashboard/community" class="btn btn-outline"><?= ui_lucide_icon('message-square') ?> Community</a>
+            <span><?= ui_lucide_icon('message-square') ?> <?= $communityCount ?> posts</span>
         </div>
     </div>
 
-    <aside class="student-home-next-card">
-        <div class="student-home-next-card-head">
-            <h2><?= ui_lucide_icon('calendar-clock') ?> Next Kuppi Session</h2>
-            <span class="badge"><?= $upcomingSessionCount ?> upcoming</span>
-        </div>
+    <aside class="student-dash-today">
+        <h2><?= ui_lucide_icon('calendar-range') ?> Today at a Glance</h2>
+        <ul>
+            <li><span>Open Kuppi Requests</span><strong><?= $openKuppiCount ?></strong></li>
+            <li><span>Upcoming Sessions</span><strong><?= $upcomingSessionCount ?></strong></li>
+            <li><span>Official Lecture Blocks</span><strong><?= $todayBlockedCount ?></strong></li>
+            <li><span>Blocked Hours</span><strong><?= number_format($todayBlockedHours, 1) ?>h</strong></li>
+        </ul>
+        <a href="/dashboard/kuppi/timetable" class="btn btn-sm btn-outline">View University Timetable</a>
+    </aside>
+</section>
+
+<section class="student-dash-actions">
+    <a href="/dashboard/feed" class="student-dash-action-card">
+        <span class="student-dash-action-icon"><?= ui_lucide_icon('newspaper') ?></span>
+        <strong>Central Feed</strong>
+        <small>Catch all latest batch activity</small>
+    </a>
+    <a href="/dashboard/subjects" class="student-dash-action-card">
+        <span class="student-dash-action-icon"><?= ui_lucide_icon('book-open') ?></span>
+        <strong>Subjects</strong>
+        <small>Open notes, topics, and resources</small>
+    </a>
+    <a href="/dashboard/quizzes" class="student-dash-action-card">
+        <span class="student-dash-action-icon"><?= ui_lucide_icon('clipboard-check') ?></span>
+        <strong>Quiz Hub</strong>
+        <small>Practice and improve your score</small>
+    </a>
+    <a href="/dashboard/kuppi" class="student-dash-action-card">
+        <span class="student-dash-action-icon"><?= ui_lucide_icon('calendar-plus') ?></span>
+        <strong>Kuppi Sessions</strong>
+        <small>Request and join peer sessions</small>
+    </a>
+    <a href="/dashboard/gpa/analytics" class="student-dash-action-card">
+        <span class="student-dash-action-icon"><?= ui_lucide_icon('line-chart') ?></span>
+        <strong>GPA Analytics</strong>
+        <small>Track academic progression</small>
+    </a>
+    <a href="/dashboard/community" class="student-dash-action-card">
+        <span class="student-dash-action-icon"><?= ui_lucide_icon('messages-square') ?></span>
+        <strong>Community</strong>
+        <small>Join questions and discussions</small>
+    </a>
+</section>
+
+<section class="student-dash-kpis">
+    <article class="student-dash-kpi">
+        <span>Quiz Attempts</span>
+        <strong><?= $quizAttemptCount ?></strong>
+        <p>Best <?= $quizBestScore !== null ? number_format($quizBestScore, 1) . '%' : '-' ?> · Avg <?= $quizAvgScore !== null ? number_format($quizAvgScore, 1) . '%' : '-' ?></p>
+    </article>
+    <article class="student-dash-kpi">
+        <span>Quiz Accuracy</span>
+        <strong><?= $quizAccuracy !== null ? number_format($quizAccuracy, 1) . '%' : '-' ?></strong>
+        <p><?= $quizTotalCorrect ?> correct from <?= $quizTotalQuestions ?> answered</p>
+    </article>
+    <article class="student-dash-kpi">
+        <span>Latest GPA</span>
+        <strong><?= $latestGpa !== null ? number_format($latestGpa, 2) : '-' ?></strong>
+        <p>
+            <?php if ($gpaLatestYear !== null && $gpaLatestSemester !== null): ?>
+                Y<?= $gpaLatestYear ?> · S<?= $gpaLatestSemester ?>
+            <?php else: ?>
+                Save your first GPA term
+            <?php endif; ?>
+        </p>
+    </article>
+    <article class="student-dash-kpi">
+        <span>Best GPA</span>
+        <strong><?= $bestGpa !== null ? number_format($bestGpa, 2) : '-' ?></strong>
+        <p>From your saved GPA records</p>
+    </article>
+</section>
+
+<section class="student-dash-grid">
+    <article class="student-dash-card">
+        <header class="student-dash-card-head">
+            <h2><?= ui_lucide_icon('calendar-clock') ?> Next Scheduled Kuppi</h2>
+            <a href="/dashboard/kuppi/scheduled" class="btn btn-sm btn-outline">All Sessions</a>
+        </header>
         <?php if ($hasNextSession): ?>
             <?php
             $sessionId = (int) ($nextSession['id'] ?? 0);
@@ -114,166 +167,93 @@ $truncate = static function (string $text, int $length = 120): string {
             $sessionLocationText = trim((string) ($nextSession['location_text'] ?? ''));
             $sessionMeetingLink = trim((string) ($nextSession['meeting_link'] ?? ''));
             $locationLabel = $sessionLocationType === 'online'
-                ? ($sessionMeetingLink !== '' ? 'Online session link ready' : 'Online session')
+                ? ($sessionMeetingLink !== '' ? 'Online link ready' : 'Online session')
                 : ($sessionLocationText !== '' ? $sessionLocationText : 'Physical location');
             ?>
-            <p class="student-home-next-title">
-                <?php if ($sessionSubjectCode !== ''): ?>
-                    <span class="badge"><?= e($sessionSubjectCode) ?></span>
-                <?php endif; ?>
-                <strong><?= e($sessionTitle) ?></strong>
-            </p>
-            <ul class="student-home-next-meta">
-                <li><?= ui_lucide_icon('calendar-days') ?> <?= e($sessionDateLabel) ?></li>
-                <li><?= ui_lucide_icon('clock-3') ?> <?= e($sessionTimeLabel) ?></li>
-                <li><?= ui_lucide_icon('map-pin') ?> <?= e($locationLabel) ?></li>
-            </ul>
-            <a href="/dashboard/kuppi/scheduled/<?= $sessionId ?>" class="btn btn-outline btn-sm">Open Session</a>
-        <?php else: ?>
-            <p class="text-muted">No scheduled sessions yet. Explore open requests and help your batch plan the next Kuppi.</p>
-            <a href="/dashboard/kuppi" class="btn btn-outline btn-sm">Browse Kuppi Requests</a>
-        <?php endif; ?>
-    </aside>
-</section>
-
-<section class="student-home-kpi-grid">
-    <article class="student-home-kpi-card">
-        <span>Subjects</span>
-        <strong><?= $subjectCount ?></strong>
-        <p>Available in your batch scope</p>
-    </article>
-    <article class="student-home-kpi-card">
-        <span>Open Kuppi Requests</span>
-        <strong><?= $openKuppiCount ?></strong>
-        <p>Student demand for new sessions</p>
-    </article>
-    <article class="student-home-kpi-card">
-        <span>Quiz Attempts</span>
-        <strong><?= $quizAttemptCount ?></strong>
-        <p>Best <?= $quizBestScore !== null ? number_format($quizBestScore, 1) . '%' : '-' ?> · Avg <?= $quizAvgScore !== null ? number_format($quizAvgScore, 1) . '%' : '-' ?></p>
-    </article>
-    <article class="student-home-kpi-card">
-        <span>Latest GPA</span>
-        <strong><?= $latestGpa !== null ? number_format($latestGpa, 2) : '-' ?></strong>
-        <p>
-            <?php if ($gpaLatestYear !== null && $gpaLatestSemester !== null): ?>
-                Saved for Y<?= $gpaLatestYear ?> · S<?= $gpaLatestSemester ?>
-            <?php else: ?>
-                Add your first GPA term record
-            <?php endif; ?>
-        </p>
-    </article>
-</section>
-
-<section class="student-home-layout">
-    <article class="student-home-card">
-        <header class="student-home-card-head">
-            <h2><?= ui_lucide_icon('sparkles') ?> Recent Batch Activity</h2>
-            <a href="/dashboard/feed" class="btn btn-sm btn-outline">Open Feed</a>
-        </header>
-
-        <?php if (empty($recentActivityItems)): ?>
-            <p class="text-muted">No recent activity in your batch yet.</p>
-        <?php else: ?>
-            <div class="student-home-activity-list">
-                <?php foreach ($recentActivityItems as $item): ?>
-                    <?php
-                    $itemType = (string) ($item['item_type'] ?? 'community');
-                    $itemTypeLabel = function_exists('feed_item_type_label')
-                        ? feed_item_type_label($itemType)
-                        : ucfirst(str_replace('_', ' ', $itemType));
-                    $itemTitle = trim((string) ($item['title'] ?? 'Update'));
-                    $itemSummary = $truncate((string) ($item['summary'] ?? ''), 140);
-                    $itemActor = trim((string) ($item['actor_name'] ?? 'Unknown User'));
-                    $itemSubjectCode = trim((string) ($item['subject_code'] ?? ''));
-                    $itemUrl = trim((string) ($item['target_url'] ?? '/dashboard/feed'));
-                    $itemEventAt = (string) ($item['event_at'] ?? '');
-                    ?>
-                    <a href="<?= e($itemUrl) ?>" class="student-home-activity-item">
-                        <div class="student-home-activity-head">
-                            <span class="badge"><?= e($itemTypeLabel) ?></span>
-                            <?php if ($itemSubjectCode !== ''): ?>
-                                <span class="student-home-activity-subject"><?= e($itemSubjectCode) ?></span>
-                            <?php endif; ?>
-                            <time><?= e($formatDateTime($itemEventAt, 'Recently')) ?></time>
-                        </div>
-                        <h3><?= e($itemTitle) ?></h3>
-                        <p><?= e($itemSummary !== '' ? $itemSummary : 'Open to view details.') ?></p>
-                        <small><?= ui_lucide_icon('user-round') ?> <?= e($itemActor) ?></small>
-                    </a>
-                <?php endforeach; ?>
+            <div class="student-dash-session-card">
+                <p class="student-dash-session-title">
+                    <?php if ($sessionSubjectCode !== ''): ?><span class="badge"><?= e($sessionSubjectCode) ?></span><?php endif; ?>
+                    <strong><?= e($sessionTitle) ?></strong>
+                </p>
+                <ul class="student-dash-session-meta">
+                    <li><?= ui_lucide_icon('calendar-days') ?> <?= e($sessionDateLabel) ?></li>
+                    <li><?= ui_lucide_icon('clock-3') ?> <?= e($sessionTimeLabel) ?></li>
+                    <li><?= ui_lucide_icon('map-pin') ?> <?= e($locationLabel) ?></li>
+                </ul>
+                <a href="/dashboard/kuppi/scheduled/<?= $sessionId ?>" class="btn btn-sm btn-primary">Open Session</a>
             </div>
+        <?php else: ?>
+            <p class="text-muted">No scheduled sessions yet. Start by browsing open requests from your batch.</p>
+            <a href="/dashboard/kuppi" class="btn btn-sm btn-outline">Browse Open Requests</a>
         <?php endif; ?>
     </article>
 
-    <article class="student-home-card">
-        <header class="student-home-card-head">
-            <h2><?= ui_lucide_icon('target') ?> Progress Snapshot</h2>
-            <a href="/my-quiz-analytics" class="btn btn-sm btn-outline">Quiz Analytics</a>
+    <article class="student-dash-card">
+        <header class="student-dash-card-head">
+            <h2><?= ui_lucide_icon('target') ?> Personal Activity</h2>
+            <a href="/my-quiz-analytics" class="btn btn-sm btn-outline">My Quiz Analytics</a>
         </header>
-
-        <ul class="student-home-progress-list">
-            <li>
-                <span>Quiz Accuracy</span>
-                <strong><?= $quizAccuracy !== null ? number_format($quizAccuracy, 1) . '%' : '-' ?></strong>
-            </li>
-            <li>
-                <span>Best Quiz Score</span>
-                <strong><?= $quizBestScore !== null ? number_format($quizBestScore, 1) . '%' : '-' ?></strong>
-            </li>
-            <li>
-                <span>Latest GPA</span>
-                <strong><?= $latestGpa !== null ? number_format($latestGpa, 2) : '-' ?></strong>
-            </li>
-            <li>
-                <span>Best GPA</span>
-                <strong><?= $bestGpa !== null ? number_format($bestGpa, 2) : '-' ?></strong>
-            </li>
+        <ul class="student-dash-personal-list">
+            <li><span>My Kuppi Requests</span><strong><?= $myKuppiRequestCount ?></strong></li>
+            <li><span>My Quizzes</span><strong><?= $myQuizCount ?></strong></li>
+            <li><span>My Resources</span><strong><?= $myResourceCount ?></strong></li>
+            <li><span>My Posts</span><strong><?= $myPostCount ?></strong></li>
         </ul>
-
-        <div class="student-home-mini-kpi-grid">
-            <article>
-                <span>My Kuppi Requests</span>
-                <strong><?= $myKuppiRequestCount ?></strong>
-            </article>
-            <article>
-                <span>My Quizzes</span>
-                <strong><?= $myQuizCount ?></strong>
-            </article>
-            <article>
-                <span>My Posts</span>
-                <strong><?= $myPostCount ?></strong>
-            </article>
-            <article>
-                <span>My Resources</span>
-                <strong><?= $myResourceCount ?></strong>
-            </article>
-        </div>
-
-        <div class="student-home-day-note">
-            <p>
-                <?= ui_lucide_icon('calendar-range') ?>
-                Today has <strong><?= $todayBlockedCount ?></strong> official lecture block<?= $todayBlockedCount === 1 ? '' : 's' ?>
-                (<?= number_format($todayBlockedHours, 1) ?>h). Plan Kuppi outside those slots.
-            </p>
-            <a href="/dashboard/kuppi/timetable" class="btn btn-sm btn-outline">View Timetable</a>
+        <div class="student-dash-inline-actions">
+            <a href="/my-kuppi-requests" class="btn btn-sm btn-outline">My Kuppi</a>
+            <a href="/my-quizzes" class="btn btn-sm btn-outline">My Quizzes</a>
+            <a href="/my-resources" class="btn btn-sm btn-outline">My Resources</a>
+            <a href="/my-posts" class="btn btn-sm btn-outline">My Posts</a>
         </div>
     </article>
 </section>
 
-<section class="student-home-card student-home-subjects">
-    <header class="student-home-card-head">
-        <h2><?= ui_lucide_icon('book-open') ?> Subject Focus</h2>
-        <div class="student-home-head-actions">
-            <span class="badge"><?= $subjectCount ?> subjects</span>
-            <a href="/dashboard/subjects" class="btn btn-sm btn-outline">View All</a>
+<section class="student-dash-card">
+    <header class="student-dash-card-head">
+        <h2><?= ui_lucide_icon('sparkles') ?> Recent Batch Activity</h2>
+        <a href="/dashboard/feed" class="btn btn-sm btn-outline">Open Feed</a>
+    </header>
+
+    <?php if (empty($recentActivityItems)): ?>
+        <p class="text-muted">No recent activity in your batch yet.</p>
+    <?php else: ?>
+        <div class="student-dash-activity-list">
+            <?php foreach ($recentActivityItems as $item): ?>
+                <?php
+                $itemType = (string) ($item['item_type'] ?? 'community');
+                $itemTypeLabel = (string) ($item['item_type_label'] ?? ucfirst(str_replace('_', ' ', $itemType)));
+                $itemTitle = trim((string) ($item['title'] ?? 'Update'));
+                $itemSummary = $truncate((string) ($item['summary'] ?? ''), 120);
+                $itemActor = trim((string) ($item['actor_name'] ?? 'Unknown User'));
+                $itemSubjectCode = trim((string) ($item['subject_code'] ?? ''));
+                $itemUrl = trim((string) ($item['target_url'] ?? '/dashboard/feed'));
+                $itemEventLabel = trim((string) ($item['event_label'] ?? 'Recently'));
+                ?>
+                <a href="<?= e($itemUrl) ?>" class="student-dash-activity-item">
+                    <div class="student-dash-activity-head">
+                        <span class="badge"><?= e($itemTypeLabel) ?></span>
+                        <?php if ($itemSubjectCode !== ''): ?><span class="student-dash-activity-subject"><?= e($itemSubjectCode) ?></span><?php endif; ?>
+                        <time><?= e($itemEventLabel) ?></time>
+                    </div>
+                    <h3><?= e($itemTitle) ?></h3>
+                    <p><?= e($itemSummary !== '' ? $itemSummary : 'Open to view details.') ?></p>
+                    <small><?= ui_lucide_icon('user-round') ?> <?= e($itemActor) ?></small>
+                </a>
+            <?php endforeach; ?>
         </div>
+    <?php endif; ?>
+</section>
+
+<section class="student-dash-card">
+    <header class="student-dash-card-head">
+        <h2><?= ui_lucide_icon('book-open') ?> Subject Focus</h2>
+        <a href="/dashboard/subjects" class="btn btn-sm btn-outline">View All Subjects</a>
     </header>
 
     <?php if (empty($featuredSubjects)): ?>
         <p class="text-muted">No subjects are available in your batch yet.</p>
     <?php else: ?>
-        <div class="student-home-subject-grid">
+        <div class="student-dash-subject-grid">
             <?php foreach ($featuredSubjects as $subject): ?>
                 <?php
                 $subjectId = (int) ($subject['id'] ?? 0);
@@ -287,14 +267,14 @@ $truncate = static function (string $text, int $length = 120): string {
                     default => '',
                 };
                 ?>
-                <a href="/dashboard/subjects/<?= $subjectId ?>/topics" class="student-home-subject-card">
-                    <div class="student-home-subject-head">
+                <a href="/dashboard/subjects/<?= $subjectId ?>/topics" class="student-dash-subject-card">
+                    <div class="student-dash-subject-head">
                         <span class="badge"><?= e($subjectCode) ?></span>
                         <span class="badge <?= e($statusClass) ?>"><?= e(subjects_status_label($subjectStatus)) ?></span>
                     </div>
                     <h3><?= e($subjectName) ?></h3>
-                    <p><?= e($subjectDescription !== '' ? $truncate($subjectDescription, 120) : 'Description will be added by your moderator.') ?></p>
-                    <div class="student-home-subject-meta">
+                    <p><?= e($subjectDescription !== '' ? $truncate($subjectDescription, 110) : 'Description will be added by your moderator.') ?></p>
+                    <div class="student-dash-subject-meta">
                         <span><?= (int) ($subject['credits'] ?? 0) ?> credits</span>
                         <span>Y<?= (int) ($subject['academic_year'] ?? 1) ?> / S<?= (int) ($subject['semester'] ?? 1) ?></span>
                     </div>
