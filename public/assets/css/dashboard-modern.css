@@ -2807,7 +2807,7 @@
     margin: 0;
     min-height: 100vh;
     display: grid;
-    grid-template-columns: 272px minmax(0, 1fr);
+    grid-template-columns: 280px minmax(0, 1fr);
     gap: 0;
 }
 
@@ -2821,7 +2821,7 @@
     height: 100vh;
     max-height: 100vh;
     z-index: 1;
-    background: var(--dash-panel);
+    background: linear-gradient(180deg, #fbfcff 0%, #f8faff 100%);
     border: 0;
     border-right: 1px solid var(--dash-stroke);
     border-radius: 0;
@@ -2832,10 +2832,10 @@
 }
 
 .sidebar-header {
-    padding: 20px 18px 14px;
+    padding: 22px 18px 16px;
     border-bottom: 1px solid var(--dash-stroke);
     display: grid;
-    gap: 14px;
+    gap: 12px;
 }
 
 .sidebar-brand {
@@ -2851,7 +2851,7 @@
 
 .sidebar-brand-logo {
     width: auto;
-    height: 34px;
+    height: 36px;
     display: block;
     flex-shrink: 0;
 }
@@ -2864,12 +2864,12 @@
 
 .role-badge {
     width: fit-content;
-    font-size: 0.72rem;
-    font-weight: 500;
-    letter-spacing: 0.04em;
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
     text-transform: uppercase;
     border-radius: 999px;
-    padding: 5px 10px;
+    padding: 6px 11px;
 }
 
 .role-student {
@@ -2895,49 +2895,51 @@
 .sidebar-nav {
     flex: 1 1 auto;
     min-height: 0;
-    padding: 16px 12px;
+    padding: 14px 10px;
     overflow-y: auto;
 }
 
 .sidebar-section-label {
-    margin: 0 8px 6px;
-    font-size: 0.66rem;
-    font-weight: 500;
+    margin: 4px 10px 8px;
+    font-size: 0.64rem;
+    font-weight: 600;
     text-transform: uppercase;
-    letter-spacing: 0.12em;
-    color: #8893a6;
+    letter-spacing: 0.14em;
+    color: #90a0b8;
 }
 
 .sidebar-nav ul {
-    margin: 0 0 15px;
+    margin: 0 0 16px;
     padding: 0;
     list-style: none;
     display: grid;
-    gap: 6px;
+    gap: 4px;
 }
 
 .sidebar-nav li a {
     display: flex;
     align-items: center;
-    gap: 10px;
-    padding: 9px 11px;
-    border-radius: 10px;
-    color: var(--dash-muted);
-    font-size: 0.86rem;
-    font-weight: 450;
+    gap: 11px;
+    padding: 10px 12px;
+    border-radius: 12px;
+    color: #5f6f88;
+    font-size: 0.92rem;
+    font-weight: 500;
     border: 1px solid transparent;
+    transition: background-color 0.16s ease, border-color 0.16s ease, color 0.16s ease;
 }
 
 .sidebar-nav-icon {
-    width: 26px;
-    height: 26px;
-    border-radius: 8px;
+    width: 30px;
+    height: 30px;
+    border-radius: 10px;
     display: grid;
     place-items: center;
-    color: var(--dash-brand);
-    background: var(--dash-brand-soft);
-    border: 1px solid rgba(var(--dash-brand-rgb), 0.2);
+    color: #5f6f88;
+    background: #ffffff;
+    border: 1px solid #dde6f4;
     flex-shrink: 0;
+    transition: background-color 0.16s ease, border-color 0.16s ease, color 0.16s ease;
 }
 
 .sidebar-nav-icon .ui-lucide-icon {
@@ -2946,10 +2948,21 @@
 }
 
 .sidebar-nav li a:hover,
-.sidebar-nav li a.active {
-    background: #f4f7fd;
-    color: var(--dash-text);
-    border-color: #d6deea;
+.sidebar-accordion-toggle:hover,
+.sidebar-nav li a.active,
+.sidebar-accordion[open] > .sidebar-accordion-toggle {
+    background: #f3f6fc;
+    color: #1c2b43;
+    border-color: #d6dfee;
+}
+
+.sidebar-nav li a:hover .sidebar-nav-icon,
+.sidebar-accordion-toggle:hover .sidebar-nav-icon,
+.sidebar-nav li a.active .sidebar-nav-icon,
+.sidebar-accordion[open] > .sidebar-accordion-toggle .sidebar-nav-icon {
+    color: var(--dash-brand);
+    background: var(--dash-brand-soft);
+    border-color: rgba(var(--dash-brand-rgb), 0.3);
 }
 
 .sidebar-nav li.sidebar-accordion-item {
@@ -2971,22 +2984,23 @@
 .sidebar-accordion-toggle {
     display: flex;
     align-items: center;
-    gap: 10px;
-    padding: 9px 11px;
-    border-radius: 10px;
-    color: var(--dash-muted);
-    font-size: 0.86rem;
-    font-weight: 450;
+    gap: 11px;
+    padding: 10px 12px;
+    border-radius: 12px;
+    color: #5f6f88;
+    font-size: 0.92rem;
+    font-weight: 500;
     border: 1px solid transparent;
     cursor: pointer;
+    transition: background-color 0.16s ease, border-color 0.16s ease, color 0.16s ease;
 }
 
 .sidebar-accordion-toggle:hover,
 .sidebar-accordion-toggle.is-active,
 .sidebar-accordion[open] > .sidebar-accordion-toggle {
-    background: #f4f7fd;
-    color: var(--dash-text);
-    border-color: #d6deea;
+    background: #f3f6fc;
+    color: #1c2b43;
+    border-color: #d6dfee;
 }
 
 .sidebar-accordion-caret {
@@ -3007,21 +3021,22 @@
 }
 
 .sidebar-nav ul.sidebar-subnav {
-    margin: 5px 0 8px 16px;
-    padding: 0 0 0 10px;
+    margin: 4px 0 10px 16px;
+    padding: 0 0 0 14px;
     list-style: none;
     display: grid;
-    gap: 5px;
-    border-left: 1px solid #dde5f1;
+    gap: 4px;
+    border-left: 1px solid #dde4f2;
 }
 
 .sidebar-nav ul.sidebar-subnav li a {
     display: block;
-    padding: 7px 10px;
-    border-radius: 8px;
-    font-size: 0.8rem;
-    color: #5f7088;
+    padding: 7px 10px 7px 12px;
+    border-radius: 9px;
+    font-size: 0.82rem;
+    color: #6a7a92;
     border: 1px solid transparent;
+    font-weight: 500;
 }
 
 .sidebar-nav ul.sidebar-subnav li a:hover,
@@ -3034,9 +3049,10 @@
 .sidebar-footer {
     margin-top: auto;
     border-top: 1px solid var(--dash-stroke);
-    padding: 14px 16px;
+    padding: 14px 14px 16px;
     display: grid;
-    gap: 12px;
+    gap: 10px;
+    background: #fbfdff;
 }
 
 .sidebar-user {
@@ -3049,8 +3065,8 @@
 }
 
 .sidebar-user .user-email {
-    font-size: 0.73rem;
-    color: var(--dash-muted);
+    font-size: 0.75rem;
+    color: #6f7f97;
 }
 
 .dashboard-stage {
