@@ -3678,13 +3678,18 @@
 }
 
 .student-dash-hero {
-    border: 1px solid var(--dash-stroke);
+    border: 1px solid #c9d4ea;
     border-radius: 18px;
-    background: linear-gradient(150deg, #ffffff 0%, #f7fbff 100%);
+    background:
+        linear-gradient(118deg, rgba(8, 12, 32, 0.74) 0%, rgba(22, 17, 72, 0.67) 52%, rgba(36, 12, 88, 0.54) 100%),
+        url("../img/bg.jpeg");
+    background-size: cover;
+    background-position: center;
     padding: 20px;
     display: grid;
     grid-template-columns: minmax(0, 1.65fr) minmax(280px, 1fr);
     gap: 14px;
+    box-shadow: 0 18px 38px rgba(20, 28, 52, 0.2);
 }
 
 .student-dash-hero-main {
@@ -3696,7 +3701,7 @@
     font-size: 0.68rem;
     text-transform: uppercase;
     letter-spacing: 0.15em;
-    color: #2160b8;
+    color: #d4e2ff;
     font-weight: 650;
 }
 
@@ -3706,18 +3711,18 @@
     letter-spacing: -0.02em;
     line-height: 1.14;
     font-weight: 620;
-    color: #16263d;
+    color: #ffffff;
 }
 
 .student-dash-copy {
     margin: 10px 0 0;
-    color: #5d6e87;
+    color: #dde7ff;
     font-size: 0.92rem;
     line-height: 1.55;
 }
 
 .student-dash-inline-strong {
-    color: #2b3d56;
+    color: #ffffff;
     font-weight: 620;
 }
 
@@ -3732,19 +3737,19 @@
     display: inline-flex;
     align-items: center;
     gap: 5px;
-    border: 1px solid #d8e4f3;
+    border: 1px solid rgba(225, 236, 255, 0.35);
     border-radius: 999px;
-    background: #f8fbff;
+    background: rgba(233, 242, 255, 0.16);
     padding: 5px 9px;
     font-size: 0.74rem;
-    color: #536681;
+    color: #edf3ff;
     font-weight: 520;
 }
 
 .student-dash-chips .ui-lucide-icon {
     width: 13px;
     height: 13px;
-    color: #637790;
+    color: #edf3ff;
 }
 
 .student-dash-today {
