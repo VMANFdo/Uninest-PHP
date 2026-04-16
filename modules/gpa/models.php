@@ -375,13 +375,17 @@ function gpa_summary_for_user(int $userId, int $batchId): array
         [$userId, $batchId]
     ) ?? [];
 
+    $bestGpaRaw = $totals['best_gpa'] ?? null;
+    $averageGpaRaw = $totals['average_gpa'] ?? null;
+    $latestGpaRaw = $latest['semester_gpa'] ?? null;
+
     return [
         'record_count' => (int) ($totals['record_count'] ?? 0),
-        'best_gpa' => $totals['best_gpa'] !== null ? (float) $totals['best_gpa'] : null,
-        'average_gpa' => $totals['average_gpa'] !== null ? (float) $totals['average_gpa'] : null,
+        'best_gpa' => $bestGpaRaw !== null ? (float) $bestGpaRaw : null,
+        'average_gpa' => $averageGpaRaw !== null ? (float) $averageGpaRaw : null,
         'total_credits' => (float) ($totals['total_credits'] ?? 0),
         'total_subjects' => (int) ($totals['total_subjects'] ?? 0),
-        'latest_gpa' => $latest['semester_gpa'] !== null ? (float) $latest['semester_gpa'] : null,
+        'latest_gpa' => $latestGpaRaw !== null ? (float) $latestGpaRaw : null,
         'latest_academic_year' => isset($latest['academic_year']) ? (int) $latest['academic_year'] : null,
         'latest_semester' => isset($latest['semester']) ? (int) $latest['semester'] : null,
         'latest_updated_at' => $latest['updated_at'] ?? null,
