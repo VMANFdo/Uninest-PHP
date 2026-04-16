@@ -72,9 +72,6 @@ if ($initials === '') {
 
                 <div class="topbar-actions">
                     <a href="/dashboard/profile" class="topbar-link">Profile</a>
-                    <?php if ($role !== 'admin'): ?>
-                        <a href="/onboarding" class="topbar-link">Onboarding</a>
-                    <?php endif; ?>
                     <a href="/logout" class="topbar-link">Logout</a>
                     <div class="topbar-user-chip">
                         <span class="topbar-avatar" aria-hidden="true"><?= e($initials) ?></span>
