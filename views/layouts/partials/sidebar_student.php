@@ -1,11 +1,6 @@
 <?php
 $currentPath = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
 
-$isSubjectsManage = str_starts_with($currentPath, '/subjects');
-$isSubjectCreate = $currentPath === '/subjects/create';
-$isStudentsManage = str_starts_with($currentPath, '/students');
-$isJoinRequests = str_starts_with($currentPath, '/moderator/join-requests');
-
 $isKuppiScheduled = str_starts_with($currentPath, '/dashboard/kuppi/scheduled');
 $isKuppiTimetable = str_starts_with($currentPath, '/dashboard/kuppi/timetable');
 $isMyKuppiRequests = str_starts_with($currentPath, '/my-kuppi-requests');
@@ -13,29 +8,24 @@ $isKuppiRequested = (
     str_starts_with($currentPath, '/dashboard/kuppi')
     && !$isKuppiScheduled
     && !$isKuppiTimetable
-) || $isMyKuppiRequests;
+);
 
 $isQuizHub = $currentPath === '/dashboard/quizzes'
     || (str_starts_with($currentPath, '/dashboard/subjects/') && str_contains($currentPath, '/quizzes'));
 $isMyQuizzes = str_starts_with($currentPath, '/my-quizzes');
 $isMyQuizAnalytics = $currentPath === '/my-quiz-analytics';
-$isQuizRequests = str_starts_with($currentPath, '/dashboard/quiz-requests');
-$isQuizReviewAnalytics = str_starts_with($currentPath, '/dashboard/quiz-analytics');
 
 $isGpaCalculator = $currentPath === '/dashboard/gpa';
 $isGpaAnalytics = $currentPath === '/dashboard/gpa/analytics';
-$isGpaGradeScale = str_starts_with($currentPath, '/dashboard/gpa/grade-scale');
 
 $isCentralFeed = $currentPath === '/dashboard/feed';
-$isSubjectsBrowse = str_starts_with($currentPath, '/dashboard/subjects');
-$isCommunityReports = str_starts_with($currentPath, '/dashboard/community/reports');
-$isCommunityFeed = str_starts_with($currentPath, '/dashboard/community') && !$isCommunityReports;
+$isSubjects = str_starts_with($currentPath, '/dashboard/subjects');
+$isCommunityFeed = str_starts_with($currentPath, '/dashboard/community');
 $isMyPosts = str_starts_with($currentPath, '/my-posts');
 $isSavedPosts = str_starts_with($currentPath, '/saved-posts');
-$isMyResources = str_starts_with($currentPath, '/my-resources');
 $isProfileSettings = $currentPath === '/dashboard/profile';
 
-$isKuppiSectionActive = $isKuppiRequested || $isKuppiScheduled || $isKuppiTimetable;
+$isKuppiSectionActive = $isKuppiRequested || $isMyKuppiRequests || $isKuppiScheduled || $isKuppiTimetable;
 $isQuizSectionActive = $isQuizHub || $isMyQuizzes || $isMyQuizAnalytics;
 $isGpaSectionActive = $isGpaCalculator || $isGpaAnalytics;
 $isCommunitySectionActive = $isCommunityFeed || $isMyPosts || $isSavedPosts;
@@ -47,9 +37,9 @@ $isCommunitySectionActive = $isCommunityFeed || $isMyPosts || $isSavedPosts;
         <li><a href="/dashboard/feed" class="<?= $isCentralFeed ? 'active' : '' ?>"><span class="sidebar-nav-icon"><?= ui_lucide_icon('newspaper') ?></span><span>Central Feed</span></a></li>
     </ul>
 
-    <div class="sidebar-section-label">Student Pages</div>
+    <div class="sidebar-section-label">Learning</div>
     <ul>
-        <li><a href="/dashboard/subjects" class="<?= $isSubjectsBrowse ? 'active' : '' ?>"><span class="sidebar-nav-icon"><?= ui_lucide_icon('book-open') ?></span><span>Subjects</span></a></li>
+        <li><a href="/dashboard/subjects" class="<?= $isSubjects ? 'active' : '' ?>"><span class="sidebar-nav-icon"><?= ui_lucide_icon('book-open') ?></span><span>Subjects</span></a></li>
         <li class="sidebar-accordion-item">
             <details class="sidebar-accordion" <?= $isKuppiSectionActive ? 'open' : '' ?>>
                 <summary class="sidebar-accordion-toggle <?= $isKuppiSectionActive ? 'is-active' : '' ?>">
@@ -110,19 +100,6 @@ $isCommunitySectionActive = $isCommunityFeed || $isMyPosts || $isSavedPosts;
                 </ul>
             </details>
         </li>
-        <li><a href="/my-resources" class="<?= $isMyResources ? 'active' : '' ?>"><span class="sidebar-nav-icon"><?= ui_lucide_icon('folder-open') ?></span><span>My Resources</span></a></li>
-    </ul>
-
-    <div class="sidebar-section-label">Moderator Controls</div>
-    <ul>
-        <li><a href="/moderator/join-requests" class="<?= $isJoinRequests ? 'active' : '' ?>"><span class="sidebar-nav-icon"><?= ui_lucide_icon('inbox') ?></span><span>Join Requests</span></a></li>
-        <li><a href="/subjects" class="<?= $isSubjectsManage ? 'active' : '' ?>"><span class="sidebar-nav-icon"><?= ui_lucide_icon('layers') ?></span><span>Batch Subjects</span></a></li>
-        <li><a href="/subjects/create" class="<?= $isSubjectCreate ? 'active' : '' ?>"><span class="sidebar-nav-icon"><?= ui_lucide_icon('plus') ?></span><span>New Subject</span></a></li>
-        <li><a href="/students" class="<?= $isStudentsManage ? 'active' : '' ?>"><span class="sidebar-nav-icon"><?= ui_lucide_icon('users') ?></span><span>Batch Students</span></a></li>
-        <li><a href="/dashboard/quiz-requests" class="<?= $isQuizRequests ? 'active' : '' ?>"><span class="sidebar-nav-icon"><?= ui_lucide_icon('check-check') ?></span><span>Quiz Requests</span></a></li>
-        <li><a href="/dashboard/quiz-analytics" class="<?= $isQuizReviewAnalytics ? 'active' : '' ?>"><span class="sidebar-nav-icon"><?= ui_lucide_icon('chart-no-axes-column') ?></span><span>Review Analytics</span></a></li>
-        <li><a href="/dashboard/community/reports" class="<?= $isCommunityReports ? 'active' : '' ?>"><span class="sidebar-nav-icon"><?= ui_lucide_icon('flag') ?></span><span>Reports Queue</span></a></li>
-        <li><a href="/dashboard/gpa/grade-scale" class="<?= $isGpaGradeScale ? 'active' : '' ?>"><span class="sidebar-nav-icon"><?= ui_lucide_icon('calculator') ?></span><span>Grade Point Config</span></a></li>
     </ul>
 
     <div class="sidebar-section-label">Account</div>
