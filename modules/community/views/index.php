@@ -126,7 +126,7 @@ $buildFeedUrl = static function (array $params = []) use ($is_admin, $selectedBa
                 </div>
                 <div class="community-feed-hero-actions">
                     <?php if (!empty($can_post)): ?>
-                        <a href="/dashboard/community/create" class="community-hero-link">New Conversation</a>
+                        <a href="/dashboard/community/create" class="community-hero-link">New Post</a>
                     <?php endif; ?>
                     <a href="/dashboard" class="community-hero-link">Dashboard</a>
                     <?php if (!empty($can_post)): ?>

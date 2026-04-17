@@ -17,7 +17,7 @@ if ($authorName === '') {
 <div class="page-header community-create-header">
     <div class="page-header-content">
         <p class="page-breadcrumb">Community Feed / Create Post</p>
-        <h1>Start A New Conversation</h1>
+        <h1>Start A New Post</h1>
         <p class="page-subtitle">Share a useful update, ask a question, or post a resource your batch can use.</p>
     </div>
     <div class="page-header-actions">

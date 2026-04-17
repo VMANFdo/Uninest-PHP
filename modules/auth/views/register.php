@@ -57,7 +57,7 @@ $defaultRole = in_array($inviteRole, ['student', 'moderator'], true) ? $inviteRo
                         <label for="academic_year">Academic Year</label>
                         <?php $selectedAcademicYear = old('academic_year', '1'); ?>
                         <select id="academic_year" name="academic_year" required>
-                            <?php for ($year = 1; $year <= 8; $year++): ?>
+                            <?php for ($year = 1; $year <= 4; $year++): ?>
                                 <option value="<?= $year ?>" <?= $selectedAcademicYear === (string) $year ? 'selected' : '' ?>>
                                     Year <?= $year ?>
                                 </option>
