@@ -43,7 +43,7 @@ function moderators_store(): void
     if (moderators_email_exists($email)) $errors[] = 'An account with this email already exists.';
     if (strlen($password) < 6) $errors[] = 'Password must be at least 6 characters.';
     if ($password !== $passwordConfirmation) $errors[] = 'Passwords do not match.';
-    if ($academicYear < 1 || $academicYear > 8) $errors[] = 'Academic year must be between 1 and 8.';
+    if ($academicYear < 1 || $academicYear > 4) $errors[] = 'Academic year must be between 1 and 4.';
     if ($universityId <= 0 || !university_is_active($universityId)) $errors[] = 'Select a valid university.';
 
     if ($resolvedBatchId !== null) {
@@ -124,7 +124,7 @@ function moderators_update_action(string $id): void
     if ($name === '') $errors[] = 'Name is required.';
     if (!filter_var($email, FILTER_VALIDATE_EMAIL)) $errors[] = 'A valid email is required.';
     if (moderators_email_exists($email, $moderatorId)) $errors[] = 'An account with this email already exists.';
-    if ($academicYear < 1 || $academicYear > 8) $errors[] = 'Academic year must be between 1 and 8.';
+    if ($academicYear < 1 || $academicYear > 4) $errors[] = 'Academic year must be between 1 and 4.';
     if ($universityId <= 0 || !university_is_active($universityId)) $errors[] = 'Select a valid university.';
 
     if ($password !== '' && strlen($password) < 6) {

@@ -77,8 +77,8 @@ function profile_validate_profile_input(int $userId): array
             $errors[] = 'Academic year must be a whole number between 1 and 8.';
         } else {
             $academicYear = (int) $academicYearRaw;
-            if ($academicYear < 1 || $academicYear > 8) {
-                $errors[] = 'Academic year must be between 1 and 8.';
+            if ($academicYear < 1 || $academicYear > 4) {
+                $errors[] = 'Academic year must be between 1 and 4.';
             }
         }
     }

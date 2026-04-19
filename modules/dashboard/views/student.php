@@ -205,7 +205,7 @@ $truncate = static function (string $text, int $length = 120): string {
             <li><span>My Posts</span><strong><?= $myPostCount ?></strong></li>
         </ul>
         <div class="student-dash-inline-actions">
-            <a href="/my-kuppi-requests" class="btn btn-sm btn-outline">My Kuppi</a>
+            <a href="/my-kuppi-requests" class="btn btn-sm btn-outline">My Kuppi Requests</a></a>
             <a href="/my-quizzes" class="btn btn-sm btn-outline">My Quizzes</a>
             <a href="/my-resources" class="btn btn-sm btn-outline">My Resources</a>
             <a href="/my-posts" class="btn btn-sm btn-outline">My Posts</a>

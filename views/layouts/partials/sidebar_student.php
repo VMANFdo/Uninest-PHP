@@ -67,7 +67,7 @@ $isCommunitySectionActive = $isCommunityFeed || $isMyPosts || $isSavedPosts;
                 </summary>
                 <ul class="sidebar-subnav">
                     <li><a href="/dashboard/kuppi" class="<?= $isKuppiRequested ? 'active' : '' ?>">Requested Sessions</a></li>
-                    <li><a href="/my-kuppi-requests" class="<?= $isMyKuppiRequests ? 'active' : '' ?>">My Kuppi</a></li>
+                    <li><a href="/my-kuppi-requests" class="<?= $isMyKuppiRequests ? 'active' : '' ?>">My Kuppi Requests</a></a></li>
                     <li><a href="/dashboard/kuppi/scheduled" class="<?= $isKuppiScheduled ? 'active' : '' ?>">Scheduled Sessions</a></li>
                     <li><a href="/dashboard/kuppi/timetable" class="<?= $isKuppiTimetable ? 'active' : '' ?>">University Timetable</a></li>
                 </ul>
