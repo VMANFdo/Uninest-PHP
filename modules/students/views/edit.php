@@ -39,7 +39,7 @@
                 <label for="academic_year">Academic Year</label>
                 <?php $selectedYear = old('academic_year', (string) $student['academic_year']); ?>
                 <select id="academic_year" name="academic_year" required>
-                    <?php for ($year = 1; $year <= 8; $year++): ?>
+                    <?php for ($year = 1; $year <= 4; $year++): ?>
                         <option value="<?= $year ?>" <?= $selectedYear === (string) $year ? 'selected' : '' ?>>Year <?= $year ?></option>
                     <?php endfor; ?>
                 </select>

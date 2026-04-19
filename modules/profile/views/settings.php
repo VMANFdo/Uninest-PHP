@@ -80,7 +80,7 @@ if ($updatedDateRaw !== '') {
                         <label for="profile_academic_year">Academic Year</label>
                         <select id="profile_academic_year" name="academic_year">
                             <option value="">Not set</option>
-                            <?php for ($year = 1; $year <= 8; $year++): ?>
+                            <?php for ($year = 1; $year <= 4; $year++): ?>
                                 <option value="<?= $year ?>" <?= $academicYearValue === (string) $year ? 'selected' : '' ?>>Year <?= $year ?></option>
                             <?php endfor; ?>
                         </select>
