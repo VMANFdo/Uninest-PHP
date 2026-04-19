@@ -6,8 +6,14 @@ declare(strict_types=1);
 $basePath = dirname(__DIR__);
 
 $coreFiles = glob($basePath . '/core/*.php') ?: [];
-$moduleModelFiles = glob($basePath . '/modules/*/models.php') ?: [];
-$moduleControllerFiles = glob($basePath . '/modules/*/controllers.php') ?: [];
+$moduleModelFiles = array_merge(
+    glob($basePath . '/modules/*/models.php') ?: [],
+    glob($basePath . '/modules/*/models/*.php') ?: []
+);
+$moduleControllerFiles = array_merge(
+    glob($basePath . '/modules/*/controllers.php') ?: [],
+    glob($basePath . '/modules/*/controllers/*.php') ?: []
+);
 
 $scanFiles = array_merge($coreFiles, $moduleModelFiles, $moduleControllerFiles);
 sort($scanFiles);

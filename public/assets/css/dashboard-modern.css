@@ -3924,6 +3924,30 @@
     box-shadow: 0 18px 38px rgba(20, 28, 52, 0.2);
 }
 
+.role-hero.role-hero--coordinator {
+    background:
+        linear-gradient(118deg, rgba(6, 16, 46, 0.75) 0%, rgba(18, 23, 86, 0.68) 52%, rgba(25, 47, 118, 0.56) 100%),
+        url("../img/bg.jpeg");
+    background-size: cover;
+    background-position: center;
+}
+
+.role-hero.role-hero--moderator {
+    background:
+        linear-gradient(118deg, rgba(10, 20, 38, 0.78) 0%, rgba(28, 34, 86, 0.68) 52%, rgba(39, 30, 112, 0.58) 100%),
+        url("../img/bg.jpeg");
+    background-size: cover;
+    background-position: center;
+}
+
+.role-hero.role-hero--admin {
+    background:
+        linear-gradient(118deg, rgba(22, 16, 43, 0.78) 0%, rgba(44, 18, 94, 0.7) 52%, rgba(24, 40, 122, 0.58) 100%),
+        url("../img/bg.jpeg");
+    background-size: cover;
+    background-position: center;
+}
+
 .student-dash-hero-main {
     min-width: 0;
 }
@@ -4237,6 +4261,35 @@
     min-height: 32px;
 }
 
+.dashboard-inline-copy {
+    margin-top: 10px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 8px;
+    align-items: center;
+}
+
+.dashboard-inline-copy input[type="text"] {
+    min-height: 38px;
+    border: 1px solid #d8e2f1;
+    border-radius: 10px;
+    background: #f9fbff;
+    color: #33465f;
+    padding: 0 12px;
+}
+
+.moderator-invite-qr {
+    margin-top: 12px;
+}
+
+.moderator-invite-qr img {
+    width: 140px;
+    height: 140px;
+    border-radius: 12px;
+    border: 1px solid #dbe5f3;
+    display: block;
+}
+
 .student-dash-activity-list {
     display: grid;
     gap: 8px;
@@ -4400,6 +4453,10 @@
     .student-dash-inline-actions .btn {
         width: 100%;
         justify-content: center;
+    }
+
+    .dashboard-inline-copy {
+        grid-template-columns: 1fr;
     }
 }
 

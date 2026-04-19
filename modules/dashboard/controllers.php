@@ -15,31 +15,33 @@ function dashboard_index(): void
     // Load role-specific dashboard data
     switch ($role) {
         case 'admin':
-            try {
-                $data['user_count']    = db_count('users');
-                $data['subject_count'] = db_count('subjects');
-                $onboardingCounts = onboarding_admin_counts();
-                $data['pending_batch_requests'] = $onboardingCounts['pending_batch_requests'];
-                $data['pending_student_requests'] = $onboardingCounts['pending_student_requests'];
-                $data['pending_quiz_requests'] = quizzes_pending_count_for_reviewer((int) $user['id'], 'admin', 0);
-            } catch (\PDOException) {
-                $data['user_count']    = 0;
-                $data['subject_count'] = 0;
-                $data['pending_batch_requests'] = 0;
-                $data['pending_student_requests'] = 0;
-                $data['pending_quiz_requests'] = 0;
-            }
+            $data = array_merge($data, dashboard_admin_build_dashboard_data($user));
             $viewName = 'admin';
             break;
 
         case 'moderator':
             try {
                 $batchId = (int) ($user['batch_id'] ?? 0);
-                $data['subjects']      = db_fetch_all('SELECT * FROM subjects WHERE batch_id = ? ORDER BY created_at DESC LIMIT 10', [$batchId]);
-                $data['subject_count'] = (int) db_fetch('SELECT COUNT(*) AS cnt FROM subjects WHERE batch_id = ?', [$batchId])['cnt'];
+                $batchSubjects = $batchId > 0
+                    ? db_fetch_all('SELECT * FROM subjects WHERE batch_id = ? ORDER BY name ASC', [$batchId])
+                    : [];
+
+                $data['batch_subjects'] = $batchSubjects;
+                $data['recent_subjects'] = array_slice($batchSubjects, 0, 8);
+                $data['subjects'] = $data['recent_subjects'];
+                $data['subject_count'] = count($batchSubjects);
                 $data['pending_student_requests'] = onboarding_moderator_pending_student_request_count((int) $user['id']);
                 $data['pending_quiz_requests'] = quizzes_pending_count_for_reviewer((int) $user['id'], 'moderator', $batchId);
                 $data['batch'] = onboarding_find_moderator_batch((int) $user['id']);
+                $data['open_report_count'] = (int) db_fetch(
+                    "SELECT COUNT(*) AS cnt
+                     FROM feed_reports
+                     WHERE batch_id = ?
+                       AND status = 'open'",
+                    [$batchId]
+                )['cnt'];
+
+                $data = array_merge($data, dashboard_student_build_dashboard_data($user, $batchSubjects));
 
                 if (!empty($data['batch']['batch_code'])) {
                     $data['invite_link'] = base_url('register') . '?role=student&batch_code=' . urlencode($data['batch']['batch_code']);
@@ -50,25 +52,38 @@ function dashboard_index(): void
                 }
             } catch (\PDOException) {
                 $data['subjects']      = [];
+                $data['batch_subjects'] = [];
+                $data['recent_subjects'] = [];
                 $data['subject_count'] = 0;
                 $data['pending_student_requests'] = 0;
                 $data['pending_quiz_requests'] = 0;
+                $data['open_report_count'] = 0;
                 $data['batch'] = null;
                 $data['invite_link'] = null;
                 $data['invite_qr_url'] = null;
+                $data = array_merge($data, dashboard_student_build_dashboard_data($user, []));
             }
             $viewName = 'moderator';
             break;
 
         case 'coordinator':
             try {
+                $batchId = (int) ($user['batch_id'] ?? 0);
                 $data['subjects'] = subjects_all_for_coordinator((int) $user['id']);
+                $data['assigned_subjects'] = $data['subjects'];
+                $data['batch_subjects'] = $batchId > 0
+                    ? db_fetch_all('SELECT * FROM subjects WHERE batch_id = ? ORDER BY name ASC', [$batchId])
+                    : [];
                 $data['pending_resource_requests'] = resources_coordinator_pending_count((int) $user['id']);
-                $data['pending_quiz_requests'] = quizzes_pending_count_for_reviewer((int) $user['id'], 'coordinator', (int) ($user['batch_id'] ?? 0));
+                $data['pending_quiz_requests'] = quizzes_pending_count_for_reviewer((int) $user['id'], 'coordinator', $batchId);
+                $data = array_merge($data, dashboard_student_build_dashboard_data($user, (array) $data['batch_subjects']));
             } catch (\PDOException) {
                 $data['subjects'] = [];
+                $data['assigned_subjects'] = [];
+                $data['batch_subjects'] = [];
                 $data['pending_resource_requests'] = 0;
                 $data['pending_quiz_requests'] = 0;
+                $data = array_merge($data, dashboard_student_build_dashboard_data($user, []));
             }
             $viewName = 'coordinator';
             break;
@@ -384,6 +399,150 @@ function dashboard_student_build_dashboard_data(array $user, array $subjects): a
             'recent_activity_items' => $recentActivity,
             'quiz_summary' => $quizSummary,
             'gpa_summary' => $gpaSummary,
+        ]);
+    } catch (\PDOException) {
+        return $defaults;
+    }
+}
+
+function dashboard_admin_build_dashboard_data(array $user): array
+{
+    $adminUserId = (int) ($user['id'] ?? 0);
+    $defaults = [
+        'user_count' => 0,
+        'student_count' => 0,
+        'coordinator_count' => 0,
+        'moderator_count' => 0,
+        'batch_count' => 0,
+        'subject_count' => 0,
+        'resource_count' => 0,
+        'quiz_count' => 0,
+        'open_kuppi_count' => 0,
+        'upcoming_session_count' => 0,
+        'announcement_count' => 0,
+        'pending_batch_requests' => 0,
+        'pending_student_requests' => 0,
+        'pending_quiz_requests' => 0,
+        'open_report_count' => 0,
+        'pending_resource_requests' => 0,
+        'latest_pending_batches' => [],
+        'latest_pending_students' => [],
+        'latest_pending_quizzes' => [],
+        'latest_open_reports' => [],
+    ];
+
+    try {
+        $onboardingCounts = onboarding_admin_counts();
+        $counts = db_fetch(
+            "SELECT
+                (SELECT COUNT(*) FROM users) AS user_count,
+                (SELECT COUNT(*) FROM users WHERE role = 'student') AS student_count,
+                (SELECT COUNT(*) FROM users WHERE role = 'coordinator') AS coordinator_count,
+                (SELECT COUNT(*) FROM users WHERE role = 'moderator') AS moderator_count,
+                (SELECT COUNT(*) FROM batches WHERE status = 'approved') AS batch_count,
+                (SELECT COUNT(*) FROM subjects) AS subject_count,
+                (SELECT COUNT(*) FROM resources WHERE status = 'published') AS resource_count,
+                (SELECT COUNT(*) FROM quizzes WHERE status = 'approved') AS quiz_count,
+                (SELECT COUNT(*) FROM kuppi_requests WHERE status = 'open') AS open_kuppi_count,
+                (SELECT COUNT(*) FROM kuppi_scheduled_sessions WHERE status = 'scheduled' AND session_date >= CURDATE()) AS upcoming_session_count,
+                (SELECT COUNT(*) FROM announcements) AS announcement_count,
+                (SELECT COUNT(*) FROM feed_reports WHERE status = 'open') AS open_report_count,
+                (
+                    (SELECT COUNT(*) FROM resources WHERE status = 'pending')
+                    + (SELECT COUNT(*) FROM resource_update_requests WHERE status = 'pending')
+                ) AS pending_resource_requests",
+            []
+        ) ?? [];
+
+        $latestPendingBatches = db_fetch_all(
+            "SELECT b.id,
+                    b.name,
+                    b.batch_code,
+                    b.program,
+                    b.intake_year,
+                    b.created_at,
+                    u.name AS moderator_name
+             FROM batches b
+             LEFT JOIN users u ON u.id = b.moderator_user_id
+             WHERE b.status = 'pending'
+             ORDER BY b.created_at DESC, b.id DESC
+             LIMIT 5"
+        );
+
+        $latestPendingStudents = db_fetch_all(
+            "SELECT r.id,
+                    r.created_at,
+                    s.id AS student_id,
+                    s.name AS student_name,
+                    s.email AS student_email,
+                    b.id AS batch_id,
+                    b.batch_code,
+                    b.name AS batch_name
+             FROM student_batch_requests r
+             INNER JOIN users s ON s.id = r.student_user_id
+             INNER JOIN batches b ON b.id = r.requested_batch_id
+             WHERE r.status = 'pending'
+             ORDER BY r.created_at DESC, r.id DESC
+             LIMIT 5"
+        );
+
+        $latestPendingQuizzes = db_fetch_all(
+            "SELECT q.id,
+                    q.title,
+                    q.mode,
+                    q.created_at,
+                    s.id AS subject_id,
+                    s.code AS subject_code,
+                    s.name AS subject_name,
+                    b.id AS batch_id,
+                    b.batch_code,
+                    u.name AS creator_name
+             FROM quizzes q
+             INNER JOIN subjects s ON s.id = q.subject_id
+             INNER JOIN batches b ON b.id = s.batch_id
+             LEFT JOIN users u ON u.id = q.created_by_user_id
+             WHERE q.status = 'pending'
+             ORDER BY q.created_at DESC, q.id DESC
+             LIMIT 5"
+        );
+
+        $latestOpenReports = db_fetch_all(
+            "SELECT r.id,
+                    r.target_type,
+                    r.reason,
+                    r.created_at,
+                    b.id AS batch_id,
+                    b.batch_code,
+                    reporter.name AS reporter_name
+             FROM feed_reports r
+             LEFT JOIN batches b ON b.id = r.batch_id
+             LEFT JOIN users reporter ON reporter.id = r.reporter_user_id
+             WHERE r.status = 'open'
+             ORDER BY r.created_at DESC, r.id DESC
+             LIMIT 5"
+        );
+
+        return array_merge($defaults, [
+            'user_count' => (int) ($counts['user_count'] ?? 0),
+            'student_count' => (int) ($counts['student_count'] ?? 0),
+            'coordinator_count' => (int) ($counts['coordinator_count'] ?? 0),
+            'moderator_count' => (int) ($counts['moderator_count'] ?? 0),
+            'batch_count' => (int) ($counts['batch_count'] ?? 0),
+            'subject_count' => (int) ($counts['subject_count'] ?? 0),
+            'resource_count' => (int) ($counts['resource_count'] ?? 0),
+            'quiz_count' => (int) ($counts['quiz_count'] ?? 0),
+            'open_kuppi_count' => (int) ($counts['open_kuppi_count'] ?? 0),
+            'upcoming_session_count' => (int) ($counts['upcoming_session_count'] ?? 0),
+            'announcement_count' => (int) ($counts['announcement_count'] ?? 0),
+            'pending_batch_requests' => (int) ($onboardingCounts['pending_batch_requests'] ?? 0),
+            'pending_student_requests' => (int) ($onboardingCounts['pending_student_requests'] ?? 0),
+            'pending_quiz_requests' => $adminUserId > 0 ? quizzes_pending_count_for_reviewer($adminUserId, 'admin', 0) : 0,
+            'open_report_count' => (int) ($counts['open_report_count'] ?? 0),
+            'pending_resource_requests' => (int) ($counts['pending_resource_requests'] ?? 0),
+            'latest_pending_batches' => $latestPendingBatches,
+            'latest_pending_students' => $latestPendingStudents,
+            'latest_pending_quizzes' => $latestPendingQuizzes,
+            'latest_open_reports' => $latestOpenReports,
         ]);
     } catch (\PDOException) {
         return $defaults;
