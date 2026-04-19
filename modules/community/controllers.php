@@ -862,6 +862,113 @@ function community_save_toggle(string $id): void
     redirect($returnTo);
 }
 
+function community_like_create(string $id): void
+{
+    csrf_check();
+
+    $postId = (int) $id;
+    $post = community_resolve_readable_post($postId);
+    if (!$post) {
+        abort(404, 'Post not found.');
+    }
+
+    try {
+        community_add_like($postId, (int) auth_id());
+    } catch (Throwable) {
+        flash('error', 'Unable to like this post right now.');
+    }
+
+    $returnTo = community_resolve_valid_return_to(
+        (string) request_input('return_to', ''),
+        $post
+    );
+    redirect($returnTo);
+}
+
+function community_like_delete(string $id): void
+{
+    csrf_check();
+
+    $postId = (int) $id;
+    $post = community_resolve_readable_post($postId);
+    if (!$post) {
+        abort(404, 'Post not found.');
+    }
+
+    try {
+        community_remove_like($postId, (int) auth_id());
+    } catch (Throwable) {
+        flash('error', 'Unable to remove like right now.');
+    }
+
+    $returnTo = community_resolve_valid_return_to(
+        (string) request_input('return_to', ''),
+        $post
+    );
+    redirect($returnTo);
+}
+
+function community_save_create(string $id): void
+{
+    csrf_check();
+
+    if (!community_user_can_save_posts()) {
+        abort(403, 'You do not have permission to save posts.');
+    }
+
+    $postId = (int) $id;
+    $post = community_resolve_readable_post($postId);
+    if (!$post) {
+        abort(404, 'Post not found.');
+    }
+
+    try {
+        community_add_save($postId, (int) auth_id());
+    } catch (Throwable) {
+        flash('error', 'Unable to save this post right now.');
+    }
+
+    flash('success', 'Post saved.');
+    $returnTo = community_resolve_valid_return_to(
+        (string) request_input('return_to', ''),
+        $post
+    );
+    redirect($returnTo);
+}
+
+function community_save_delete(string $id): void
+{
+    csrf_check();
+
+    if (!community_user_can_save_posts()) {
+        abort(403, 'You do not have permission to save posts.');
+    }
+
+    $postId = (int) $id;
+    $post = community_resolve_readable_post($postId);
+    if (!$post) {
+        abort(404, 'Post not found.');
+    }
+
+    try {
+        $removed = community_remove_save($postId, (int) auth_id());
+    } catch (Throwable) {
+        flash('error', 'Unable to remove saved post right now.');
+        $returnTo = community_resolve_valid_return_to(
+            (string) request_input('return_to', ''),
+            $post
+        );
+        redirect($returnTo);
+    }
+
+    flash('success', $removed ? 'Post removed from saved posts.' : 'Post was not in your saved list.');
+    $returnTo = community_resolve_valid_return_to(
+        (string) request_input('return_to', ''),
+        $post
+    );
+    redirect($returnTo);
+}
+
 function community_report_post(string $id): void
 {
     csrf_check();

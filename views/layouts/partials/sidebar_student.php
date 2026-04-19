@@ -21,6 +21,8 @@ $isGpaAnalytics = $currentPath === '/dashboard/gpa/analytics';
 $isCentralFeed = $currentPath === '/dashboard/feed';
 $isAnnouncements = str_starts_with($currentPath, '/dashboard/announcements');
 $isSubjects = str_starts_with($currentPath, '/dashboard/subjects');
+$isMyResources = str_starts_with($currentPath, '/my-resources');
+$isSavedResources = str_starts_with($currentPath, '/saved-resources');
 $isCommunityFeed = str_starts_with($currentPath, '/dashboard/community');
 $isMyPosts = str_starts_with($currentPath, '/my-posts');
 $isSavedPosts = str_starts_with($currentPath, '/saved-posts');
@@ -29,6 +31,7 @@ $isProfileSettings = $currentPath === '/dashboard/profile';
 $isKuppiSectionActive = $isKuppiRequested || $isMyKuppiRequests || $isKuppiScheduled || $isKuppiTimetable;
 $isQuizSectionActive = $isQuizHub || $isMyQuizzes || $isMyQuizAnalytics;
 $isGpaSectionActive = $isGpaCalculator || $isGpaAnalytics;
+$isResourcesSectionActive = $isSubjects || $isMyResources || $isSavedResources;
 $isCommunitySectionActive = $isCommunityFeed || $isMyPosts || $isSavedPosts;
 ?>
 <nav class="sidebar-nav">
@@ -42,6 +45,19 @@ $isCommunitySectionActive = $isCommunityFeed || $isMyPosts || $isSavedPosts;
     <div class="sidebar-section-label">Learning</div>
     <ul>
         <li><a href="/dashboard/subjects" class="<?= $isSubjects ? 'active' : '' ?>"><span class="sidebar-nav-icon"><?= ui_lucide_icon('book-open') ?></span><span>Subjects</span></a></li>
+        <li class="sidebar-accordion-item">
+            <details class="sidebar-accordion" <?= $isResourcesSectionActive ? 'open' : '' ?>>
+                <summary class="sidebar-accordion-toggle <?= $isResourcesSectionActive ? 'is-active' : '' ?>">
+                    <span class="sidebar-nav-icon"><?= ui_lucide_icon('folder-open') ?></span>
+                    <span>Resources</span>
+                    <span class="sidebar-accordion-caret"><?= ui_lucide_icon('chevron-down') ?></span>
+                </summary>
+                <ul class="sidebar-subnav">
+                    <li><a href="/my-resources" class="<?= $isMyResources ? 'active' : '' ?>">My Resources</a></li>
+                    <li><a href="/saved-resources" class="<?= $isSavedResources ? 'active' : '' ?>">Saved Resources</a></li>
+                </ul>
+            </details>
+        </li>
         <li class="sidebar-accordion-item">
             <details class="sidebar-accordion" <?= $isKuppiSectionActive ? 'open' : '' ?>>
                 <summary class="sidebar-accordion-toggle <?= $isKuppiSectionActive ? 'is-active' : '' ?>">

@@ -111,6 +111,7 @@ Primary tables:
 - `resources` (topic-scoped, approval-based)
 - `resource_update_requests` (staged edits)
 - `resource_ratings`
+- `resource_saves`
 - `announcements` (batch-scoped official notices)
 - `feed_posts` (batch-scoped community posts)
 - `feed_post_likes`
@@ -141,6 +142,7 @@ Non-negotiable integrity rules:
 - One join-request row per student (`student_user_id` unique in `student_batch_requests`).
 - `users.first_approved_batch_id` becomes immutable once first approved assignment is recorded.
 - One save row per `(post_id, user_id)` in `feed_post_saves`.
+- One save row per `(resource_id, user_id)` in `resource_saves`.
 - One request-vote row per `(request_id, user_id)` in `kuppi_request_votes`.
 - One conductor-application row per `(request_id, applicant_user_id)` in `kuppi_conductor_applications`.
 - One conductor-vote row per `(application_id, voter_user_id)` in `kuppi_conductor_votes`.
@@ -206,6 +208,10 @@ Use `middleware_exact_role('admin')` for admin provisioning routes.
   - rating is `student`-only,
   - one rating per `(resource_id, student_user_id)`,
   - uploader cannot rate own resource.
+- Saved resources apply to published resources only.
+  - save roles are `student | coordinator | moderator`,
+  - saved rows are private to the saving user,
+  - one save per `(resource_id, user_id)` with toggle/create-delete behavior.
 - Comments apply to published resources only in v1 using `comments.target_type = 'resource'`.
 - Comment nesting is capped at 3 visible levels (`depth` 0..2).
 - Comment permissions:
@@ -444,7 +450,11 @@ Use `middleware_exact_role('admin')` for admin provisioning routes.
   - `POST /dashboard/community/{id}`
   - `POST /dashboard/community/{id}/delete`
   - `POST /dashboard/community/{id}/like`
+  - `POST /dashboard/community/{id}/like/create`
+  - `POST /dashboard/community/{id}/like/delete`
   - `POST /dashboard/community/{id}/save`
+  - `POST /dashboard/community/{id}/save/create`
+  - `POST /dashboard/community/{id}/save/delete`
   - `POST /dashboard/community/{id}/report`
   - `POST /dashboard/community/{id}/question/resolve`
   - `POST /dashboard/community/{id}/question/reopen`
@@ -470,13 +480,23 @@ Use `middleware_exact_role('admin')` for admin provisioning routes.
   - `POST /dashboard/kuppi/{id}`
   - `POST /dashboard/kuppi/{id}/delete`
   - `POST /dashboard/kuppi/{id}/vote`
+  - `POST /dashboard/kuppi/{id}/vote/delete`
   - `GET /dashboard/kuppi/{id}/conductors/apply`
   - `POST /dashboard/kuppi/{id}/conductors/apply`
+  - `GET /dashboard/kuppi/{id}/conductors/{applicationId}/edit`
+  - `POST /dashboard/kuppi/{id}/conductors/{applicationId}`
+  - `POST /dashboard/kuppi/{id}/conductors/{applicationId}/delete`
   - `POST /dashboard/kuppi/{id}/conductors/{applicationId}/vote`
+  - `POST /dashboard/kuppi/{id}/conductors/{applicationId}/vote/delete`
   - `POST /dashboard/kuppi/{id}/comments`
   - `POST /dashboard/kuppi/{id}/comments/{commentId}`
   - `POST /dashboard/kuppi/{id}/comments/{commentId}/delete`
   - `GET /my-kuppi-requests`
+  - `GET /saved-resources`
+  - `POST /resources/{id}/rating`
+  - `POST /resources/{id}/rating/delete`
+  - `POST /resources/{id}/save/create`
+  - `POST /resources/{id}/save/delete`
   - `GET /dashboard/kuppi/schedule`
   - `GET /dashboard/kuppi/schedule/manual`
   - `POST /dashboard/kuppi/schedule/select-request`

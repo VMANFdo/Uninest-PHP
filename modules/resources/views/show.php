@@ -12,6 +12,9 @@ $maxCommentLevel = (int) ($comment_max_level ?? (comments_max_depth() + 1));
 $ratingDistribution = (array) ($rating_distribution ?? []);
 $ratingPeak = max(1, (int) ($rating_distribution_peak ?? 0));
 $filledStars = max(0, min(5, (int) round($averageRating)));
+$canSaveResources = !empty($can_save_resources);
+$isSavedByViewer = (int) ($resource['is_saved_by_viewer'] ?? 0) === 1;
+$currentUri = (string) ($current_uri ?? ($_SERVER['REQUEST_URI'] ?? ''));
 ?>
 
 <div class="page-header">
@@ -69,6 +72,15 @@ $filledStars = max(0, min(5, (int) round($averageRating)));
             <?php else: ?>
                 <a href="<?= e((string) $resource['external_url']) ?>" target="_blank" rel="noopener" class="btn btn-primary">Open Link</a>
                 <span class="text-muted"><?= e((string) $resource['external_url']) ?></span>
+            <?php endif; ?>
+            <?php if ($canSaveResources): ?>
+                <form method="POST" action="/resources/<?= $resourceId ?>/save/<?= $isSavedByViewer ? 'delete' : 'create' ?>" class="resource-inline-action-form">
+                    <?= csrf_field() ?>
+                    <input type="hidden" name="return_to" value="<?= e($currentUri) ?>">
+                    <button type="submit" class="btn <?= $isSavedByViewer ? 'btn-outline' : 'btn-primary' ?>">
+                        <?= $isSavedByViewer ? 'Saved' : 'Save Resource' ?>
+                    </button>
+                </form>
             <?php endif; ?>
         </div>
     </article>
@@ -146,7 +158,19 @@ $filledStars = max(0, min(5, (int) round($averageRating)));
                         </option>
                     <?php endfor; ?>
                 </select>
-                <button type="submit" class="btn btn-primary">Save Rating</button>
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">Save Rating</button>
+                    <?php if ($current_user_rating !== null): ?>
+                        <button
+                            type="submit"
+                            formaction="/resources/<?= $resourceId ?>/rating/delete"
+                            formnovalidate
+                            class="btn btn-outline"
+                            onclick="return confirm('Remove your saved rating?');">
+                            Remove Rating
+                        </button>
+                    <?php endif; ?>
+                </div>
             </form>
         <?php elseif (user_role() === 'student' && (int) ($resource['uploaded_by_user_id'] ?? 0) === (int) auth_id()): ?>
             <p class="text-muted">You cannot rate your own uploaded resource.</p>

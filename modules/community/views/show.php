@@ -81,7 +81,7 @@ $reportReasonOptions = (array) ($report_reason_options ?? []);
             <span><?= $commentCount ?> comments</span>
         </div>
         <div class="community-post-actions">
-            <form method="POST" action="/dashboard/community/<?= $postId ?>/like">
+            <form method="POST" action="/dashboard/community/<?= $postId ?>/like/<?= $likedByViewer ? 'delete' : 'create' ?>">
                 <?= csrf_field() ?>
                 <input type="hidden" name="return_to" value="<?= e($currentUri) ?>">
                 <button type="submit" class="btn btn-sm <?= $likedByViewer ? 'btn-primary' : 'btn-outline' ?>">
@@ -89,7 +89,7 @@ $reportReasonOptions = (array) ($report_reason_options ?? []);
                 </button>
             </form>
             <?php if (!empty($can_save_posts)): ?>
-                <form method="POST" action="/dashboard/community/<?= $postId ?>/save">
+                <form method="POST" action="/dashboard/community/<?= $postId ?>/save/<?= $savedByViewer ? 'delete' : 'create' ?>">
                     <?= csrf_field() ?>
                     <input type="hidden" name="return_to" value="<?= e($currentUri) ?>">
                     <button type="submit" class="btn btn-sm <?= $savedByViewer ? 'btn-primary' : 'btn-outline' ?>">

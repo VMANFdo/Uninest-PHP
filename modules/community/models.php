@@ -544,6 +544,44 @@ function community_toggle_like(int $postId, int $userId): bool
     return true;
 }
 
+function community_add_like(int $postId, int $userId): bool
+{
+    if ($postId <= 0 || $userId <= 0) {
+        return false;
+    }
+
+    $existing = db_fetch(
+        'SELECT id FROM feed_post_likes WHERE post_id = ? AND user_id = ? LIMIT 1',
+        [$postId, $userId]
+    );
+    if ($existing) {
+        return true;
+    }
+
+    try {
+        db_insert('feed_post_likes', [
+            'post_id' => $postId,
+            'user_id' => $userId,
+        ]);
+    } catch (Throwable) {
+        return true;
+    }
+
+    return true;
+}
+
+function community_remove_like(int $postId, int $userId): bool
+{
+    if ($postId <= 0 || $userId <= 0) {
+        return false;
+    }
+
+    return db_query(
+        'DELETE FROM feed_post_likes WHERE post_id = ? AND user_id = ?',
+        [$postId, $userId]
+    )->rowCount() > 0;
+}
+
 function community_toggle_save(int $postId, int $userId): bool
 {
     if ($postId <= 0 || $userId <= 0) {
@@ -573,6 +611,44 @@ function community_toggle_save(int $postId, int $userId): bool
     }
 
     return true;
+}
+
+function community_add_save(int $postId, int $userId): bool
+{
+    if ($postId <= 0 || $userId <= 0) {
+        return false;
+    }
+
+    $existing = db_fetch(
+        'SELECT id FROM feed_post_saves WHERE post_id = ? AND user_id = ? LIMIT 1',
+        [$postId, $userId]
+    );
+    if ($existing) {
+        return true;
+    }
+
+    try {
+        db_insert('feed_post_saves', [
+            'post_id' => $postId,
+            'user_id' => $userId,
+        ]);
+    } catch (Throwable) {
+        return true;
+    }
+
+    return true;
+}
+
+function community_remove_save(int $postId, int $userId): bool
+{
+    if ($postId <= 0 || $userId <= 0) {
+        return false;
+    }
+
+    return db_query(
+        'DELETE FROM feed_post_saves WHERE post_id = ? AND user_id = ?',
+        [$postId, $userId]
+    )->rowCount() > 0;
 }
 
 function community_saved_posts_for_user(int $userId, ?int $batchId, bool $isAdmin): array

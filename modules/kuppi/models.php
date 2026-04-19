@@ -533,6 +533,18 @@ function kuppi_apply_vote(int $requestId, int $userId, string $direction): ?stri
     return $direction;
 }
 
+function kuppi_remove_vote(int $requestId, int $userId): bool
+{
+    if ($requestId <= 0 || $userId <= 0) {
+        return false;
+    }
+
+    return db_query(
+        'DELETE FROM kuppi_request_votes WHERE request_id = ? AND user_id = ?',
+        [$requestId, $userId]
+    )->rowCount() > 0;
+}
+
 function kuppi_vote_totals_for_request(int $requestId): array
 {
     if ($requestId <= 0) {
@@ -649,6 +661,66 @@ function kuppi_create_conductor_application(array $data): int
     ]);
 }
 
+function kuppi_update_conductor_application_by_owner(int $applicationId, int $requestId, int $ownerUserId, array $data): bool
+{
+    if ($applicationId <= 0 || $requestId <= 0 || $ownerUserId <= 0) {
+        return false;
+    }
+
+    $stmt = db_query(
+        "UPDATE kuppi_conductor_applications a
+         INNER JOIN kuppi_requests r ON r.id = a.request_id
+         SET a.motivation = ?,
+             a.availability_csv = ?,
+             a.updated_at = NOW()
+         WHERE a.id = ?
+           AND a.request_id = ?
+           AND a.applicant_user_id = ?
+           AND r.status = 'open'",
+        [
+            $data['motivation'],
+            $data['availability_csv'],
+            $applicationId,
+            $requestId,
+            $ownerUserId,
+        ]
+    );
+
+    if ($stmt->rowCount() > 0) {
+        return true;
+    }
+
+    return (bool) db_fetch(
+        "SELECT a.id
+         FROM kuppi_conductor_applications a
+         INNER JOIN kuppi_requests r ON r.id = a.request_id
+         WHERE a.id = ?
+           AND a.request_id = ?
+           AND a.applicant_user_id = ?
+           AND r.status = 'open'
+         LIMIT 1",
+        [$applicationId, $requestId, $ownerUserId]
+    );
+}
+
+function kuppi_delete_conductor_application_by_owner(int $applicationId, int $requestId, int $ownerUserId): bool
+{
+    if ($applicationId <= 0 || $requestId <= 0 || $ownerUserId <= 0) {
+        return false;
+    }
+
+    return db_query(
+        "DELETE a
+         FROM kuppi_conductor_applications a
+         INNER JOIN kuppi_requests r ON r.id = a.request_id
+         WHERE a.id = ?
+           AND a.request_id = ?
+           AND a.applicant_user_id = ?
+           AND r.status = 'open'",
+        [$applicationId, $requestId, $ownerUserId]
+    )->rowCount() > 0;
+}
+
 function kuppi_toggle_conductor_vote(int $applicationId, int $voterUserId): bool
 {
     if ($applicationId <= 0 || $voterUserId <= 0) {
@@ -680,6 +752,20 @@ function kuppi_toggle_conductor_vote(int $applicationId, int $voterUserId): bool
     ]);
 
     return true;
+}
+
+function kuppi_remove_conductor_vote(int $applicationId, int $voterUserId): bool
+{
+    if ($applicationId <= 0 || $voterUserId <= 0) {
+        return false;
+    }
+
+    return db_query(
+        "DELETE FROM kuppi_conductor_votes
+         WHERE application_id = ?
+           AND voter_user_id = ?",
+        [$applicationId, $voterUserId]
+    )->rowCount() > 0;
 }
 
 function kuppi_scheduled_statuses(): array

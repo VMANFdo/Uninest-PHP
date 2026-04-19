@@ -13,6 +13,7 @@ $createdAtLabel = $createdAtRaw !== ''
     : 'recently';
 $conductors = (array) ($conductor_applications ?? []);
 $viewerApplication = $viewer_conductor_application ?? null;
+$viewerApplicationId = (int) (($viewerApplication['id'] ?? 0));
 $topVoteApplicationId = (int) ($top_vote_application_id ?? 0);
 $availabilityOptions = (array) ($availability_options ?? []);
 $comments = (array) ($comments ?? []);
@@ -95,11 +96,18 @@ $commentMaxLevel = (int) ($comment_max_level ?? (comments_max_depth() + 1));
                 <h2>Applied Conductors <span class="badge badge-info"><?= (int) ($conductor_count ?? count($conductors)) ?></span></h2>
                 <?php if (!empty($can_apply_as_conductor) && !$viewerApplication): ?>
                     <a href="/dashboard/kuppi/<?= $requestId ?>/conductors/apply" class="btn btn-primary">Apply to Conduct</a>
+                <?php elseif ($viewerApplicationId > 0): ?>
+                    <a href="/dashboard/kuppi/<?= $requestId ?>/conductors/<?= $viewerApplicationId ?>/edit" class="btn btn-outline">Edit My Application</a>
                 <?php endif; ?>
             </header>
 
             <?php if ($viewerApplication): ?>
-                <div class="alert alert-success">You have already applied as a conductor for this session.</div>
+                <div class="alert alert-success">
+                    You have already applied as a conductor for this session.
+                    <?php if ($viewerApplicationId > 0): ?>
+                        <a href="/dashboard/kuppi/<?= $requestId ?>/conductors/<?= $viewerApplicationId ?>/edit">Manage application</a>.
+                    <?php endif; ?>
+                </div>
             <?php endif; ?>
 
             <?php if (empty($conductors)): ?>
@@ -122,10 +130,12 @@ $commentMaxLevel = (int) ($comment_max_level ?? (comments_max_depth() + 1));
                         $isTopVote = $applicationId > 0 && $applicationId === $topVoteApplicationId;
                         $canVoteThisConductor = !empty($can_vote_conductor) && !$isOwnApplication;
                         $availability = (array) ($application['availability'] ?? []);
+                        $voteAction = '/dashboard/kuppi/' . $requestId . '/conductors/' . $applicationId
+                            . (!empty($application['is_voted_by_viewer']) ? '/vote/delete' : '/vote');
                         ?>
                         <article class="kuppi-conductor-card <?= $isTopVote ? 'is-top' : '' ?>">
                             <aside class="kuppi-conductor-vote">
-                                <form method="POST" action="/dashboard/kuppi/<?= $requestId ?>/conductors/<?= $applicationId ?>/vote">
+                                <form method="POST" action="<?= e($voteAction) ?>">
                                     <?= csrf_field() ?>
                                     <input type="hidden" name="return_to" value="<?= e($currentUri) ?>">
                                     <button type="submit" class="kuppi-vote-btn <?= !empty($application['is_voted_by_viewer']) ? 'is-active' : '' ?>" <?= $canVoteThisConductor ? '' : 'disabled' ?> aria-label="Vote conductor"><?= ui_lucide_icon('arrow-up') ?></button>
@@ -160,6 +170,17 @@ $commentMaxLevel = (int) ($comment_max_level ?? (comments_max_depth() + 1));
                                             <?php $label = $availabilityOptions[$slot] ?? $slot; ?>
                                             <span class="badge"><?= e((string) $label) ?></span>
                                         <?php endforeach; ?>
+                                    </div>
+                                <?php endif; ?>
+
+                                <?php if ($isOwnApplication): ?>
+                                    <div class="kuppi-request-actions kuppi-request-actions--list" style="margin-top:12px;">
+                                        <a href="/dashboard/kuppi/<?= $requestId ?>/conductors/<?= $applicationId ?>/edit" class="btn btn-sm btn-outline">Edit My Application</a>
+                                        <form method="POST" action="/dashboard/kuppi/<?= $requestId ?>/conductors/<?= $applicationId ?>/delete" onsubmit="return confirm('Delete your conductor application?');">
+                                            <?= csrf_field() ?>
+                                            <input type="hidden" name="return_to" value="<?= e($currentUri) ?>">
+                                            <button type="submit" class="btn btn-sm btn-outline">Delete Application</button>
+                                        </form>
                                     </div>
                                 <?php endif; ?>
                             </div>
@@ -296,6 +317,16 @@ $commentMaxLevel = (int) ($comment_max_level ?? (comments_max_depth() + 1));
                     <button type="submit" class="kuppi-vote-btn <?= $viewerVote === 'down' ? 'is-active is-down' : 'is-down' ?>" <?= (!empty($can_vote_request) && !$isOwnRequest) ? '' : 'disabled' ?> aria-label="Downvote request"><?= ui_lucide_icon('arrow-down') ?></button>
                 </form>
             </div>
+            <?php if (($viewerVote === 'up' || $viewerVote === 'down') && !empty($can_vote_request) && !$isOwnRequest): ?>
+                <form method="POST" action="/dashboard/kuppi/<?= $requestId ?>/vote/delete" style="margin-top:10px;">
+                    <?= csrf_field() ?>
+                    <input type="hidden" name="return_to" value="<?= e($currentUri) ?>">
+                    <?php if (user_role() === 'admin'): ?>
+                        <input type="hidden" name="batch_id" value="<?= (int) ($request['batch_id'] ?? 0) ?>">
+                    <?php endif; ?>
+                    <button type="submit" class="btn btn-sm btn-outline">Clear Vote</button>
+                </form>
+            <?php endif; ?>
         </article>
 
         <article class="kuppi-side-card">
@@ -316,6 +347,8 @@ $commentMaxLevel = (int) ($comment_max_level ?? (comments_max_depth() + 1));
                 <?php endif; ?>
                 <?php if (!empty($can_apply_as_conductor) && !$viewerApplication): ?>
                     <a href="/dashboard/kuppi/<?= $requestId ?>/conductors/apply" class="btn btn-primary">Apply to Conduct</a>
+                <?php elseif ($viewerApplicationId > 0): ?>
+                    <a href="/dashboard/kuppi/<?= $requestId ?>/conductors/<?= $viewerApplicationId ?>/edit" class="btn btn-outline">Edit My Application</a>
                 <?php endif; ?>
                 <a href="<?= e((string) $back_list_url) ?>" class="btn btn-outline">Share Session</a>
                 <button type="button" class="btn btn-outline" disabled>Report Issue</button>

@@ -217,7 +217,7 @@ $buildFeedUrl = static function (array $params = []) use ($is_admin, $selectedBa
                             </div>
 
                             <footer class="community-post-footer social-post-actions">
-                                <form method="POST" action="/dashboard/community/<?= $postId ?>/like">
+                                <form method="POST" action="/dashboard/community/<?= $postId ?>/like/<?= $likedByViewer ? 'delete' : 'create' ?>">
                                     <?= csrf_field() ?>
                                     <input type="hidden" name="return_to" value="<?= e($currentUri) ?>">
                                     <button type="submit" class="community-action-btn <?= $likedByViewer ? 'is-active' : '' ?>">
@@ -225,7 +225,7 @@ $buildFeedUrl = static function (array $params = []) use ($is_admin, $selectedBa
                                     </button>
                                 </form>
                                 <?php if (!empty($can_save_posts)): ?>
-                                    <form method="POST" action="/dashboard/community/<?= $postId ?>/save">
+                                    <form method="POST" action="/dashboard/community/<?= $postId ?>/save/<?= $isSavedByViewer ? 'delete' : 'create' ?>">
                                         <?= csrf_field() ?>
                                         <input type="hidden" name="return_to" value="<?= e($currentUri) ?>">
                                         <button type="submit" class="community-action-btn <?= $isSavedByViewer ? 'is-active' : '' ?>">

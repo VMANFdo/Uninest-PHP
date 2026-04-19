@@ -187,6 +187,17 @@ $buildListUrl = static function (array $params = []) use ($is_admin, $selectedBa
                             <?php endif; ?>
                             <button type="submit" class="kuppi-vote-btn <?= $viewerVote === 'down' ? 'is-active is-down' : 'is-down' ?>" <?= $canVote ? '' : 'disabled' ?> aria-label="Downvote request"><?= ui_lucide_icon('arrow-down') ?></button>
                         </form>
+
+                        <?php if (($viewerVote === 'up' || $viewerVote === 'down') && $canVote): ?>
+                            <form method="POST" action="/dashboard/kuppi/<?= $requestId ?>/vote/delete">
+                                <?= csrf_field() ?>
+                                <input type="hidden" name="return_to" value="<?= e($currentUri) ?>">
+                                <?php if (!empty($is_admin)): ?>
+                                    <input type="hidden" name="batch_id" value="<?= (int) ($selectedBatchId > 0 ? $selectedBatchId : ($request['batch_id'] ?? 0)) ?>">
+                                <?php endif; ?>
+                                <button type="submit" class="kuppi-vote-btn" aria-label="Clear vote"><?= ui_lucide_icon('x') ?></button>
+                            </form>
+                        <?php endif; ?>
                     </aside>
 
                     <div class="kuppi-request-main kuppi-request-main--list">

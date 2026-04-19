@@ -4680,7 +4680,7 @@
         box-shadow 0.2s ease;
 }
 
-.dashboard-body .resource-card-link:hover .resource-card {
+.dashboard-body .resource-card:hover {
     transform: translateY(-2px);
     box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
 }
@@ -4728,6 +4728,25 @@
     display: flex;
     flex-wrap: wrap;
     gap: 6px;
+}
+
+.dashboard-body .resource-card-actions {
+    border-top: 1px solid #e6edf7;
+    padding: 10px 14px 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+}
+
+.dashboard-body .resource-card-actions-left {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.dashboard-body .resource-card-actions form {
+    margin: 0;
 }
 
 .dashboard-body .community-admin-gate {
@@ -5833,6 +5852,11 @@
     display: grid;
     gap: 14px;
     padding-left: 2px;
+}
+
+.dashboard-body .resource-inline-action-form {
+    display: inline-flex;
+    margin: 0;
 }
 
 .dashboard-body .resource-detail-content-card p {

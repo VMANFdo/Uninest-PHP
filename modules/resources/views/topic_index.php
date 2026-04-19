@@ -1,3 +1,8 @@
+<?php
+$canSaveResources = !empty($can_save_resources);
+$currentUri = (string) ($current_uri ?? ($_SERVER['REQUEST_URI'] ?? ''));
+?>
+
 <div class="page-header">
     <div class="page-header-content">
         <p class="page-breadcrumb">Subjects / Topics / Resources</p>
@@ -25,13 +30,19 @@
     <div class="resource-grid">
         <?php foreach ($resources as $resource): ?>
             <?php
+            $resourceId = (int) ($resource['id'] ?? 0);
+            $detailUrl = '/dashboard/subjects/' . (int) $subject['id'] . '/topics/' . (int) $topic['id'] . '/resources/' . $resourceId;
+            $isSaved = (int) ($resource['is_saved_by_viewer'] ?? 0) === 1;
+            $isFileSource = (string) ($resource['source_type'] ?? '') === 'file';
+            $hasDownload = $isFileSource && trim((string) ($resource['file_path'] ?? '')) !== '';
+            $hasOpenLink = !$isFileSource && !empty($resource['external_url']);
             $toneClass = ui_avatar_tone_class((string) (($resource['title'] ?? '') . '-' . ($resource['id'] ?? '')));
-            $previewLabel = ($resource['source_type'] ?? '') === 'file'
+            $previewLabel = $isFileSource
                 ? resources_file_extension_label((string) ($resource['file_name'] ?? ''), (string) ($resource['file_path'] ?? ''))
                 : resources_link_host_label((string) ($resource['external_url'] ?? ''));
             ?>
-            <a href="/dashboard/subjects/<?= (int) $subject['id'] ?>/topics/<?= (int) $topic['id'] ?>/resources/<?= (int) $resource['id'] ?>" class="resource-card-link" aria-label="Open resource <?= e($resource['title']) ?>">
-                <article class="resource-card">
+            <article class="resource-card">
+                <a href="<?= e($detailUrl) ?>" class="resource-card-link" aria-label="Open resource <?= e((string) ($resource['title'] ?? 'Resource')) ?>">
                     <div class="resource-card-thumb <?= e($toneClass) ?>">
                         <span class="resource-card-thumb-label"><?= e($previewLabel) ?></span>
                     </div>
@@ -53,8 +64,26 @@
                             <span class="badge"><?= e(resources_comment_count_label((int) ($resource['comment_count'] ?? 0))) ?></span>
                         </div>
                     </div>
-                </article>
-            </a>
+                </a>
+                <div class="resource-card-actions">
+                    <div class="resource-card-actions-left">
+                        <?php if ($hasDownload): ?>
+                            <a href="/resources/<?= $resourceId ?>/download" class="btn btn-sm btn-outline">Download</a>
+                        <?php elseif ($hasOpenLink): ?>
+                            <a href="<?= e((string) $resource['external_url']) ?>" target="_blank" rel="noopener" class="btn btn-sm btn-outline">Open Link</a>
+                        <?php endif; ?>
+                    </div>
+                    <?php if ($canSaveResources): ?>
+                        <form method="POST" action="/resources/<?= $resourceId ?>/save/<?= $isSaved ? 'delete' : 'create' ?>">
+                            <?= csrf_field() ?>
+                            <input type="hidden" name="return_to" value="<?= e($currentUri) ?>">
+                            <button type="submit" class="btn btn-sm <?= $isSaved ? 'btn-outline' : 'btn-primary' ?>">
+                                <?= $isSaved ? 'Saved' : 'Save' ?>
+                            </button>
+                        </form>
+                    <?php endif; ?>
+                </div>
+            </article>
         <?php endforeach; ?>
     </div>
 <?php endif; ?>

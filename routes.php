@@ -70,6 +70,10 @@ route('POST', '/dashboard/community/{id}', 'community_update_action', ['middlewa
 route('POST', '/dashboard/community/{id}/delete', 'community_delete_action', ['middleware_auth', 'middleware_onboarding_complete']);
 route('POST', '/dashboard/community/{id}/like', 'community_like_toggle', ['middleware_auth', 'middleware_onboarding_complete']);
 route('POST', '/dashboard/community/{id}/save', 'community_save_toggle', ['middleware_auth', 'middleware_onboarding_complete']);
+route('POST', '/dashboard/community/{id}/like/create', 'community_like_create', ['middleware_auth', 'middleware_onboarding_complete']);
+route('POST', '/dashboard/community/{id}/like/delete', 'community_like_delete', ['middleware_auth', 'middleware_onboarding_complete']);
+route('POST', '/dashboard/community/{id}/save/create', 'community_save_create', ['middleware_auth', 'middleware_onboarding_complete']);
+route('POST', '/dashboard/community/{id}/save/delete', 'community_save_delete', ['middleware_auth', 'middleware_onboarding_complete']);
 route('POST', '/dashboard/community/{id}/report', 'community_report_post', ['middleware_auth', 'middleware_onboarding_complete']);
 route('POST', '/dashboard/community/{id}/question/resolve', 'community_question_resolve', ['middleware_auth', 'middleware_onboarding_complete']);
 route('POST', '/dashboard/community/{id}/question/reopen', 'community_question_reopen', ['middleware_auth', 'middleware_onboarding_complete']);
@@ -103,12 +107,17 @@ route('POST', '/dashboard/kuppi/scheduled/{id}/cancel', 'kuppi_scheduled_cancel_
 route('POST', '/dashboard/kuppi/scheduled/{id}/delete', 'kuppi_scheduled_delete_action', ['middleware_auth', 'middleware_onboarding_complete', fn() => middleware_role('coordinator')]);
 route('GET', '/dashboard/kuppi/{id}/conductors/apply', 'kuppi_conductor_apply_form', ['middleware_auth', 'middleware_onboarding_complete']);
 route('POST', '/dashboard/kuppi/{id}/conductors/apply', 'kuppi_conductor_apply_action', ['middleware_auth', 'middleware_onboarding_complete']);
+route('GET', '/dashboard/kuppi/{id}/conductors/{applicationId}/edit', 'kuppi_conductor_edit_form', ['middleware_auth', 'middleware_onboarding_complete']);
+route('POST', '/dashboard/kuppi/{id}/conductors/{applicationId}', 'kuppi_conductor_update_action', ['middleware_auth', 'middleware_onboarding_complete']);
+route('POST', '/dashboard/kuppi/{id}/conductors/{applicationId}/delete', 'kuppi_conductor_delete_action', ['middleware_auth', 'middleware_onboarding_complete']);
 route('POST', '/dashboard/kuppi/{id}/conductors/{applicationId}/vote', 'kuppi_conductor_vote_action', ['middleware_auth', 'middleware_onboarding_complete']);
+route('POST', '/dashboard/kuppi/{id}/conductors/{applicationId}/vote/delete', 'kuppi_conductor_vote_delete_action', ['middleware_auth', 'middleware_onboarding_complete']);
 route('GET', '/dashboard/kuppi/{id}/edit', 'kuppi_edit_form', ['middleware_auth', 'middleware_onboarding_complete']);
 route('GET', '/dashboard/kuppi/{id}', 'kuppi_show', ['middleware_auth', 'middleware_onboarding_complete']);
 route('POST', '/dashboard/kuppi/{id}', 'kuppi_update_action', ['middleware_auth', 'middleware_onboarding_complete']);
 route('POST', '/dashboard/kuppi/{id}/delete', 'kuppi_delete_action', ['middleware_auth', 'middleware_onboarding_complete']);
 route('POST', '/dashboard/kuppi/{id}/vote', 'kuppi_vote_action', ['middleware_auth', 'middleware_onboarding_complete']);
+route('POST', '/dashboard/kuppi/{id}/vote/delete', 'kuppi_vote_delete_action', ['middleware_auth', 'middleware_onboarding_complete']);
 route('POST', '/dashboard/kuppi/{id}/comments', 'kuppi_comment_store', ['middleware_auth', 'middleware_onboarding_complete']);
 route('POST', '/dashboard/kuppi/{id}/comments/{commentId}', 'kuppi_comment_update', ['middleware_auth', 'middleware_onboarding_complete']);
 route('POST', '/dashboard/kuppi/{id}/comments/{commentId}/delete', 'kuppi_comment_delete', ['middleware_auth', 'middleware_onboarding_complete']);
@@ -177,6 +186,7 @@ route('GET', '/my-resources', 'resources_my_index', ['middleware_auth', 'middlew
 route('GET', '/my-resources/{id}/edit', 'resources_my_edit_form', ['middleware_auth', 'middleware_onboarding_complete']);
 route('POST', '/my-resources/{id}', 'resources_my_update_action', ['middleware_auth', 'middleware_onboarding_complete']);
 route('POST', '/my-resources/{id}/delete', 'resources_my_delete_action', ['middleware_auth', 'middleware_onboarding_complete']);
+route('GET', '/saved-resources', 'resources_saved_index', ['middleware_auth', 'middleware_onboarding_complete']);
 route('GET', '/my-quizzes', 'quizzes_my_index', ['middleware_auth', 'middleware_onboarding_complete']);
 route('GET', '/my-quiz-analytics', 'quizzes_my_analytics_index', ['middleware_auth', 'middleware_onboarding_complete']);
 route('GET', '/my-quizzes/{id}/edit', 'quizzes_my_edit_form', ['middleware_auth', 'middleware_onboarding_complete']);
@@ -194,6 +204,9 @@ route('POST', '/my-posts/{id}', 'community_my_update_action', ['middleware_auth'
 route('POST', '/my-posts/{id}/delete', 'community_my_delete_action', ['middleware_auth', 'middleware_onboarding_complete']);
 route('GET', '/my-kuppi-requests', 'kuppi_my_index', ['middleware_auth', 'middleware_onboarding_complete']);
 route('POST', '/resources/{id}/rating', 'resources_rating_upsert', ['middleware_auth', 'middleware_onboarding_complete']);
+route('POST', '/resources/{id}/rating/delete', 'resources_rating_delete', ['middleware_auth', 'middleware_onboarding_complete']);
+route('POST', '/resources/{id}/save/create', 'resources_save_create', ['middleware_auth', 'middleware_onboarding_complete']);
+route('POST', '/resources/{id}/save/delete', 'resources_save_delete', ['middleware_auth', 'middleware_onboarding_complete']);
 route('POST', '/resources/{id}/comments', 'resources_comment_store', ['middleware_auth', 'middleware_onboarding_complete']);
 route('POST', '/resources/{id}/comments/{commentId}', 'resources_comment_update', ['middleware_auth', 'middleware_onboarding_complete']);
 route('POST', '/resources/{id}/comments/{commentId}/delete', 'resources_comment_delete', ['middleware_auth', 'middleware_onboarding_complete']);

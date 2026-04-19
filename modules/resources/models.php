@@ -26,14 +26,17 @@ function resources_allowed_file_extensions(): array
     return ['pdf', 'doc', 'docx', 'ppt', 'pptx', 'xls', 'xlsx', 'txt', 'zip', 'jpg', 'jpeg', 'png'];
 }
 
-function resources_topic_published_list(int $topicId): array
+function resources_topic_published_list(int $topicId, ?int $viewerUserId = null): array
 {
+    $viewerId = max(0, (int) $viewerUserId);
+
     return db_fetch_all(
         "SELECT r.*,
                 u.name AS uploader_name,
                 COALESCE(rr.average_rating, 0) AS average_rating,
                 COALESCE(rr.rating_count, 0) AS rating_count,
-                COALESCE(cc.comment_count, 0) AS comment_count
+                COALESCE(cc.comment_count, 0) AS comment_count,
+                CASE WHEN rs.id IS NULL THEN 0 ELSE 1 END AS is_saved_by_viewer
          FROM resources r
          LEFT JOIN users u ON u.id = r.uploaded_by_user_id
          LEFT JOIN (
@@ -50,21 +53,27 @@ function resources_topic_published_list(int $topicId): array
             WHERE target_type = 'resource'
             GROUP BY target_id
          ) cc ON cc.resource_id = r.id
+         LEFT JOIN resource_saves rs
+                ON rs.resource_id = r.id
+               AND rs.user_id = ?
          WHERE r.topic_id = ?
            AND r.status = 'published'
          ORDER BY r.updated_at DESC, r.id DESC",
-        [$topicId]
+        [$viewerId, $topicId]
     );
 }
 
-function resources_find_topic_published(int $resourceId, int $topicId): ?array
+function resources_find_topic_published(int $resourceId, int $topicId, ?int $viewerUserId = null): ?array
 {
+    $viewerId = max(0, (int) $viewerUserId);
+
     return db_fetch(
         "SELECT r.*,
                 u.name AS uploader_name,
                 COALESCE(rr.average_rating, 0) AS average_rating,
                 COALESCE(rr.rating_count, 0) AS rating_count,
-                COALESCE(cc.comment_count, 0) AS comment_count
+                COALESCE(cc.comment_count, 0) AS comment_count,
+                CASE WHEN rs.id IS NULL THEN 0 ELSE 1 END AS is_saved_by_viewer
          FROM resources r
          LEFT JOIN users u ON u.id = r.uploaded_by_user_id
          LEFT JOIN (
@@ -81,11 +90,14 @@ function resources_find_topic_published(int $resourceId, int $topicId): ?array
             WHERE target_type = 'resource'
             GROUP BY target_id
          ) cc ON cc.resource_id = r.id
+         LEFT JOIN resource_saves rs
+                ON rs.resource_id = r.id
+               AND rs.user_id = ?
          WHERE r.id = ?
            AND r.topic_id = ?
            AND r.status = 'published'
          LIMIT 1",
-        [$resourceId, $topicId]
+        [$viewerId, $resourceId, $topicId]
     );
 }
 
@@ -149,8 +161,10 @@ function resources_find_with_context(int $resourceId): ?array
     );
 }
 
-function resources_find_published_with_context(int $resourceId): ?array
+function resources_find_published_with_context(int $resourceId, ?int $viewerUserId = null): ?array
 {
+    $viewerId = max(0, (int) $viewerUserId);
+
     return db_fetch(
         "SELECT r.*,
                 t.id AS topic_id,
@@ -161,7 +175,8 @@ function resources_find_published_with_context(int $resourceId): ?array
                 u.name AS uploader_name,
                 COALESCE(rr.average_rating, 0) AS average_rating,
                 COALESCE(rr.rating_count, 0) AS rating_count,
-                COALESCE(cc.comment_count, 0) AS comment_count
+                COALESCE(cc.comment_count, 0) AS comment_count,
+                CASE WHEN rs.id IS NULL THEN 0 ELSE 1 END AS is_saved_by_viewer
          FROM resources r
          INNER JOIN topics t ON t.id = r.topic_id
          INNER JOIN subjects s ON s.id = t.subject_id
@@ -180,10 +195,13 @@ function resources_find_published_with_context(int $resourceId): ?array
             WHERE target_type = 'resource'
             GROUP BY target_id
          ) cc ON cc.resource_id = r.id
+         LEFT JOIN resource_saves rs
+                ON rs.resource_id = r.id
+               AND rs.user_id = ?
          WHERE r.id = ?
            AND r.status = 'published'
          LIMIT 1",
-        [$resourceId]
+        [$viewerId, $resourceId]
     );
 }
 
@@ -210,6 +228,106 @@ function resources_upsert_student_rating(int $resourceId, int $studentUserId, in
              rating = VALUES(rating),
              updated_at = CURRENT_TIMESTAMP",
         [$resourceId, $studentUserId, $rating]
+    );
+}
+
+function resources_delete_student_rating(int $resourceId, int $studentUserId): bool
+{
+    return db_query(
+        'DELETE FROM resource_ratings WHERE resource_id = ? AND student_user_id = ?',
+        [$resourceId, $studentUserId]
+    )->rowCount() > 0;
+}
+
+function resources_is_saved_by_user(int $resourceId, int $userId): bool
+{
+    if ($resourceId <= 0 || $userId <= 0) {
+        return false;
+    }
+
+    return (bool) db_fetch(
+        'SELECT id FROM resource_saves WHERE resource_id = ? AND user_id = ? LIMIT 1',
+        [$resourceId, $userId]
+    );
+}
+
+function resources_add_save(int $resourceId, int $userId): bool
+{
+    if ($resourceId <= 0 || $userId <= 0) {
+        return false;
+    }
+
+    if (resources_is_saved_by_user($resourceId, $userId)) {
+        return true;
+    }
+
+    try {
+        db_insert('resource_saves', [
+            'resource_id' => $resourceId,
+            'user_id' => $userId,
+        ]);
+    } catch (Throwable) {
+        return true;
+    }
+
+    return true;
+}
+
+function resources_remove_save(int $resourceId, int $userId): bool
+{
+    if ($resourceId <= 0 || $userId <= 0) {
+        return false;
+    }
+
+    return db_query(
+        'DELETE FROM resource_saves WHERE resource_id = ? AND user_id = ?',
+        [$resourceId, $userId]
+    )->rowCount() > 0;
+}
+
+function resources_saved_for_user(int $userId, int $batchId): array
+{
+    if ($userId <= 0 || $batchId <= 0) {
+        return [];
+    }
+
+    return db_fetch_all(
+        "SELECT r.*,
+                rs.created_at AS saved_at,
+                t.id AS topic_id,
+                t.title AS topic_title,
+                s.id AS subject_id,
+                s.code AS subject_code,
+                s.name AS subject_name,
+                u.name AS uploader_name,
+                1 AS is_saved_by_viewer,
+                COALESCE(rr.average_rating, 0) AS average_rating,
+                COALESCE(rr.rating_count, 0) AS rating_count,
+                COALESCE(cc.comment_count, 0) AS comment_count
+         FROM resource_saves rs
+         INNER JOIN resources r ON r.id = rs.resource_id
+         INNER JOIN topics t ON t.id = r.topic_id
+         INNER JOIN subjects s ON s.id = t.subject_id
+         LEFT JOIN users u ON u.id = r.uploaded_by_user_id
+         LEFT JOIN (
+            SELECT resource_id,
+                   ROUND(AVG(rating), 2) AS average_rating,
+                   COUNT(*) AS rating_count
+            FROM resource_ratings
+            GROUP BY resource_id
+         ) rr ON rr.resource_id = r.id
+         LEFT JOIN (
+            SELECT target_id AS resource_id,
+                   COUNT(*) AS comment_count
+            FROM comments
+            WHERE target_type = 'resource'
+            GROUP BY target_id
+         ) cc ON cc.resource_id = r.id
+         WHERE rs.user_id = ?
+           AND s.batch_id = ?
+           AND r.status = 'published'
+         ORDER BY rs.created_at DESC, rs.id DESC",
+        [$userId, $batchId]
     );
 }
 

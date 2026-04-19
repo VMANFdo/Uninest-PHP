@@ -500,6 +500,18 @@ CREATE TABLE IF NOT EXISTS resource_ratings (
     CONSTRAINT fk_resource_ratings_student FOREIGN KEY (student_user_id) REFERENCES users(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
+CREATE TABLE IF NOT EXISTS resource_saves (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    resource_id INT NOT NULL,
+    user_id INT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY uniq_resource_save (resource_id, user_id),
+    INDEX idx_resource_saves_user_created (user_id, created_at, id),
+    INDEX idx_resource_saves_resource (resource_id),
+    CONSTRAINT fk_resource_saves_resource FOREIGN KEY (resource_id) REFERENCES resources(id) ON DELETE CASCADE,
+    CONSTRAINT fk_resource_saves_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
 CREATE TABLE IF NOT EXISTS announcements (
     id INT AUTO_INCREMENT PRIMARY KEY,
     batch_id INT NOT NULL,

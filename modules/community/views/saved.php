@@ -72,7 +72,7 @@ $savedPosts = (array) ($posts ?? []);
                 </div>
 
                 <footer class="community-post-footer social-post-actions">
-                    <form method="POST" action="/dashboard/community/<?= $postId ?>/save">
+                    <form method="POST" action="/dashboard/community/<?= $postId ?>/save/delete">
                         <?= csrf_field() ?>
                         <input type="hidden" name="return_to" value="<?= e($currentUri) ?>">
                         <button type="submit" class="community-action-btn is-active">Unsave</button>

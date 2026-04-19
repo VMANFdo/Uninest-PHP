@@ -335,7 +335,7 @@ $buildFeedUrl = static function (array $params = []) use ($is_admin, $selectedBa
                             <footer class="feed-post-actions">
                                 <div class="feed-post-actions-left">
                                     <?php if ($itemType === 'community'): ?>
-                                        <form method="POST" action="/dashboard/community/<?= $itemId ?>/like" class="feed-inline-form">
+                                        <form method="POST" action="/dashboard/community/<?= $itemId ?>/like/<?= $communityIsLiked ? 'delete' : 'create' ?>" class="feed-inline-form">
                                             <?= csrf_field() ?>
                                             <input type="hidden" name="return_to" value="<?= e($currentUri) ?>">
                                             <button type="submit" class="feed-react-btn <?= $communityIsLiked ? 'is-active' : '' ?>">
@@ -343,7 +343,7 @@ $buildFeedUrl = static function (array $params = []) use ($is_admin, $selectedBa
                                             </button>
                                         </form>
                                         <?php if (!empty($can_save_posts)): ?>
-                                            <form method="POST" action="/dashboard/community/<?= $itemId ?>/save" class="feed-inline-form">
+                                            <form method="POST" action="/dashboard/community/<?= $itemId ?>/save/<?= $communityIsSaved ? 'delete' : 'create' ?>" class="feed-inline-form">
                                                 <?= csrf_field() ?>
                                                 <input type="hidden" name="return_to" value="<?= e($currentUri) ?>">
                                                 <button type="submit" class="feed-react-btn <?= $communityIsSaved ? 'is-active' : '' ?>">
@@ -374,6 +374,18 @@ $buildFeedUrl = static function (array $params = []) use ($is_admin, $selectedBa
                                                 <?= ui_lucide_icon('arrow-down', 'feed-mini-icon') ?> Downvote
                                             </button>
                                         </form>
+                                        <?php if (($kuppiViewerVote === 'up' || $kuppiViewerVote === 'down') && $canVoteRequest): ?>
+                                            <form method="POST" action="/dashboard/kuppi/<?= $itemId ?>/vote/delete" class="feed-inline-form">
+                                                <?= csrf_field() ?>
+                                                <input type="hidden" name="return_to" value="<?= e($currentUri) ?>">
+                                                <?php if (!empty($is_admin) && $selectedBatchId > 0): ?>
+                                                    <input type="hidden" name="batch_id" value="<?= $selectedBatchId ?>">
+                                                <?php endif; ?>
+                                                <button type="submit" class="feed-react-btn">
+                                                    <?= ui_lucide_icon('x', 'feed-mini-icon') ?> Clear Vote
+                                                </button>
+                                            </form>
+                                        <?php endif; ?>
                                     <?php endif; ?>
                                 </div>
                                 <div class="feed-post-actions-right">

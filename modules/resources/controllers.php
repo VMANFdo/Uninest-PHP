@@ -153,6 +153,28 @@ function resources_can_embed_in_iframe(array $resource): bool
     return resources_is_valid_http_url(trim((string) ($resource['external_url'] ?? '')));
 }
 
+function resources_user_can_save(): bool
+{
+    return in_array((string) user_role(), ['student', 'coordinator', 'moderator'], true);
+}
+
+function resources_resolve_valid_return_to(string $returnTo, string $fallback): string
+{
+    $raw = trim($returnTo);
+    if ($raw !== '') {
+        $path = (string) parse_url($raw, PHP_URL_PATH);
+        if (
+            (str_starts_with($path, '/dashboard/subjects/') && str_contains($path, '/resources'))
+            || str_starts_with($path, '/saved-resources')
+            || str_starts_with($path, '/dashboard/feed')
+        ) {
+            return $raw;
+        }
+    }
+
+    return $fallback;
+}
+
 function resources_status_label(string $status): string
 {
     return match ($status) {
@@ -436,7 +458,7 @@ function resources_resolve_readable_topic(int $subjectId, int $topicId): ?array
 
 function resources_resolve_accessible_published_resource(int $resourceId): ?array
 {
-    $resource = resources_find_published_with_context($resourceId);
+    $resource = resources_find_published_with_context($resourceId, (int) auth_id());
     if (!$resource) {
         return null;
     }
@@ -622,7 +644,9 @@ function resources_topic_index(string $id, string $topicId): void
     view('resources::topic_index', [
         'subject' => $context['subject'],
         'topic' => $context['topic'],
-        'resources' => resources_topic_published_list($topicIdInt),
+        'resources' => resources_topic_published_list($topicIdInt, (int) auth_id()),
+        'can_save_resources' => resources_user_can_save(),
+        'current_uri' => (string) ($_SERVER['REQUEST_URI'] ?? ''),
     ], 'dashboard');
 }
 
@@ -637,7 +661,7 @@ function resources_topic_show(string $id, string $topicId, string $resourceId): 
         abort(404, 'Topic not found.');
     }
 
-    $resource = resources_find_topic_published($resourceIdInt, $topicIdInt);
+    $resource = resources_find_topic_published($resourceIdInt, $topicIdInt, (int) auth_id());
     if (!$resource) {
         abort(404, 'Published resource not found.');
     }
@@ -658,6 +682,8 @@ function resources_topic_show(string $id, string $topicId, string $resourceId): 
         'subject' => $context['subject'],
         'topic' => $context['topic'],
         'resource' => $resource,
+        'can_save_resources' => resources_user_can_save(),
+        'current_uri' => (string) ($_SERVER['REQUEST_URI'] ?? ''),
         'current_user_rating' => $currentUserRating,
         'can_rate' => $viewerCanRate,
         'rating_distribution' => $ratingDistribution,
@@ -751,6 +777,23 @@ function resources_my_index(): void
 {
     view('resources::my_index', [
         'resources' => resources_my_all((int) auth_id()),
+    ], 'dashboard');
+}
+
+function resources_saved_index(): void
+{
+    if (!resources_user_can_save()) {
+        abort(403, 'You do not have permission to save resources.');
+    }
+
+    $batchId = (int) (auth_user()['batch_id'] ?? 0);
+    if ($batchId <= 0) {
+        abort(403, 'You are not assigned to a batch.');
+    }
+
+    view('resources::saved', [
+        'resources' => resources_saved_for_user((int) auth_id(), $batchId),
+        'current_uri' => (string) ($_SERVER['REQUEST_URI'] ?? '/saved-resources'),
     ], 'dashboard');
 }
 
@@ -938,6 +981,62 @@ function resources_inline(string $id): void
     resources_stream_file($resource, 'inline');
 }
 
+function resources_save_create(string $id): void
+{
+    csrf_check();
+
+    if (!resources_user_can_save()) {
+        abort(403, 'You do not have permission to save resources.');
+    }
+
+    $resourceId = (int) $id;
+    $resource = resources_resolve_accessible_published_resource($resourceId);
+    if (!$resource) {
+        abort(404, 'Resource not found.');
+    }
+
+    $resourcePath = resources_detail_path($resource);
+    $returnTo = resources_resolve_valid_return_to((string) request_input('return_to', ''), $resourcePath);
+
+    try {
+        resources_add_save($resourceId, (int) auth_id());
+    } catch (Throwable) {
+        flash('error', 'Unable to save this resource right now.');
+        redirect($returnTo);
+    }
+
+    flash('success', 'Resource saved.');
+    redirect($returnTo);
+}
+
+function resources_save_delete(string $id): void
+{
+    csrf_check();
+
+    if (!resources_user_can_save()) {
+        abort(403, 'You do not have permission to save resources.');
+    }
+
+    $resourceId = (int) $id;
+    $resource = resources_resolve_accessible_published_resource($resourceId);
+    if (!$resource) {
+        abort(404, 'Resource not found.');
+    }
+
+    $resourcePath = resources_detail_path($resource);
+    $returnTo = resources_resolve_valid_return_to((string) request_input('return_to', ''), $resourcePath);
+
+    try {
+        $removed = resources_remove_save($resourceId, (int) auth_id());
+    } catch (Throwable) {
+        flash('error', 'Unable to remove this saved resource right now.');
+        redirect($returnTo);
+    }
+
+    flash('success', $removed ? 'Resource removed from saved list.' : 'Resource was not in your saved list.');
+    redirect($returnTo);
+}
+
 function resources_rating_upsert(string $id): void
 {
     csrf_check();
@@ -973,6 +1072,38 @@ function resources_rating_upsert(string $id): void
     }
 
     flash('success', 'Your rating has been saved.');
+    redirect($resourcePath . '#resource-interactions');
+}
+
+function resources_rating_delete(string $id): void
+{
+    csrf_check();
+
+    if (user_role() !== 'student') {
+        abort(403, 'Only students can remove resource ratings.');
+    }
+
+    $resourceId = (int) $id;
+    $resource = resources_resolve_accessible_published_resource($resourceId);
+    if (!$resource) {
+        abort(404, 'Resource not found.');
+    }
+
+    $resourcePath = resources_detail_path($resource);
+
+    if ((int) ($resource['uploaded_by_user_id'] ?? 0) === (int) auth_id()) {
+        flash('error', 'You cannot rate your own resource.');
+        redirect($resourcePath . '#resource-interactions');
+    }
+
+    try {
+        $removed = resources_delete_student_rating($resourceId, (int) auth_id());
+    } catch (Throwable) {
+        flash('error', 'Unable to remove your rating right now. Please try again.');
+        redirect($resourcePath . '#resource-interactions');
+    }
+
+    flash('success', $removed ? 'Your rating has been removed.' : 'No saved rating found to remove.');
     redirect($resourcePath . '#resource-interactions');
 }
 
