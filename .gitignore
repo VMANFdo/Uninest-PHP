@@ -13,6 +13,7 @@
 /storage/logs/*.log
 /storage/resources/*
 !/storage/resources/.gitkeep
+/database/seed_assets/resources
 
 # IDE / editor
 .idea/

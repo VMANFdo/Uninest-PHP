@@ -19,6 +19,10 @@
     ],
     "make:crud": [
       "@php scripts/make_crud.php"
+    ],
+    "seed:ucsc-is21": [
+      "Composer\\Config::disableProcessTimeout",
+      "@php scripts/seed_ucsc_is21.php"
     ]
   },
   "autoload": {
