@@ -272,15 +272,15 @@ function seed_ucsc_is21(PDO $pdo, string $basePath): array
         }
 
         $topicRows = [];
+        $topicsBySubject = [];
         seed_log('Step 9/18: creating topics for all subjects...');
-        $topicTotal = count($subjectRows) * 3;
+        $topicTotal = 0;
+        foreach ($subjectRows as $subjectForCount) {
+            $topicTotal += count(seed_topic_templates_for_subject((string) $subjectForCount['code'], (string) $subjectForCount['name']));
+        }
         $topicCreated = 0;
         foreach ($subjectRows as $subject) {
-            $topicTemplates = [
-                ['title' => 'Core Concepts', 'description' => 'Lecture fundamentals, theory notes, and concept walkthroughs.'],
-                ['title' => 'Tutorials & Practice', 'description' => 'Tutorial sheets, worked examples, and practical problem solving.'],
-                ['title' => 'Revision & Exam Prep', 'description' => 'Past-paper style materials and short revision guides.'],
-            ];
+            $topicTemplates = seed_topic_templates_for_subject((string) $subject['code'], (string) $subject['name']);
 
             foreach ($topicTemplates as $order => $template) {
                 $topicId = seed_insert_topic($pdo, [
@@ -297,114 +297,180 @@ function seed_ucsc_is21(PDO $pdo, string $basePath): array
                     'id' => $topicId,
                     'subject_id' => (int) $subject['id'],
                     'subject_code' => $subject['code'],
+                    'topic_key' => $template['key'],
                     'topic_title' => $template['title'],
+                ];
+                $topicsBySubject[(int) $subject['id']][] = [
+                    'id' => $topicId,
+                    'key' => $template['key'],
+                    'title' => $template['title'],
                 ];
                 $stats['topics']++;
                 $topicCreated++;
-                seed_log_progress('Topics created', $topicCreated, $topicTotal, 15);
+                seed_log_progress('Topics created', $topicCreated, $topicTotal, 25);
             }
         }
 
         $publishedResourceRows = [];
-        $allResourceRows = [];
-        seed_log('Step 10/18: creating resources from files + links...');
+        seed_log('Step 10/18: creating resources from all asset files + curated links...');
+
+        $filePlans = [];
+        foreach ($subjectRows as $subject) {
+            $subjectAssets = (array) ($assetPool[(string) $subject['code']] ?? []);
+            foreach ($subjectAssets as $assetMeta) {
+                if (is_string($assetMeta)) {
+                    $assetMeta = [
+                        'source_path' => $assetMeta,
+                        'source_group' => 'subject_material',
+                    ];
+                }
+                if (!is_array($assetMeta)) {
+                    continue;
+                }
+                $filePlans[] = [
+                    'subject' => $subject,
+                    'asset' => $assetMeta,
+                ];
+            }
+        }
+
+        $genericAssets = (array) ($assetPool['_generic'] ?? []);
+        foreach ($genericAssets as $genericIndex => $assetMeta) {
+            if (is_string($assetMeta)) {
+                $assetMeta = [
+                    'source_path' => $assetMeta,
+                    'source_group' => 'generic',
+                ];
+            }
+            if (!is_array($assetMeta)) {
+                continue;
+            }
+
+            $targetSubject = seed_match_subject_for_asset($subjectRows, $assetMeta);
+            if ($targetSubject === null) {
+                continue;
+            }
+            $filePlans[] = [
+                'subject' => $targetSubject,
+                'asset' => $assetMeta,
+            ];
+
+            if (($genericIndex + 1) % 40 === 0 || $genericIndex + 1 === count($genericAssets)) {
+                seed_log_progress('Generic assets mapped by subject', $genericIndex + 1, count($genericAssets), 40);
+            }
+        }
+
+        seed_log('File resource plans prepared: ' . count($filePlans));
+
+        $uploaderPool = array_merge($seedUsers['students'], $seedUsers['coordinators']);
+        foreach ($filePlans as $planIndex => $plan) {
+            $subject = (array) ($plan['subject'] ?? []);
+            $assetMeta = (array) ($plan['asset'] ?? []);
+
+            $topicsForSubject = (array) ($topicsBySubject[(int) ($subject['id'] ?? 0)] ?? []);
+            $topic = seed_pick_topic_for_asset($topicsForSubject, $assetMeta);
+            if ($topic === null) {
+                continue;
+            }
+
+            $uploader = $uploaderPool[$planIndex % count($uploaderPool)];
+            $reviewer = $seedUsers['coordinators'][$planIndex % count($seedUsers['coordinators'])];
+            $fileStatus = ($planIndex % 29 === 0)
+                ? 'rejected'
+                : (($planIndex % 11 === 0) ? 'pending' : 'published');
+
+            $copiedMeta = seed_copy_resource_asset_cached(
+                $basePath,
+                $assetMeta,
+                (string) ($subject['code'] ?? 'ISXX'),
+                $assetCopyCounter,
+                $copiedAssetCache
+            );
+
+            $resourceId = seed_insert_resource($pdo, [
+                'topic_id' => (int) $topic['id'],
+                'uploaded_by_user_id' => (int) $uploader['id'],
+                'title' => seed_resource_file_title((string) ($subject['code'] ?? 'ISXX'), (string) $copiedMeta['file_name']),
+                'description' => 'Seeded file resource for ' . (string) ($subject['name'] ?? 'subject') . ' • Topic: ' . (string) ($topic['title'] ?? 'Study Materials') . '.',
+                'category' => seed_resource_category_for_extension((string) $copiedMeta['file_name']),
+                'category_other' => null,
+                'source_type' => 'file',
+                'file_path' => $copiedMeta['file_path'],
+                'file_name' => $copiedMeta['file_name'],
+                'file_mime' => $copiedMeta['file_mime'],
+                'file_size' => $copiedMeta['file_size'],
+                'external_url' => null,
+                'status' => $fileStatus,
+                'rejection_reason' => $fileStatus === 'rejected' ? 'Please verify file quality before publishing.' : null,
+                'reviewed_by_user_id' => $fileStatus === 'pending' ? null : (int) $reviewer['id'],
+                'reviewed_at' => $fileStatus === 'pending' ? null : seed_random_datetime('-45 days', '-1 days'),
+                'created_at' => seed_random_datetime('-180 days', '-2 days'),
+                'updated_at' => seed_random_datetime('-40 days', '-1 days'),
+            ]);
+            $stats['resources']++;
+
+            $resourceRow = [
+                'id' => $resourceId,
+                'topic_id' => (int) $topic['id'],
+                'subject_id' => (int) ($subject['id'] ?? 0),
+                'uploaded_by_user_id' => (int) $uploader['id'],
+                'status' => $fileStatus,
+            ];
+            if ($fileStatus === 'published') {
+                $publishedResourceRows[] = $resourceRow;
+            }
+
+            seed_log_progress('File resources created', $planIndex + 1, count($filePlans), 25);
+        }
+
+        seed_log('Step 10/18 continued: adding topic-level curated links...');
         foreach ($topicRows as $topicIndex => $topic) {
             $subject = seed_find_subject_by_id($subjectRows, (int) $topic['subject_id']);
             if ($subject === null) {
                 continue;
             }
 
-            $uploaderPool = array_merge($seedUsers['students'], $seedUsers['coordinators']);
             $uploader = $uploaderPool[$topicIndex % count($uploaderPool)];
             $reviewer = $seedUsers['coordinators'][$topicIndex % count($seedUsers['coordinators'])];
+            $linkStatus = ($topicIndex % 19 === 0)
+                ? 'rejected'
+                : (($topicIndex % 13 === 0) ? 'pending' : 'published');
 
-            $hasSubjectAsset = !empty($assetPool[$subject['code']] ?? []);
-            $createFileResource = $hasSubjectAsset || ($topicIndex % 3 === 0);
+            $linkCategory = seed_resource_link_category_for_topic_key((string) ($topic['topic_key'] ?? 'reference'));
 
-            if ($createFileResource) {
-                $assetMeta = seed_pick_asset_for_subject($assetPool, $subject['code']);
-                if ($assetMeta !== null) {
-                    $copiedMeta = seed_copy_resource_asset_cached(
-                        $basePath,
-                        $assetMeta,
-                        $subject['code'],
-                        $assetCopyCounter,
-                        $copiedAssetCache
-                    );
-
-                    $fileStatus = ($topicIndex % 11 === 0) ? 'pending' : 'published';
-                    $resourceId = seed_insert_resource($pdo, [
-                        'topic_id' => (int) $topic['id'],
-                        'uploaded_by_user_id' => (int) $uploader['id'],
-                        'title' => seed_resource_file_title($subject['code'], (string) $copiedMeta['file_name']),
-                        'description' => 'Curated file upload for ' . $subject['code'] . ' (' . $topic['topic_title'] . ').',
-                        'category' => seed_resource_category_for_extension((string) $copiedMeta['file_name']),
-                        'category_other' => null,
-                        'source_type' => 'file',
-                        'file_path' => $copiedMeta['file_path'],
-                        'file_name' => $copiedMeta['file_name'],
-                        'file_mime' => $copiedMeta['file_mime'],
-                        'file_size' => $copiedMeta['file_size'],
-                        'external_url' => null,
-                        'status' => $fileStatus,
-                        'rejection_reason' => null,
-                        'reviewed_by_user_id' => $fileStatus === 'published' ? (int) $reviewer['id'] : null,
-                        'reviewed_at' => $fileStatus === 'published' ? seed_random_datetime('-60 days', '-1 days') : null,
-                        'created_at' => seed_random_datetime('-180 days', '-2 days'),
-                        'updated_at' => seed_random_datetime('-40 days', '-1 days'),
-                    ]);
-                    $stats['resources']++;
-
-                    $resourceRow = [
-                        'id' => $resourceId,
-                        'topic_id' => (int) $topic['id'],
-                        'subject_id' => (int) $subject['id'],
-                        'uploaded_by_user_id' => (int) $uploader['id'],
-                        'status' => $fileStatus,
-                    ];
-                    $allResourceRows[] = $resourceRow;
-                    if ($fileStatus === 'published') {
-                        $publishedResourceRows[] = $resourceRow;
-                    }
-                }
-            }
-
-            $linkStatus = ($topicIndex % 17 === 0) ? 'rejected' : 'published';
             $linkResourceId = seed_insert_resource($pdo, [
                 'topic_id' => (int) $topic['id'],
                 'uploaded_by_user_id' => (int) $uploader['id'],
-                'title' => $subject['code'] . ' ' . $topic['topic_title'] . ' Learning Link',
-                'description' => 'External reading and tutorial reference for ' . $subject['name'] . '.',
-                'category' => ($topicIndex % 5 === 0) ? 'Video Tutorials' : 'Reference Materials',
+                'title' => (string) $subject['code'] . ' • ' . (string) $topic['topic_title'] . ' • Reference Link',
+                'description' => 'External reading and tutorial reference for ' . (string) $subject['name'] . '.',
+                'category' => $linkCategory,
                 'category_other' => null,
                 'source_type' => 'link',
                 'file_path' => null,
                 'file_name' => null,
                 'file_mime' => null,
                 'file_size' => null,
-                'external_url' => seed_demo_resource_link($subject['code'], (int) $topic['id']),
+                'external_url' => seed_demo_resource_link((string) $subject['code'], (int) $topic['id']),
                 'status' => $linkStatus,
                 'rejection_reason' => $linkStatus === 'rejected' ? 'Link quality does not meet publication standards yet.' : null,
-                'reviewed_by_user_id' => $linkStatus === 'published' ? (int) $reviewer['id'] : (int) $seedUsers['moderators'][0]['id'],
-                'reviewed_at' => seed_random_datetime('-35 days', '-1 days'),
+                'reviewed_by_user_id' => $linkStatus === 'pending' ? null : (int) $reviewer['id'],
+                'reviewed_at' => $linkStatus === 'pending' ? null : seed_random_datetime('-35 days', '-1 days'),
                 'created_at' => seed_random_datetime('-160 days', '-1 days'),
                 'updated_at' => seed_random_datetime('-30 days', '-1 days'),
             ]);
             $stats['resources']++;
 
-            $linkRow = [
-                'id' => $linkResourceId,
-                'topic_id' => (int) $topic['id'],
-                'subject_id' => (int) $subject['id'],
-                'uploaded_by_user_id' => (int) $uploader['id'],
-                'status' => $linkStatus,
-            ];
-            $allResourceRows[] = $linkRow;
             if ($linkStatus === 'published') {
-                $publishedResourceRows[] = $linkRow;
+                $publishedResourceRows[] = [
+                    'id' => $linkResourceId,
+                    'topic_id' => (int) $topic['id'],
+                    'subject_id' => (int) $subject['id'],
+                    'uploaded_by_user_id' => (int) $uploader['id'],
+                    'status' => $linkStatus,
+                ];
             }
 
-            seed_log_progress('Resource topic bundles processed', $topicIndex + 1, count($topicRows), 10);
+            seed_log_progress('Curated link resources created', $topicIndex + 1, count($topicRows), 30);
         }
 
         $pendingUpdateCandidates = array_values(array_filter($publishedResourceRows, static fn(array $row): bool => (int) $row['id'] % 3 === 0));
@@ -1352,6 +1418,139 @@ function seed_subject_status(int $academicYear, int $semester): string
     return 'upcoming';
 }
 
+function seed_topic_templates_for_subject(string $subjectCode, string $subjectName): array
+{
+    return match ($subjectCode) {
+        'IS1208' => [
+            ['key' => 'foundations', 'title' => 'SDLC & Requirement Analysis', 'description' => 'Lifecycle planning, requirement capture, and business context framing.'],
+            ['key' => 'concepts', 'title' => 'UML & System Modeling', 'description' => 'Use cases, class diagrams, sequence flows, and model interpretation.'],
+            ['key' => 'practice', 'title' => 'Case Studies & Applied Design', 'description' => 'Applied system analysis scenarios and practical model building exercises.'],
+            ['key' => 'exam', 'title' => 'Past Papers & Revision', 'description' => 'Past-paper style questions and focused revision notes.'],
+            ['key' => 'reference', 'title' => 'Supplementary References', 'description' => 'Additional reading, handbooks, and reference documents.'],
+        ],
+        'IS1209' => [
+            ['key' => 'foundations', 'title' => 'Project Management Fundamentals', 'description' => 'Core PM concepts, project lifecycles, and foundational definitions.'],
+            ['key' => 'concepts', 'title' => 'Scope, Time, Cost & Risk', 'description' => 'Estimation, scheduling, budgeting, and risk-management material.'],
+            ['key' => 'practice', 'title' => 'Tools, Calculations & Tutorials', 'description' => 'Practical examples, worked calculations, and tutorial-oriented resources.'],
+            ['key' => 'exam', 'title' => 'Assessment Preparation', 'description' => 'Revision-focused summaries and assessment preparation material.'],
+            ['key' => 'reference', 'title' => 'Frameworks & Standards', 'description' => 'PMBOK and related governance/reference material.'],
+        ],
+        'IS1210' => [
+            ['key' => 'foundations', 'title' => 'Database Fundamentals', 'description' => 'Introductory database concepts, architecture, and relational basics.'],
+            ['key' => 'concepts', 'title' => 'Relational Design & SQL Concepts', 'description' => 'Schema modeling, SQL theory, and relational operations.'],
+            ['key' => 'practice', 'title' => 'SQL Practice & Lab Work', 'description' => 'Hands-on SQL tasks, worked examples, and lab-oriented practice.'],
+            ['key' => 'exam', 'title' => 'Normalization & Exam Revision', 'description' => 'Normalization, tricky problem patterns, and exam-focused preparation.'],
+            ['key' => 'reference', 'title' => 'Reference Materials', 'description' => 'Detailed notes and supplementary database references.'],
+        ],
+        'IS1211' => [
+            ['key' => 'foundations', 'title' => 'Networking Fundamentals', 'description' => 'OSI/TCP-IP basics, network components, and addressing essentials.'],
+            ['key' => 'concepts', 'title' => 'Protocols & Architecture', 'description' => 'Layer-specific protocol behavior and architecture-level understanding.'],
+            ['key' => 'practice', 'title' => 'Tutorials & Problem Solving', 'description' => 'Worked networking questions and practical explanation resources.'],
+            ['key' => 'exam', 'title' => 'Past Paper Revision', 'description' => 'Exam-style preparation and revision packs for networking topics.'],
+            ['key' => 'reference', 'title' => 'Reference Books & Notes', 'description' => 'Comprehensive notes and textbook-style references.'],
+        ],
+        'IS1212' => [
+            ['key' => 'foundations', 'title' => 'Probability Foundations', 'description' => 'Probability rules, basic models, and introductory statistical ideas.'],
+            ['key' => 'concepts', 'title' => 'Distributions & Statistical Concepts', 'description' => 'Discrete/continuous distributions and related analytical concepts.'],
+            ['key' => 'practice', 'title' => 'Tutorial Questions & Worked Answers', 'description' => 'Tutorial sheets, solved examples, and applied exercises.'],
+            ['key' => 'exam', 'title' => 'Revision & Exam Preparation', 'description' => 'Exam-focused statistics notes and revision-oriented material.'],
+            ['key' => 'reference', 'title' => 'Supplementary Notes', 'description' => 'Additional notes and reference handouts.'],
+        ],
+        'IS1213' => [
+            ['key' => 'foundations', 'title' => 'OB Fundamentals', 'description' => 'Core organizational behavior principles and foundational models.'],
+            ['key' => 'concepts', 'title' => 'Motivation, Emotions & Decision Making', 'description' => 'Behavioral and cognitive dimensions in organizational settings.'],
+            ['key' => 'practice', 'title' => 'Teams, Leadership & Applied Cases', 'description' => 'Team dynamics, leadership-focused materials, and practical case content.'],
+            ['key' => 'exam', 'title' => 'Revision & Assessment Support', 'description' => 'Assessment-aligned revision resources for OB topics.'],
+            ['key' => 'reference', 'title' => 'Additional References', 'description' => 'Supplementary slides and reading material.'],
+        ],
+        'IS1214' => [
+            ['key' => 'foundations', 'title' => 'Core Data Structures', 'description' => 'Foundational structures, memory models, and implementation basics.'],
+            ['key' => 'concepts', 'title' => 'Algorithm Analysis & Design', 'description' => 'Complexity, algorithmic design patterns, and analysis techniques.'],
+            ['key' => 'practice', 'title' => 'Tutorials, Practicals & Coding Drills', 'description' => 'Tutorials and practical problem-solving exercises.'],
+            ['key' => 'exam', 'title' => 'Revision & Exam Drills', 'description' => 'Exam preparation packs and quick revision references.'],
+            ['key' => 'reference', 'title' => 'Short Notes & References', 'description' => 'Condensed notes and supplementary references for DSA.'],
+        ],
+        default => [
+            ['key' => 'foundations', 'title' => $subjectName . ' Foundations', 'description' => 'Core foundations and introductory material.'],
+            ['key' => 'concepts', 'title' => $subjectName . ' Concepts & Theory', 'description' => 'Theory-driven concepts and essential explanatory notes.'],
+            ['key' => 'practice', 'title' => $subjectName . ' Tutorials & Practice', 'description' => 'Practice-oriented resources and tutorial-style references.'],
+            ['key' => 'exam', 'title' => $subjectName . ' Assessments & Revision', 'description' => 'Revision support and exam readiness resources.'],
+            ['key' => 'reference', 'title' => $subjectName . ' Reference Library', 'description' => 'Supplementary reading and reference material.'],
+        ],
+    };
+}
+
+function seed_pick_topic_for_asset(array $topics, array $assetMeta): ?array
+{
+    if (empty($topics)) {
+        return null;
+    }
+
+    $sourcePath = (string) ($assetMeta['source_path'] ?? '');
+    $relativePath = (string) ($assetMeta['relative_path'] ?? '');
+    $sourceGroup = strtolower((string) ($assetMeta['source_group'] ?? 'subject_material'));
+    $fileName = strtolower((string) ($assetMeta['file_name'] ?? basename($sourcePath)));
+    $pathContext = strtolower(trim($fileName . ' ' . $relativePath . ' ' . $sourcePath));
+    $bucket = seed_resource_bucket_for_asset($pathContext, $sourceGroup);
+
+    foreach ($topics as $topic) {
+        if ((string) ($topic['key'] ?? '') === $bucket) {
+            return $topic;
+        }
+    }
+
+    foreach ($topics as $topic) {
+        if ((string) ($topic['key'] ?? '') === 'reference') {
+            return $topic;
+        }
+    }
+
+    return $topics[0] ?? null;
+}
+
+function seed_resource_bucket_for_asset(string $fileName, string $sourceGroup): string
+{
+    if ($sourceGroup === 'past_papers') {
+        return 'exam';
+    }
+    if ($sourceGroup === 'short_notes') {
+        return 'reference';
+    }
+    if ($sourceGroup === 'practice_material') {
+        return 'practice';
+    }
+
+    $name = strtolower($fileName);
+
+    if (seed_string_contains_any($name, ['past', 'sample', 'exam', 'revision'])) {
+        return 'exam';
+    }
+
+    if (seed_string_contains_any($name, ['tutorial', 'tute', 'practical', 'lab', 'worksheet', 'challenge'])) {
+        return 'practice';
+    }
+
+    if (seed_string_contains_any($name, ['introduction', 'intro', 'fundamentals', 'syllabus', 'lesson 1', 'lec 1', 'l1-'])) {
+        return 'foundations';
+    }
+
+    if (seed_string_contains_any($name, ['book', 'module', 'pmbok', 'complete', 'note', 'handout', 'slides'])) {
+        return 'reference';
+    }
+
+    return 'concepts';
+}
+
+function seed_resource_link_category_for_topic_key(string $topicKey): string
+{
+    return match ($topicKey) {
+        'practice' => 'Tutorials',
+        'exam' => 'Past Papers',
+        'reference' => 'Reference Materials',
+        default => 'Video Tutorials',
+    };
+}
+
 function seed_generate_sri_lankan_student_names(int $count): array
 {
     $firstNames = [
@@ -1397,53 +1596,59 @@ function seed_collect_resource_assets(string $basePath): array
         return [];
     }
 
-    $folderMap = [
-        'IS1208' => 'Systems Analysis and Design 1208',
-        'IS1209' => 'Information Technology and Management IS1209',
-        'IS1210' => 'Database Systems - IS1210',
-        'IS1211' => 'Computer Networks - IS1211',
-        'IS1212' => 'Probability and Statistics - IS1212',
-        'IS1213' => 'Organizational Behavior - IS1213',
-        'IS1214' => 'Data Structures and algorithms 1214',
-    ];
+    $allFiles = seed_scan_seed_files($assetsRoot, 'subject_material', $assetsRoot);
 
-    $pool = [];
-    foreach ($folderMap as $subjectCode => $folderName) {
-        $dirPath = $assetsRoot . '/' . $folderName;
-        if (!is_dir($dirPath)) {
+    $pool = ['_generic' => []];
+    foreach ($allFiles as $assetMeta) {
+        $relativePath = strtolower((string) ($assetMeta['relative_path'] ?? (string) ($assetMeta['file_name'] ?? '')));
+        $fileName = strtolower((string) ($assetMeta['file_name'] ?? ''));
+
+        $assetMeta['source_group'] = seed_detect_source_group_for_asset_path($relativePath);
+        $subjectCode = seed_detect_subject_code_for_asset_path($relativePath . ' ' . $fileName);
+        if ($subjectCode === null) {
+            $pool['_generic'][] = $assetMeta;
             continue;
         }
 
-        $pool[$subjectCode] = seed_scan_seed_files($dirPath);
+        if (!isset($pool[$subjectCode])) {
+            $pool[$subjectCode] = [];
+        }
+        $pool[$subjectCode][] = $assetMeta;
     }
 
-    $generic = [];
-    foreach (['Past Papers', 'more-shortnotes'] as $genericFolder) {
-        $dirPath = $assetsRoot . '/' . $genericFolder;
-        if (!is_dir($dirPath)) {
+    foreach ($pool as $code => $items) {
+        if (!is_array($items)) {
             continue;
         }
-        $generic = array_merge($generic, seed_scan_seed_files($dirPath));
+        usort(
+            $items,
+            static fn(array $a, array $b): int => strcmp(
+                (string) ($a['relative_path'] ?? $a['file_name'] ?? ''),
+                (string) ($b['relative_path'] ?? $b['file_name'] ?? '')
+            )
+        );
+        $pool[$code] = $items;
     }
-
-    $pool['_generic'] = $generic;
 
     return $pool;
 }
 
-function seed_scan_seed_files(string $dirPath): array
+function seed_scan_seed_files(string $dirPath, string $sourceGroup, ?string $relativeRoot = null): array
 {
     $allowedExtensions = ['pdf', 'doc', 'docx', 'ppt', 'pptx', 'xls', 'xlsx', 'txt', 'zip', 'jpg', 'jpeg', 'png'];
+    $root = $relativeRoot !== null ? rtrim(str_replace('\\', '/', $relativeRoot), '/') : rtrim(str_replace('\\', '/', $dirPath), '/');
 
     $files = [];
-    $entries = scandir($dirPath) ?: [];
-    foreach ($entries as $entry) {
-        if ($entry === '.' || $entry === '..' || str_starts_with($entry, '.')) {
+    $iterator = new RecursiveIteratorIterator(
+        new RecursiveDirectoryIterator($dirPath, FilesystemIterator::SKIP_DOTS),
+        RecursiveIteratorIterator::LEAVES_ONLY
+    );
+    foreach ($iterator as $fileInfo) {
+        if (!$fileInfo->isFile()) {
             continue;
         }
-
-        $fullPath = $dirPath . '/' . $entry;
-        if (!is_file($fullPath)) {
+        $entry = (string) $fileInfo->getFilename();
+        if ($entry === '' || str_starts_with($entry, '.')) {
             continue;
         }
 
@@ -1452,33 +1657,102 @@ function seed_scan_seed_files(string $dirPath): array
             continue;
         }
 
-        $files[] = $fullPath;
+        $fullPath = str_replace('\\', '/', (string) $fileInfo->getPathname());
+        $normalizedRoot = $root . '/';
+        $relativePath = str_starts_with($fullPath, $normalizedRoot)
+            ? substr($fullPath, strlen($normalizedRoot))
+            : basename($fullPath);
+
+        $files[] = [
+            'source_path' => $fullPath,
+            'file_name' => $entry,
+            'relative_path' => (string) $relativePath,
+            'source_group' => $sourceGroup,
+        ];
     }
 
-    sort($files);
+    usort(
+        $files,
+        static fn(array $a, array $b): int => strcmp((string) ($a['file_name'] ?? ''), (string) ($b['file_name'] ?? ''))
+    );
     return $files;
 }
 
-function seed_pick_asset_for_subject(array &$assetPool, string $subjectCode): ?array
+function seed_detect_source_group_for_asset_path(string $path): string
 {
-    $subjectAssets = $assetPool[$subjectCode] ?? [];
-    if (!empty($subjectAssets)) {
-        return ['source_path' => (string) $subjectAssets[0]];
+    $normalized = strtolower(str_replace('\\', '/', $path));
+
+    if (seed_string_contains_any($normalized, ['past papers', '/2ndsenpp/', '/past paper', '/pastpaper'])) {
+        return 'past_papers';
     }
 
-    $genericAssets = $assetPool['_generic'] ?? [];
-    if (!empty($genericAssets)) {
-        return ['source_path' => (string) $genericAssets[0]];
+    if (seed_string_contains_any($normalized, ['short notes', 'shortnotes', 'more-shortnotes', 'short note'])) {
+        return 'short_notes';
     }
 
-    foreach ($assetPool as $key => $items) {
-        if ($key === '_generic' || !is_array($items) || empty($items)) {
-            continue;
+    if (seed_string_contains_any($normalized, ['practical', 'tutorial', 'lab', 'assignment'])) {
+        return 'practice_material';
+    }
+
+    return 'subject_material';
+}
+
+function seed_detect_subject_code_for_asset_path(string $path): ?string
+{
+    $normalized = strtoupper(str_replace(['\\', '_'], ['/', ' '], $path));
+
+    if (preg_match('/\bIS\s*[- ]?(\d{4})\b/', $normalized, $matches) === 1) {
+        return 'IS' . $matches[1];
+    }
+
+    $lower = strtolower(str_replace(['\\', '_', '-'], ['/', ' ', ' '], $path));
+    $subjectAliasMap = [
+        'IS1208' => ['systems analysis and design', 'system analysis and design', 'sad 1208'],
+        'IS1209' => ['project management', 'information technology and management', 'it project management'],
+        'IS1210' => ['database systems', 'dbms', 'database'],
+        'IS1211' => ['computer networks', 'networking', 'network'],
+        'IS1212' => ['probability and statistics', 'probability', 'statistics'],
+        'IS1213' => ['organizational behavior', 'organizational behaviour', 'ob '],
+        'IS1214' => ['data structures and algorithms', 'data structures', 'algorithms', 'dsa'],
+    ];
+
+    foreach ($subjectAliasMap as $subjectCode => $aliases) {
+        if (seed_string_contains_any($lower, $aliases)) {
+            return $subjectCode;
         }
-        return ['source_path' => (string) $items[0]];
     }
 
     return null;
+}
+
+function seed_match_subject_for_asset(array $subjectRows, array $assetMeta): ?array
+{
+    $path = (string) ($assetMeta['relative_path'] ?? $assetMeta['source_path'] ?? $assetMeta['file_name'] ?? '');
+    $detectedCode = seed_detect_subject_code_for_asset_path($path);
+    if ($detectedCode !== null) {
+        foreach ($subjectRows as $subject) {
+            if ((string) ($subject['code'] ?? '') === $detectedCode) {
+                return $subject;
+            }
+        }
+    }
+
+    if (empty($subjectRows)) {
+        return null;
+    }
+
+    $isSubjects = array_values(array_filter(
+        $subjectRows,
+        static fn(array $subject): bool => str_starts_with((string) ($subject['code'] ?? ''), 'IS')
+    ));
+
+    if (empty($isSubjects)) {
+        return $subjectRows[0] ?? null;
+    }
+
+    $hash = crc32($path);
+    $index = (int) ($hash % count($isSubjects));
+    return $isSubjects[$index] ?? $isSubjects[0];
 }
 
 function seed_copy_resource_asset_cached(
@@ -2490,4 +2764,19 @@ function seed_log_progress(string $label, int $current, int $total, int $every =
         $percent = (int) round(($current / $safeTotal) * 100);
         seed_log(sprintf('%s: %d/%d (%d%%)', $label, $current, $safeTotal, $percent));
     }
+}
+
+function seed_string_contains_any(string $haystack, array $needles): bool
+{
+    foreach ($needles as $needle) {
+        $needleText = strtolower(trim((string) $needle));
+        if ($needleText === '') {
+            continue;
+        }
+        if (str_contains($haystack, $needleText)) {
+            return true;
+        }
+    }
+
+    return false;
 }
