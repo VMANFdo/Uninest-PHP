@@ -6,7 +6,7 @@ declare(strict_types=1);
 use Dotenv\Dotenv;
 
 const SEED_BATCH_CODE = 'BATCH-UCSC-IS21';
-const SEED_EMAIL_DOMAIN = 'is21.ucsc.uninest.local';
+const SEED_EMAIL_DOMAIN = 'uninest.com';
 const SEED_STORAGE_PREFIX = 'storage/resources/seed/is21';
 const SEED_PASSWORD_HASH_123 = '$2y$12$4sVZY2Cz8Lu71OKcmQa2lec45cNXKraA4OQryLa8.hNVQWDTBiOHu';
 
@@ -106,19 +106,13 @@ function seed_ucsc_is21(PDO $pdo, string $basePath): array
             'Nipuni Karunaratne',
             'Sachithra Kodithuwakku',
             'Thilina Dissanayake',
-            'Yashoda Wickramasinghe',
-            'Dinusha Gunasekara',
-            'Malshi Senanayake',
-            'Pasindu Herath',
-            'Sahan Maduranga',
-            'Vihangi Peiris',
         ];
 
         $studentNames = seed_generate_sri_lankan_student_names(100);
 
         seed_log('Step 5/18: creating moderators...');
         foreach ($moderatorNames as $index => $name) {
-            $email = sprintf('moderator%02d@%s', $index + 1, SEED_EMAIL_DOMAIN);
+            $email = sprintf('m%d@%s', $index + 1, SEED_EMAIL_DOMAIN);
             $userId = seed_insert_user($pdo, [
                 'name' => $name,
                 'email' => $email,
@@ -166,12 +160,12 @@ function seed_ucsc_is21(PDO $pdo, string $basePath): array
 
         seed_log('Step 6/18: creating coordinators...');
         foreach ($coordinatorNames as $index => $name) {
-            $email = sprintf('coordinator%02d@%s', $index + 1, SEED_EMAIL_DOMAIN);
+            $email = sprintf('c%d@%s', $index + 1, SEED_EMAIL_DOMAIN);
             $coordinatorId = seed_insert_user($pdo, [
                 'name' => $name,
                 'email' => $email,
                 'role' => 'coordinator',
-                'academic_year' => ($index % 2) + 1,
+                'academic_year' => 2,
                 'university_id' => $universityId,
                 'batch_id' => $batchId,
                 'first_approved_batch_id' => null,
@@ -190,8 +184,8 @@ function seed_ucsc_is21(PDO $pdo, string $basePath): array
 
         seed_log('Step 7/18: creating 100 students + approved join requests...');
         foreach ($studentNames as $index => $name) {
-            $email = sprintf('student%03d@%s', $index + 1, SEED_EMAIL_DOMAIN);
-            $academicYear = $index < 50 ? 1 : 2;
+            $email = sprintf('st%d@%s', $index + 1, SEED_EMAIL_DOMAIN);
+            $academicYear = 2;
             $createdAt = seed_random_datetime('-340 days', '-20 days');
             $updatedAt = seed_random_datetime('-20 days', '-1 days');
 
@@ -232,6 +226,12 @@ function seed_ucsc_is21(PDO $pdo, string $basePath): array
 
         $subjects = seed_is21_subject_catalog();
         $subjectRows = [];
+        $appliedDataScienceCoordinator = $seedUsers['coordinators'][0] ?? null;
+        $secondaryCoordinatorPool = array_values(array_slice($seedUsers['coordinators'], 1));
+        if (empty($secondaryCoordinatorPool)) {
+            $secondaryCoordinatorPool = $seedUsers['coordinators'];
+        }
+        $secondaryCoordinatorCursor = 0;
         seed_log('Step 8/18: creating subjects + coordinator assignments...');
         foreach ($subjects as $subjectIndex => $subject) {
             $subjectId = seed_insert_subject($pdo, [
@@ -247,7 +247,12 @@ function seed_ucsc_is21(PDO $pdo, string $basePath): array
                 'updated_at' => seed_random_datetime('-30 days', '-1 days'),
             ]);
 
-            $coordinator = $seedUsers['coordinators'][$subjectIndex % count($seedUsers['coordinators'])];
+            if ((string) $subject['code'] === 'IS2210' && $appliedDataScienceCoordinator !== null) {
+                $coordinator = $appliedDataScienceCoordinator;
+            } else {
+                $coordinator = $secondaryCoordinatorPool[$secondaryCoordinatorCursor % count($secondaryCoordinatorPool)];
+                $secondaryCoordinatorCursor++;
+            }
             seed_insert_subject_coordinator($pdo, [
                 'subject_id' => $subjectId,
                 'student_user_id' => (int) $coordinator['id'],
@@ -269,6 +274,7 @@ function seed_ucsc_is21(PDO $pdo, string $basePath): array
             $stats['subjects']++;
             seed_log_progress('Subjects created', $subjectIndex + 1, count($subjects), 5);
         }
+        $appliedDataScienceSubject = seed_find_subject_by_code($subjectRows, 'IS2210');
 
         $topicRows = [];
         $topicsBySubject = [];
@@ -472,6 +478,44 @@ function seed_ucsc_is21(PDO $pdo, string $basePath): array
             seed_log_progress('Curated link resources created', $topicIndex + 1, count($topicRows), 30);
         }
 
+        if ($appliedDataScienceSubject !== null) {
+            seed_log('Step 10/18 continued: adding extra Applied Data Science demo resources...');
+            $adsTopics = (array) ($topicsBySubject[(int) $appliedDataScienceSubject['id']] ?? []);
+            foreach ($adsTopics as $adsTopicIndex => $adsTopic) {
+                for ($boost = 0; $boost < 2; $boost++) {
+                    $uploader = $seedUsers['coordinators'][0];
+                    $adsResourceId = seed_insert_resource($pdo, [
+                        'topic_id' => (int) $adsTopic['id'],
+                        'uploaded_by_user_id' => (int) $uploader['id'],
+                        'title' => 'IS2210 • ' . (string) $adsTopic['title'] . ' • Demo Pack ' . ($boost + 1),
+                        'description' => 'Curated demo material for Applied Data Science: practical notes, guided exercises, and revision checkpoints.',
+                        'category' => $boost === 0 ? 'Short Notes' : 'Tutorials',
+                        'category_other' => null,
+                        'source_type' => 'link',
+                        'file_path' => null,
+                        'file_name' => null,
+                        'file_mime' => null,
+                        'file_size' => null,
+                        'external_url' => seed_demo_resource_link('IS2210', (int) $adsTopic['id']) . '&pack=' . ($boost + 1),
+                        'status' => 'published',
+                        'rejection_reason' => null,
+                        'reviewed_by_user_id' => (int) $seedUsers['moderators'][0]['id'],
+                        'reviewed_at' => seed_random_datetime('-20 days', '-1 days'),
+                        'created_at' => seed_random_datetime('-45 days', '-1 days'),
+                        'updated_at' => seed_random_datetime('-10 days', '-1 days'),
+                    ]);
+                    $stats['resources']++;
+                    $publishedResourceRows[] = [
+                        'id' => $adsResourceId,
+                        'topic_id' => (int) $adsTopic['id'],
+                        'subject_id' => (int) $appliedDataScienceSubject['id'],
+                        'uploaded_by_user_id' => (int) $uploader['id'],
+                        'status' => 'published',
+                    ];
+                }
+            }
+        }
+
         $pendingUpdateCandidates = array_values(array_filter($publishedResourceRows, static fn(array $row): bool => (int) $row['id'] % 3 === 0));
         $pendingUpdateCandidates = array_slice($pendingUpdateCandidates, 0, 20);
         seed_log('Step 10/18 continued: creating pending/rejected resource update requests...');
@@ -547,16 +591,16 @@ function seed_ucsc_is21(PDO $pdo, string $basePath): array
         $announcementRows = [];
         $announcementTemplates = [
             'Semester Kickoff Briefing',
-            'IS1210 Lab Assessment Window',
+            'IS2210 Applied Data Science Lab Assessment Window',
             'Mid-Semester Academic Advisory',
             'Exam Registration Reminder',
             'University Holiday Notice',
-            'Guest Lecture: Product Thinking',
+            'Guest Lecture: Data Product Thinking',
             'Library Extended Hours',
             'Coursework Submission Timeline',
             'Batch Mentoring Sessions',
             'Career Preparation Workshop',
-            'Project Demo Guidelines',
+            'IS2210 Capstone Demo Guidelines',
             'Final Review Week Plan',
         ];
 
@@ -685,6 +729,38 @@ function seed_ucsc_is21(PDO $pdo, string $basePath): array
             seed_log_progress('Approved quizzes created', $index + 1, count($subjectRows), 5);
         }
 
+        if ($appliedDataScienceSubject !== null) {
+            seed_log('Step 13/18 continued: boosting Applied Data Science quiz depth...');
+            for ($extraAdsQuiz = 0; $extraAdsQuiz < 2; $extraAdsQuiz++) {
+                $creator = $seedUsers['coordinators'][0];
+                $quizId = seed_insert_quiz($pdo, [
+                    'subject_id' => (int) $appliedDataScienceSubject['id'],
+                    'created_by_user_id' => (int) $creator['id'],
+                    'title' => 'IS2210 Applied Data Science Deep Dive Quiz ' . ($extraAdsQuiz + 1),
+                    'description' => 'Scenario-based analytics, feature engineering, model evaluation, and interpretation coverage.',
+                    'duration_minutes' => 40,
+                    'mode' => $extraAdsQuiz === 0 ? 'practice' : 'exam',
+                    'status' => 'approved',
+                    'rejection_reason' => null,
+                    'reviewed_by_user_id' => (int) $seedUsers['moderators'][0]['id'],
+                    'reviewed_at' => seed_random_datetime('-15 days', '-1 days'),
+                    'created_at' => seed_random_datetime('-50 days', '-2 days'),
+                    'updated_at' => seed_random_datetime('-7 days', '-1 days'),
+                ]);
+
+                $questionRows = seed_insert_quiz_questions_with_options($pdo, $quizId, (string) $appliedDataScienceSubject['name'], 10);
+                $quizRows[] = [
+                    'id' => $quizId,
+                    'subject_id' => (int) $appliedDataScienceSubject['id'],
+                    'mode' => $extraAdsQuiz === 0 ? 'practice' : 'exam',
+                    'duration_minutes' => 40,
+                    'questions' => $questionRows,
+                    'status' => 'approved',
+                ];
+                $stats['quizzes']++;
+            }
+        }
+
         seed_log('Step 13/18 continued: creating draft/pending/rejected student quizzes...');
         for ($extra = 0; $extra < 12; $extra++) {
             $subject = $subjectRows[$extra % count($subjectRows)];
@@ -801,14 +877,13 @@ function seed_ucsc_is21(PDO $pdo, string $basePath): array
         $stats['quiz_attempts'] = $attemptCount;
 
         $kuppiTimetableSlots = [
-            [1, '08:00:00', '10:00:00', 'IS1201 Programming Lecture'],
-            [1, '14:00:00', '16:00:00', 'IS1210 Database Lecture'],
-            [2, '09:00:00', '11:00:00', 'IS1211 Networks Lecture'],
-            [3, '10:00:00', '12:00:00', 'IS1212 Statistics Lecture'],
-            [3, '15:00:00', '17:00:00', 'IS2203 OOP Practical'],
-            [4, '08:00:00', '10:00:00', 'IS2206 BPM Lecture'],
-            [5, '13:00:00', '15:00:00', 'IS2211 UI/UX Studio'],
-            [6, '09:00:00', '11:00:00', 'IS2201 Group Project Mentoring'],
+            [1, '09:00:00', '11:00:00', 'IS2208 Information Systems Management Lecture'],
+            [1, '14:00:00', '16:00:00', 'IS2209 Data Governance Lab'],
+            [2, '10:00:00', '12:00:00', 'IS2210 Applied Data Science Theory'],
+            [3, '13:00:00', '15:00:00', 'IS2210 Applied Data Science Practical'],
+            [4, '09:00:00', '11:00:00', 'IS2211 UI/UX Studio'],
+            [5, '08:00:00', '10:00:00', 'IS2212 Cloud Infrastructure Session'],
+            [6, '10:00:00', '12:00:00', 'EN2201 Entrepreneurship Workshop'],
         ];
 
         seed_log('Step 15/18: creating university timetable slots...');
@@ -1024,10 +1099,7 @@ function seed_ucsc_is21(PDO $pdo, string $basePath): array
 
         $termRecordCount = 0;
         foreach ($seedUsers['students'] as $index => $student) {
-            $terms = [['1', '1'], ['1', '2']];
-            if ((int) $student['academic_year'] >= 2) {
-                $terms[] = ['2', '1'];
-            }
+            $terms = [['2', '2']];
 
             foreach ($terms as $term) {
                 $year = (int) $term[0];
@@ -1368,36 +1440,9 @@ function seed_ensure_ucsc_university(PDO $pdo): int
 function seed_is21_subject_catalog(): array
 {
     return [
-        ['code' => 'IS1201', 'name' => 'Programming and Problem Solving', 'credits' => 3, 'academic_year' => 1, 'semester' => 1, 'is_non_gpa' => false, 'description' => 'Introduction to problem-solving methods, algorithmic thinking, and structured programming.'],
-        ['code' => 'IS1202', 'name' => 'Computer Systems', 'credits' => 2, 'academic_year' => 1, 'semester' => 1, 'is_non_gpa' => false, 'description' => 'Core principles of computer architecture, operating systems, and hardware concepts.'],
-        ['code' => 'IS1203', 'name' => 'Foundations of Information Systems', 'credits' => 2, 'academic_year' => 1, 'semester' => 1, 'is_non_gpa' => false, 'description' => 'Foundational concepts of information systems and their role in organizations.'],
-        ['code' => 'IS1204', 'name' => 'Fundamentals of Software Engineering', 'credits' => 2, 'academic_year' => 1, 'semester' => 1, 'is_non_gpa' => false, 'description' => 'Software process, requirements, design, and quality fundamentals.'],
-        ['code' => 'IS1205', 'name' => 'Introduction to Management', 'credits' => 2, 'academic_year' => 1, 'semester' => 1, 'is_non_gpa' => false, 'description' => 'Management concepts relevant to IT teams, projects, and organizations.'],
-        ['code' => 'IS1206', 'name' => 'Mathematics for Computing', 'credits' => 2, 'academic_year' => 1, 'semester' => 1, 'is_non_gpa' => false, 'description' => 'Discrete mathematics and computational math foundations for IS students.'],
-        ['code' => 'IS1207', 'name' => 'Internet and Web Technologies', 'credits' => 3, 'academic_year' => 1, 'semester' => 1, 'is_non_gpa' => false, 'description' => 'Web architecture, front-end basics, and internet technology foundations.'],
-        ['code' => 'EN1201', 'name' => 'Communication Skills', 'credits' => 1, 'academic_year' => 1, 'semester' => 1, 'is_non_gpa' => true, 'description' => 'Academic and professional communication skills for university learners.'],
-        ['code' => 'EN1202', 'name' => 'Application Laboratory', 'credits' => 1, 'academic_year' => 1, 'semester' => 1, 'is_non_gpa' => true, 'description' => 'Hands-on application lab focused on productivity and digital workflows.'],
-
-        ['code' => 'IS1208', 'name' => 'Systems Analysis and Design', 'credits' => 2, 'academic_year' => 1, 'semester' => 2, 'is_non_gpa' => false, 'description' => 'Requirements analysis, UML modeling, and system design techniques.'],
-        ['code' => 'IS1209', 'name' => 'Information Technology Project Management', 'credits' => 2, 'academic_year' => 1, 'semester' => 2, 'is_non_gpa' => false, 'description' => 'Project lifecycle planning, scope, estimation, risk, and stakeholder communication.'],
-        ['code' => 'IS1210', 'name' => 'Database Systems', 'credits' => 3, 'academic_year' => 1, 'semester' => 2, 'is_non_gpa' => false, 'description' => 'Database design, SQL, normalization, transactions, and data modeling.'],
-        ['code' => 'IS1211', 'name' => 'Computer Networks', 'credits' => 3, 'academic_year' => 1, 'semester' => 2, 'is_non_gpa' => false, 'description' => 'Network layers, protocols, routing, transport, and practical networking concepts.'],
-        ['code' => 'IS1212', 'name' => 'Probability and Statistics', 'credits' => 3, 'academic_year' => 1, 'semester' => 2, 'is_non_gpa' => false, 'description' => 'Probability models, distributions, inference, and statistical reasoning for IS.'],
-        ['code' => 'IS1213', 'name' => 'Organizational Behavior', 'credits' => 2, 'academic_year' => 1, 'semester' => 2, 'is_non_gpa' => false, 'description' => 'Behavioral dynamics in organizations, leadership, teams, and motivation.'],
-        ['code' => 'IS1214', 'name' => 'Data Structures and Algorithms', 'credits' => 3, 'academic_year' => 1, 'semester' => 2, 'is_non_gpa' => false, 'description' => 'Data structures, algorithm design, complexity, and practical implementation patterns.'],
-        ['code' => 'EN1203', 'name' => 'Aesthetic Studies', 'credits' => 1, 'academic_year' => 1, 'semester' => 2, 'is_non_gpa' => true, 'description' => 'Broad-based appreciation of arts and culture to complement academic development.'],
-
-        ['code' => 'IS2201', 'name' => 'Group Project', 'credits' => 4, 'academic_year' => 2, 'semester' => 1, 'is_non_gpa' => false, 'description' => 'Team-based project integrating analysis, implementation, and delivery practices.'],
-        ['code' => 'IS2202', 'name' => 'Advanced Data Structures and Algorithms', 'credits' => 2, 'academic_year' => 2, 'semester' => 1, 'is_non_gpa' => false, 'description' => 'Advanced algorithmic paradigms and optimized data-structure strategies.'],
-        ['code' => 'IS2203', 'name' => 'Object Oriented Programming', 'credits' => 3, 'academic_year' => 2, 'semester' => 1, 'is_non_gpa' => false, 'description' => 'Object-oriented design principles, patterns, and implementation in modern languages.'],
-        ['code' => 'IS2204', 'name' => 'Information Systems Security', 'credits' => 2, 'academic_year' => 2, 'semester' => 1, 'is_non_gpa' => false, 'description' => 'Security principles, threats, controls, and governance in information systems.'],
-        ['code' => 'IS2205', 'name' => 'Mobile Application Design and Development', 'credits' => 3, 'academic_year' => 2, 'semester' => 1, 'is_non_gpa' => false, 'description' => 'Mobile UX and application development workflows for modern platforms.'],
-        ['code' => 'IS2206', 'name' => 'Business Process Management', 'credits' => 3, 'academic_year' => 2, 'semester' => 1, 'is_non_gpa' => false, 'description' => 'Process analysis, modeling, automation, and optimization for enterprises.'],
-        ['code' => 'IS2207', 'name' => 'Electronics and Physical Computing', 'credits' => 3, 'academic_year' => 2, 'semester' => 1, 'is_non_gpa' => false, 'description' => 'Electronics fundamentals with physical computing and IoT prototyping concepts.'],
-
+        ['code' => 'IS2210', 'name' => 'Applied Data Science', 'credits' => 3, 'academic_year' => 2, 'semester' => 2, 'is_non_gpa' => false, 'description' => 'End-to-end applied data science pipeline: data prep, exploratory analysis, feature engineering, model training, evaluation, and communication.'],
         ['code' => 'IS2208', 'name' => 'Information Systems Management and Strategy', 'credits' => 2, 'academic_year' => 2, 'semester' => 2, 'is_non_gpa' => false, 'description' => 'Strategic alignment of information systems with business goals and governance.'],
         ['code' => 'IS2209', 'name' => 'Data Management and Governance', 'credits' => 4, 'academic_year' => 2, 'semester' => 2, 'is_non_gpa' => false, 'description' => 'Enterprise data lifecycle, governance frameworks, quality, and stewardship.'],
-        ['code' => 'IS2210', 'name' => 'Applied Data Science', 'credits' => 3, 'academic_year' => 2, 'semester' => 2, 'is_non_gpa' => false, 'description' => 'Applied analytics, ML workflows, and data-driven decision-making patterns.'],
         ['code' => 'IS2211', 'name' => 'UI/UX Design', 'credits' => 3, 'academic_year' => 2, 'semester' => 2, 'is_non_gpa' => false, 'description' => 'User interface and experience design methods, prototyping, and usability testing.'],
         ['code' => 'IS2212', 'name' => 'Cloud Infrastructure and Applications', 'credits' => 2, 'academic_year' => 2, 'semester' => 2, 'is_non_gpa' => false, 'description' => 'Cloud deployment models, infrastructure basics, and cloud-native app patterns.'],
         ['code' => 'EN2201', 'name' => 'Entrepreneurship', 'credits' => 2, 'academic_year' => 2, 'semester' => 2, 'is_non_gpa' => false, 'description' => 'Entrepreneurial thinking, opportunity analysis, and startup planning basics.'],
@@ -1407,54 +1452,26 @@ function seed_is21_subject_catalog(): array
 function seed_topic_templates_for_subject(string $subjectCode, string $subjectName): array
 {
     return match ($subjectCode) {
-        'IS1208' => [
-            ['key' => 'foundations', 'title' => 'SDLC & Requirement Analysis', 'description' => 'Lifecycle planning, requirement capture, and business context framing.'],
-            ['key' => 'concepts', 'title' => 'UML & System Modeling', 'description' => 'Use cases, class diagrams, sequence flows, and model interpretation.'],
-            ['key' => 'practice', 'title' => 'Case Studies & Applied Design', 'description' => 'Applied system analysis scenarios and practical model building exercises.'],
-            ['key' => 'exam', 'title' => 'Past Papers & Revision', 'description' => 'Past-paper style questions and focused revision notes.'],
-            ['key' => 'reference', 'title' => 'Supplementary References', 'description' => 'Additional reading, handbooks, and reference documents.'],
+        'IS2210' => [
+            ['key' => 'foundations', 'title' => 'Data Science Workflow Foundations', 'description' => 'Problem framing, dataset understanding, and reproducible analysis setup.'],
+            ['key' => 'concepts', 'title' => 'Feature Engineering & Model Selection', 'description' => 'Feature pipelines, model baselines, validation strategy, and bias/variance thinking.'],
+            ['key' => 'practice', 'title' => 'Hands-on Labs & Notebook Walkthroughs', 'description' => 'Applied coding exercises with cleaned datasets and guided notebook tasks.'],
+            ['key' => 'exam', 'title' => 'Model Evaluation & Exam Preparation', 'description' => 'Confusion matrix, precision/recall, ROC-AUC, and exam-style scenario practice.'],
+            ['key' => 'reference', 'title' => 'MLOps & Responsible AI References', 'description' => 'Deployment basics, monitoring patterns, and ethics/fairness reading references.'],
         ],
-        'IS1209' => [
-            ['key' => 'foundations', 'title' => 'Project Management Fundamentals', 'description' => 'Core PM concepts, project lifecycles, and foundational definitions.'],
-            ['key' => 'concepts', 'title' => 'Scope, Time, Cost & Risk', 'description' => 'Estimation, scheduling, budgeting, and risk-management material.'],
-            ['key' => 'practice', 'title' => 'Tools, Calculations & Tutorials', 'description' => 'Practical examples, worked calculations, and tutorial-oriented resources.'],
-            ['key' => 'exam', 'title' => 'Assessment Preparation', 'description' => 'Revision-focused summaries and assessment preparation material.'],
-            ['key' => 'reference', 'title' => 'Frameworks & Standards', 'description' => 'PMBOK and related governance/reference material.'],
+        'IS2209' => [
+            ['key' => 'foundations', 'title' => 'Data Governance Fundamentals', 'description' => 'Governance principles, stewardship roles, and enterprise data lifecycle.'],
+            ['key' => 'concepts', 'title' => 'Data Quality & Policy Controls', 'description' => 'Master data, metadata, quality dimensions, and policy enforcement approaches.'],
+            ['key' => 'practice', 'title' => 'Governance Framework Workshops', 'description' => 'Applied governance scenarios and policy design exercises.'],
+            ['key' => 'exam', 'title' => 'Case-Based Revision', 'description' => 'Scenario-driven exam preparation and model-answer outlines.'],
+            ['key' => 'reference', 'title' => 'Standards and Framework References', 'description' => 'DAMA and enterprise governance reference material.'],
         ],
-        'IS1210' => [
-            ['key' => 'foundations', 'title' => 'Database Fundamentals', 'description' => 'Introductory database concepts, architecture, and relational basics.'],
-            ['key' => 'concepts', 'title' => 'Relational Design & SQL Concepts', 'description' => 'Schema modeling, SQL theory, and relational operations.'],
-            ['key' => 'practice', 'title' => 'SQL Practice & Lab Work', 'description' => 'Hands-on SQL tasks, worked examples, and lab-oriented practice.'],
-            ['key' => 'exam', 'title' => 'Normalization & Exam Revision', 'description' => 'Normalization, tricky problem patterns, and exam-focused preparation.'],
-            ['key' => 'reference', 'title' => 'Reference Materials', 'description' => 'Detailed notes and supplementary database references.'],
-        ],
-        'IS1211' => [
-            ['key' => 'foundations', 'title' => 'Networking Fundamentals', 'description' => 'OSI/TCP-IP basics, network components, and addressing essentials.'],
-            ['key' => 'concepts', 'title' => 'Protocols & Architecture', 'description' => 'Layer-specific protocol behavior and architecture-level understanding.'],
-            ['key' => 'practice', 'title' => 'Tutorials & Problem Solving', 'description' => 'Worked networking questions and practical explanation resources.'],
-            ['key' => 'exam', 'title' => 'Past Paper Revision', 'description' => 'Exam-style preparation and revision packs for networking topics.'],
-            ['key' => 'reference', 'title' => 'Reference Books & Notes', 'description' => 'Comprehensive notes and textbook-style references.'],
-        ],
-        'IS1212' => [
-            ['key' => 'foundations', 'title' => 'Probability Foundations', 'description' => 'Probability rules, basic models, and introductory statistical ideas.'],
-            ['key' => 'concepts', 'title' => 'Distributions & Statistical Concepts', 'description' => 'Discrete/continuous distributions and related analytical concepts.'],
-            ['key' => 'practice', 'title' => 'Tutorial Questions & Worked Answers', 'description' => 'Tutorial sheets, solved examples, and applied exercises.'],
-            ['key' => 'exam', 'title' => 'Revision & Exam Preparation', 'description' => 'Exam-focused statistics notes and revision-oriented material.'],
-            ['key' => 'reference', 'title' => 'Supplementary Notes', 'description' => 'Additional notes and reference handouts.'],
-        ],
-        'IS1213' => [
-            ['key' => 'foundations', 'title' => 'OB Fundamentals', 'description' => 'Core organizational behavior principles and foundational models.'],
-            ['key' => 'concepts', 'title' => 'Motivation, Emotions & Decision Making', 'description' => 'Behavioral and cognitive dimensions in organizational settings.'],
-            ['key' => 'practice', 'title' => 'Teams, Leadership & Applied Cases', 'description' => 'Team dynamics, leadership-focused materials, and practical case content.'],
-            ['key' => 'exam', 'title' => 'Revision & Assessment Support', 'description' => 'Assessment-aligned revision resources for OB topics.'],
-            ['key' => 'reference', 'title' => 'Additional References', 'description' => 'Supplementary slides and reading material.'],
-        ],
-        'IS1214' => [
-            ['key' => 'foundations', 'title' => 'Core Data Structures', 'description' => 'Foundational structures, memory models, and implementation basics.'],
-            ['key' => 'concepts', 'title' => 'Algorithm Analysis & Design', 'description' => 'Complexity, algorithmic design patterns, and analysis techniques.'],
-            ['key' => 'practice', 'title' => 'Tutorials, Practicals & Coding Drills', 'description' => 'Tutorials and practical problem-solving exercises.'],
-            ['key' => 'exam', 'title' => 'Revision & Exam Drills', 'description' => 'Exam preparation packs and quick revision references.'],
-            ['key' => 'reference', 'title' => 'Short Notes & References', 'description' => 'Condensed notes and supplementary references for DSA.'],
+        'IS2212' => [
+            ['key' => 'foundations', 'title' => 'Cloud Architecture Foundations', 'description' => 'Service models, deployment models, and infrastructure primitives.'],
+            ['key' => 'concepts', 'title' => 'Containers, Scaling, and Reliability', 'description' => 'Operational cloud patterns for resilient and scalable apps.'],
+            ['key' => 'practice', 'title' => 'Deployment Labs', 'description' => 'Hands-on exercises for hosting APIs, apps, and storage workloads.'],
+            ['key' => 'exam', 'title' => 'Cloud Exam Drills', 'description' => 'Revision questions focused on architecture and trade-offs.'],
+            ['key' => 'reference', 'title' => 'Provider Docs and Best Practices', 'description' => 'Curated cloud provider references and practical checklists.'],
         ],
         default => [
             ['key' => 'foundations', 'title' => $subjectName . ' Foundations', 'description' => 'Core foundations and introductory material.'],
@@ -1693,13 +1710,12 @@ function seed_detect_subject_code_for_asset_path(string $path): ?string
 
     $lower = strtolower(str_replace(['\\', '_', '-'], ['/', ' ', ' '], $path));
     $subjectAliasMap = [
-        'IS1208' => ['systems analysis and design', 'system analysis and design', 'sad 1208'],
-        'IS1209' => ['project management', 'information technology and management', 'it project management'],
-        'IS1210' => ['database systems', 'dbms', 'database'],
-        'IS1211' => ['computer networks', 'networking', 'network'],
-        'IS1212' => ['probability and statistics', 'probability', 'statistics'],
-        'IS1213' => ['organizational behavior', 'organizational behaviour', 'ob '],
-        'IS1214' => ['data structures and algorithms', 'data structures', 'algorithms', 'dsa'],
+        'IS2208' => ['information systems management', 'is management', 'strategy', 'it strategy'],
+        'IS2209' => ['data governance', 'data management', 'governance'],
+        'IS2210' => ['applied data science', 'data science', 'machine learning', 'analytics'],
+        'IS2211' => ['ui ux', 'ux design', 'user experience', 'user interface'],
+        'IS2212' => ['cloud infrastructure', 'cloud applications', 'cloud computing'],
+        'EN2201' => ['entrepreneurship', 'startup', 'innovation'],
     ];
 
     foreach ($subjectAliasMap as $subjectCode => $aliases) {
@@ -2651,6 +2667,18 @@ function seed_find_subject_by_id(array $subjects, int $id): ?array
 {
     foreach ($subjects as $subject) {
         if ((int) $subject['id'] === $id) {
+            return $subject;
+        }
+    }
+
+    return null;
+}
+
+function seed_find_subject_by_code(array $subjects, string $code): ?array
+{
+    $normalizedCode = strtoupper(trim($code));
+    foreach ($subjects as $subject) {
+        if (strtoupper((string) ($subject['code'] ?? '')) === $normalizedCode) {
             return $subject;
         }
     }
